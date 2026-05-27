@@ -6,6 +6,7 @@ import { Ticket, PersonaId } from "@/lib/types";
 import { seedData, getTicket, getConsensusProgress } from "@/lib/store";
 import { getAllPersonas, getPersona } from "@/lib/personas";
 import { FeedbackPanel } from "@/components/FeedbackPanel";
+import { BuildTrigger } from "@/components/BuildTrigger";
 import { PersonaBadge } from "@/components/PersonaBadge";
 import { JoinSessionModal } from "@/components/JoinSessionModal";
 import { ArrowLeft, Clock, GitBranch, RefreshCw } from "lucide-react";
@@ -214,6 +215,13 @@ export default function TicketDetailPage() {
           <p className="text-gray-500 text-sm">
             Choose a persona to join the session and provide feedback.
           </p>
+        </div>
+      )}
+
+      {/* Build Trigger — show when there's feedback or consensus status */}
+      {(ticket.status === "in-review" || ticket.status === "consensus" || ticket.status === "building" || ticket.status === "done") && (
+        <div className="mt-6">
+          <BuildTrigger ticket={ticket} onBuildTriggered={() => loadTicket()} />
         </div>
       )}
     </div>

@@ -1,5 +1,6 @@
-import { Ticket, FeedbackEntry, PersonaId, TicketStatus } from "./types";
+import { Ticket, FeedbackEntry, PersonaId, TicketStatus, BuildReport } from "./types";
 import { getAllPersonas } from "./personas";
+import { checkConsensusThreshold, buildBuildReport } from "./consensus-threshold";
 
 // === In-memory store ===
 // Will be replaced with a database in a future run.
@@ -7,6 +8,7 @@ import { getAllPersonas } from "./personas";
 let tickets: Ticket[] = [];
 let nextTicketId = 1;
 let nextFeedbackId = 1;
+let nextBuildReportId = 1;
 
 function generateId(prefix: string, counter: number): string {
   return `${prefix}-${String(counter).padStart(3, "0")}`;
@@ -41,6 +43,17 @@ export function createTicket(
     approvals: [],
   };
   tickets.push(ticket);
+  return ticket;
+}
+
+export function updateTicketStatus(
+  ticketId: string,
+  status: TicketStatus
+): Ticket | null {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  if (!ticket) return null;
+  ticket.status = status;
+  ticket.updatedAt = new Date().toISOString();
   return ticket;
 }
 
@@ -80,6 +93,12 @@ export function addFeedback(
     ticket.status = "in-review";
   }
 
+  // Auto-transition to consensus when threshold met
+  autoTransitionToConsensus(ticket.id);
+
+  // Auto-transition to building if threshold met and in consensus
+  autoTransitionToBuilding(ticket.id);
+
   return entry;
 }
 
@@ -115,6 +134,111 @@ export function getConsensusProgress(ticketId: string): {
     approved: ticket.approvals.length,
     remaining,
   };
+}
+
+/**
+ * Auto-transition to consensus status when threshold is met
+ */
+function autoTransitionToConsensus(ticketId: string): boolean {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  if (!ticket) return false;
+  if (ticket.status !== "in-review") return false;
+
+  const threshold = checkConsensusThreshold(ticket);
+  if (threshold.reached) {
+    ticket.status = "consensus";
+    ticket.updatedAt = new Date().toISOString();
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Auto-transition from consensus/in-review to building when threshold is met
+ */
+function autoTransitionToBuilding(ticketId: string): boolean {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  if (!ticket) return false;
+
+  // Only transition from consensus or in-review
+  if (ticket.status !== "consensus" && ticket.status !== "in-review") {
+    return false;
+  }
+
+  const threshold = checkConsensusThreshold(ticket);
+  if (!threshold.reached) return false;
+
+  // Check all feedback is approved before auto-building
+  const hasDisapprovals = ticket.feedback.some((f) => !f.approved);
+  if (hasDisapprovals) return false;
+
+  // Transition and generate build report
+  ticket.status = "building";
+  ticket.updatedAt = new Date().toISOString();
+
+  // Auto-generate a build report
+  const buildId = generateId("BLD", nextBuildReportId++);
+  ticket.buildReport = buildBuildReport(ticket, buildId);
+
+  return true;
+}
+
+// --- Build Reports ---
+
+export function getBuildReport(
+  ticketId: string
+): BuildReport | undefined {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  return ticket?.buildReport;
+}
+
+export function setBuildReport(
+  ticketId: string,
+  report: BuildReport
+): BuildReport | null {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  if (!ticket) return null;
+  ticket.buildReport = report;
+  ticket.updatedAt = new Date().toISOString();
+  return report;
+}
+
+/**
+ * Manually trigger a build for a ticket.
+ * Generates a new build report and transitions to building.
+ */
+export function triggerBuild(ticketId: string): BuildReport | null {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  if (!ticket) return null;
+
+  const readiness = checkConsensusThreshold(ticket);
+  if (!readiness.reached) return null;
+
+  const buildId = generateId("BLD", nextBuildReportId++);
+  const report = buildBuildReport(ticket, buildId);
+
+  ticket.buildReport = report;
+  ticket.status = "building";
+  ticket.updatedAt = new Date().toISOString();
+
+  return report;
+}
+
+/**
+ * Complete a build, transitioning to done.
+ */
+export function completeBuild(ticketId: string): Ticket | null {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  if (!ticket) return null;
+  if (ticket.status !== "building") return null;
+
+  ticket.status = "done";
+  ticket.updatedAt = new Date().toISOString();
+  if (ticket.buildReport) {
+    ticket.buildReport.status = "completed";
+    ticket.buildReport.createdAt = new Date().toISOString();
+  }
+  return ticket;
 }
 
 // --- Seed Data ---
