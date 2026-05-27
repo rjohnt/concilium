@@ -1,23 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PersonaId, Ticket, FeedbackEntry } from "@/lib/types";
 import { getPersona } from "@/lib/personas";
 import { PersonaBadge } from "./PersonaBadge";
-import { MessageSquare, CheckCircle, ThumbsUp } from "lucide-react";
+import { MessageSquare, CheckCircle, ThumbsUp, RefreshCw } from "lucide-react";
 
 export function FeedbackPanel({
   ticket,
   onFeedbackAdded,
+  initialPersona,
+  onSwitchPersona,
 }: {
   ticket: Ticket;
   onFeedbackAdded: () => void;
+  initialPersona?: PersonaId | null;
+  onSwitchPersona?: () => void;
 }) {
   const [activePersona, setActivePersona] = useState<PersonaId | null>(
-    ticket.feedback.length > 0
-      ? ticket.feedback[ticket.feedback.length - 1].personaId
-      : null
+    initialPersona ??
+      (ticket.feedback.length > 0
+        ? ticket.feedback[ticket.feedback.length - 1].personaId
+        : null)
   );
+
+  // Sync with initialPersona if it changes externally
+  useEffect(() => {
+    if (initialPersona) {
+      setActivePersona(initialPersona);
+    }
+  }, [initialPersona]);
   const [content, setContent] = useState("");
   const [approved, setApproved] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -90,21 +102,31 @@ export function FeedbackPanel({
       {/* Feedback input */}
       {persona && (
         <div className="space-y-3 border-t border-gray-800 pt-4">
-          <div>
-            <p className="text-sm text-gray-400 mb-2">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-400 mb-0">
               <span className="font-medium text-gray-300">
                 {persona.emoji} {persona.label}
               </span>{" "}
               — {persona.expertise}
             </p>
+            {onSwitchPersona && (
+              <button
+                onClick={onSwitchPersona}
+                className="flex items-center gap-1 text-xs text-gray-500 hover:text-brand-400 transition-colors"
+                title="Switch persona"
+              >
+                <RefreshCw size={12} />
+                Switch Persona
+              </button>
+            )}
           </div>
 
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder={`Weigh in as ${persona.label}...`}
+            placeholder={persona.promptTemplate}
             rows={4}
-            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
+            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
           />
 
           <div className="flex items-center justify-between">

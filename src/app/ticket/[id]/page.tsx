@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Ticket } from "@/lib/types";
+import { Ticket, PersonaId } from "@/lib/types";
 import { seedData, getTicket, getConsensusProgress } from "@/lib/store";
-import { getAllPersonas } from "@/lib/personas";
+import { getAllPersonas, getPersona } from "@/lib/personas";
 import { FeedbackPanel } from "@/components/FeedbackPanel";
 import { PersonaBadge } from "@/components/PersonaBadge";
-import { ArrowLeft, Clock, GitBranch } from "lucide-react";
+import { JoinSessionModal } from "@/components/JoinSessionModal";
+import { ArrowLeft, Clock, GitBranch, RefreshCw } from "lucide-react";
 import Link from "next/link";
 
 export default function TicketDetailPage() {
@@ -16,16 +17,38 @@ export default function TicketDetailPage() {
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const loadTicket = () => {
+  // Session state
+  const [sessionPersona, setSessionPersona] = useState<PersonaId | null>(null);
+  const [showJoinModal, setShowJoinModal] = useState(false);
+
+  const loadTicket = useCallback(() => {
     seedData();
     const t = getTicket(params.id as string);
     setTicket(t || null);
     setLoading(false);
-  };
+  }, [params.id]);
 
   useEffect(() => {
     loadTicket();
-  }, [params.id]);
+  }, [loadTicket]);
+
+  // After ticket loads, show the join modal if no session is active
+  useEffect(() => {
+    if (!loading && ticket && !sessionPersona && !showJoinModal) {
+      // Small delay for cinematic entrance after page load
+      const timer = setTimeout(() => setShowJoinModal(true), 400);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, ticket, sessionPersona, showJoinModal]);
+
+  const handleJoinSession = (personaId: PersonaId) => {
+    setSessionPersona(personaId);
+    setShowJoinModal(false);
+  };
+
+  const handleSwitchPersona = () => {
+    setShowJoinModal(true);
+  };
 
   if (loading) {
     return (
@@ -54,9 +77,22 @@ export default function TicketDetailPage() {
   const consensus = getConsensusProgress(ticket.id);
   const allPersonas = getAllPersonas();
   const progress = consensus.approved / consensus.total;
+  const activePersonaObj = sessionPersona ? getPersona(sessionPersona) : null;
 
   return (
     <div className="max-w-4xl mx-auto">
+      {/* Join Session Modal */}
+      <JoinSessionModal
+        isOpen={showJoinModal && !sessionPersona}
+        onJoin={handleJoinSession}
+      />
+
+      {/* Switch Persona Modal (re-join) */}
+      <JoinSessionModal
+        isOpen={showJoinModal && !!sessionPersona}
+        onJoin={handleJoinSession}
+      />
+
       {/* Breadcrumb */}
       <Link
         href="/"
@@ -65,6 +101,27 @@ export default function TicketDetailPage() {
         <ArrowLeft size={14} />
         Back to Dashboard
       </Link>
+
+      {/* Active persona indicator */}
+      {activePersonaObj && (
+        <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-gray-900/60 border border-gray-800">
+          <span className="text-lg">{activePersonaObj.emoji}</span>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-gray-200">
+              Viewing as{" "}
+              <span className="text-white">{activePersonaObj.label}</span>
+            </p>
+            <p className="text-xs text-gray-500">{activePersonaObj.expertise}</p>
+          </div>
+          <button
+            onClick={handleSwitchPersona}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-gray-400 hover:text-brand-400 hover:bg-gray-800 transition-colors"
+          >
+            <RefreshCw size={12} />
+            Switch
+          </button>
+        </div>
+      )}
 
       {/* Ticket header */}
       <div className="card mb-6">
@@ -144,11 +201,21 @@ export default function TicketDetailPage() {
         </div>
       </div>
 
-      {/* Feedback panel */}
-      <FeedbackPanel
-        ticket={ticket}
-        onFeedbackAdded={() => loadTicket()}
-      />
+      {/* Feedback panel — show after joining, or show hint before joining */}
+      {sessionPersona ? (
+        <FeedbackPanel
+          ticket={ticket}
+          onFeedbackAdded={() => loadTicket()}
+          initialPersona={sessionPersona}
+          onSwitchPersona={handleSwitchPersona}
+        />
+      ) : (
+        <div className="card text-center py-12 opacity-60">
+          <p className="text-gray-500 text-sm">
+            Choose a persona to join the session and provide feedback.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
