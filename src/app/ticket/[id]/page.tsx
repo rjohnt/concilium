@@ -168,10 +168,8 @@ export default function TicketDetailPage() {
           <div className="flex flex-col items-end gap-2 flex-shrink-0">
             {/* Copy Link button */}
             <CopyButton
-              text=""
               label="Copy link to this ticket"
               icon="link"
-              className="self-end"
             />
 
             {/* Start Prompt Session button */}
