@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { FeedbackPanel } from '../FeedbackPanel'
 import type { Ticket, FeedbackEntry } from '@/lib/types'
 
@@ -174,5 +174,98 @@ describe('FeedbackPanel', () => {
     fireEvent.click(qaFilterBtn)
 
     expect(screen.getByText('No feedback from this persona yet.')).toBeInTheDocument()
+  })
+
+  it('shows the keyboard shortcut hint text', () => {
+    render(
+      <FeedbackPanel
+        ticket={mockTicket}
+        onFeedbackAdded={vi.fn()}
+      />
+    )
+    // Should show Cmd+Enter or Ctrl+Enter depending on platform
+    expect(screen.getByText(/Enter to submit/)).toBeInTheDocument()
+  })
+
+  it('submits feedback on Cmd+Enter when content is entered', async () => {
+    render(
+      <FeedbackPanel
+        ticket={{...mockTicket, feedback: []}}
+        onFeedbackAdded={vi.fn()}
+        initialPersona="engineer"
+      />
+    )
+
+    // Type content
+    const textarea = screen.getByPlaceholderText(/weighing in as the Engineer/i)
+    fireEvent.change(textarea, { target: { value: 'Test feedback' } })
+
+    // Press Cmd+Enter
+    fireEvent.keyDown(textarea, { key: 'Enter', metaKey: true })
+
+    // Should have cleared the textarea after submit (async)
+    await waitFor(() => {
+      expect(screen.queryByDisplayValue('Test feedback')).not.toBeInTheDocument()
+    })
+  })
+
+  it('does not submit on Cmd+Enter with empty content', () => {
+    const onFeedbackAdded = vi.fn()
+    render(
+      <FeedbackPanel
+        ticket={{...mockTicket, feedback: []}}
+        onFeedbackAdded={onFeedbackAdded}
+        initialPersona="engineer"
+      />
+    )
+
+    const textarea = screen.getByPlaceholderText(/weighing in as the Engineer/i)
+    // Press Cmd+Enter with empty textarea
+    fireEvent.keyDown(textarea, { key: 'Enter', metaKey: true })
+
+    // onFeedbackAdded should not have been called
+    expect(onFeedbackAdded).not.toHaveBeenCalled()
+  })
+
+  it('submits on Ctrl+Enter as well (Windows compat)', async () => {
+    render(
+      <FeedbackPanel
+        ticket={{...mockTicket, feedback: []}}
+        onFeedbackAdded={vi.fn()}
+        initialPersona="engineer"
+      />
+    )
+
+    const textarea = screen.getByPlaceholderText(/weighing in as the Engineer/i)
+    fireEvent.change(textarea, { target: { value: 'Windows feedback' } })
+
+    // Press Ctrl+Enter
+    fireEvent.keyDown(textarea, { key: 'Enter', ctrlKey: true })
+
+    // Text should be cleared (async)
+    await waitFor(() => {
+      expect(screen.queryByDisplayValue('Windows feedback')).not.toBeInTheDocument()
+    })
+  })
+
+  it('does not submit on plain Enter (newline only)', () => {
+    const onFeedbackAdded = vi.fn()
+    render(
+      <FeedbackPanel
+        ticket={{...mockTicket, feedback: []}}
+        onFeedbackAdded={onFeedbackAdded}
+        initialPersona="engineer"
+      />
+    )
+
+    const textarea = screen.getByPlaceholderText(/weighing in as the Engineer/i)
+    fireEvent.change(textarea, { target: { value: 'Multi line' } })
+
+    // Press plain Enter (should add newline, not submit)
+    fireEvent.keyDown(textarea, { key: 'Enter' })
+
+    // Content should still be there (not submitted)
+    expect(screen.getByDisplayValue('Multi line')).toBeInTheDocument()
+    expect(onFeedbackAdded).not.toHaveBeenCalled()
   })
 })
