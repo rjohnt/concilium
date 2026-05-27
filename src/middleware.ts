@@ -26,7 +26,11 @@ export async function middleware(request: NextRequest) {
   );
 
   // Refresh the auth session on every request
-  await supabase.auth.getUser();
+  try {
+    await supabase.auth.getUser();
+  } catch {
+    // Supabase unavailable — continue without auth (dev mode)
+  }
 
   return supabaseResponse;
 }

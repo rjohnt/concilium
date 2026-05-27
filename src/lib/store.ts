@@ -25,16 +25,6 @@ let nextTicketId = initial.nextTicketId;
 let nextFeedbackId = initial.nextFeedbackId;
 let nextBuildReportId = initial.nextBuildReportId;
 
-const STORAGE_KEY = "concilium-tickets";
-
-function persistState(): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tickets));
-  } catch {
-    // localStorage may be unavailable (SSR, storage full, etc.)
-  }
-}
-
 export function loadPersistedState(): void {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -146,6 +136,23 @@ export function deleteTicket(ticketId: string): boolean {
   tickets.splice(index, 1);
   persistState();
   return true;
+}
+
+export function updateTicket(
+  ticketId: string,
+  updates: { title?: string; description?: string }
+): Ticket | null {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  if (!ticket) return null;
+  if (updates.title !== undefined) {
+    ticket.title = updates.title;
+  }
+  if (updates.description !== undefined) {
+    ticket.description = updates.description;
+  }
+  ticket.updatedAt = new Date().toISOString();
+  persistState();
+  return ticket;
 }
 
 // Future scaffolding – exposed for API routes and external state management.
