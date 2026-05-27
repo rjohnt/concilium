@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Concilium — Design System</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   CONCILIUM DESIGN SYSTEM
+   Dark parchment — warm, editorial, human
+   ═══════════════════════════════════════════ */
+
+:root {
+  /* Surfaces */
+  --bg-deep:      #1a1714;
+  --bg-base:      #211e1a;
+  --bg-raised:    #29251f;
+  --bg-elevated:  #302b24;
+  --bg-overlay:   #3a352d;
+
+  /* Ink */
+  --ink-primary:  #e8e4db;
+  --ink-secondary:#b8b2a6;
+  --ink-muted:    #7a7468;
+  --ink-ghost:    #4a4540;
+
+  /* Accents */
+  --gold:         #c9a84c;
+  --gold-light:   #e0c86a;
+  --gold-dim:     #8a7030;
+  --cardinal:     #b84545;
+  --olive:        #6b8f5e;
+  --blue-steel:   #6b8fa8;
+
+  /* Persona colors */
+  --persona-eng:  #6b8fa8;
+  --persona-des:  #c97da0;
+  --persona-po:   #c9a84c;
+  --persona-qa:   #6b8f5e;
+
+  /* Status */
+  --status-todo:     #7a7468;
+  --status-progress: #c9a84c;
+  --status-review:   #6b8fa8;
+  --status-done:     #6b8f5e;
+
+  /* Borders */
+  --border-subtle: #2e2a24;
+  --border-visible:#3d3830;
+
+  /* Spacing */
+  --space-unit: 8px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* Typography */
+  --font-serif:  'EB Garamond', 'Georgia', serif;
+  --font-sans:   'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono:   'JetBrains Mono', 'SF Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+body {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--ink-secondary);
+  background: var(--bg-deep);
+}
+
+/* ═══ LAYOUT ═══ */
+.page {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  width: 260px;
+  background: var(--bg-base);
+  border-right: 1px solid var(--border-subtle);
+  padding: 1.5rem 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+.sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0 1.25rem 1.25rem;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 0.75rem;
+}
+.sidebar__brand-icon {
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--bg-deep);
+  font-family: var(--font-sans);
+}
+.sidebar__brand-text {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ink-primary);
+  letter-spacing: -0.01em;
+}
+.sidebar__section { padding: 0.5rem 1.25rem; }
+.sidebar__section-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-muted);
+  padding: 0.5rem 0;
+}
+.sidebar__item {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  color: var(--ink-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+.sidebar__item:hover { background: var(--bg-raised); color: var(--ink-primary); }
+.sidebar__item--active { background: var(--bg-raised); color: var(--gold); }
+
+/* ── Main ── */
+.main {
+  flex: 1;
+  padding: 2.5rem 3rem;
+  max-width: 1000px;
+}
+
+.page-title {
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--ink-primary);
+  letter-spacing: -0.02em;
+  margin-bottom: 0.25rem;
+}
+.page-subtitle {
+  font-size: 0.875rem;
+  color: var(--ink-muted);
+  margin-bottom: 2.5rem;
+}
+
+/* ═══ COMPONENT SECTIONS ═══ */
+.comp-section {
+  margin-bottom: 3rem;
+  padding-bottom: 2.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.comp-section:last-child { border-bottom: none; }
+.comp-section__title {
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--ink-primary);
+  margin-bottom: 0.35rem;
+}
+.comp-section__desc {
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+  margin-bottom: 1.5rem;
+  max-width: 560px;
+}
+.comp-section__row {
+  display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-start;
+}
+
+/* ═══ COMPONENTS ═══ */
+
+/* ── Status Pills ── */
+.status-pill {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.7rem; font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.status-pill--todo     { background: rgba(122,116,104,0.15); color: var(--status-todo); }
+.status-pill--progress { background: rgba(201,168,76,0.15); color: var(--status-progress); }
+.status-pill--review   { background: rgba(107,143,168,0.15); color: var(--status-review); }
+.status-pill--done     { background: rgba(107,143,94,0.15); color: var(--status-done); }
+.status-pill__dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor;
+}
+
+/* ── Persona Badge ── */
+.persona-badge {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem; font-weight: 600;
+}
+.persona-badge__avatar {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.55rem; font-weight: 700;
+  color: var(--bg-deep);
+  font-family: var(--font-sans);
+}
+.persona-badge--eng { background: rgba(107,143,168,0.12); color: var(--persona-eng); }
+.persona-badge--eng .persona-badge__avatar { background: var(--persona-eng); }
+.persona-badge--des { background: rgba(201,125,160,0.12); color: var(--persona-des); }
+.persona-badge--des .persona-badge__avatar { background: var(--persona-des); }
+.persona-badge--po  { background: rgba(201,168,76,0.12); color: var(--persona-po); }
+.persona-badge--po  .persona-badge__avatar { background: var(--persona-po); }
+.persona-badge--qa  { background: rgba(107,143,94,0.12); color: var(--persona-qa); }
+.persona-badge--qa  .persona-badge__avatar { background: var(--persona-qa); }
+
+.persona-row {
+  display: flex; gap: 0.35rem; flex-wrap: wrap;
+}
+
+/* ── Ticket Card ── */
+.ticket-card {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  width: 340px;
+  transition: border-color 0.15s ease;
+}
+.ticket-card:hover { border-color: rgba(201,168,76,0.2); }
+.ticket-card__header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+.ticket-card__id {
+  font-family: var(--font-mono); font-size: 0.7rem;
+  color: var(--ink-muted); font-weight: 500;
+}
+.ticket-card__title {
+  font-family: var(--font-serif);
+  font-size: 1.05rem; font-weight: 600;
+  color: var(--ink-primary);
+  line-height: 1.3;
+  margin-bottom: 0.5rem;
+}
+.ticket-card__meta {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 0.75rem; color: var(--ink-muted);
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* ── Consensus Bar ── */
+.consensus-bar {
+  margin-top: 0.75rem;
+}
+.consensus-bar__label {
+  display: flex; justify-content: space-between;
+  font-size: 0.7rem; color: var(--ink-muted);
+  margin-bottom: 0.3rem;
+}
+.consensus-bar__track {
+  height: 4px; background: var(--bg-elevated);
+  border-radius: 2px; overflow: hidden;
+}
+.consensus-bar__fill {
+  height: 100%; border-radius: 2px;
+  transition: width 0.4s ease;
+}
+.consensus-bar__fill--low    { background: var(--gold-dim); width: 25%; }
+.consensus-bar__fill--mid    { background: var(--gold); width: 50%; }
+.consensus-bar__fill--high   { background: var(--gold-light); width: 75%; }
+.consensus-bar__fill--reached{ background: var(--olive); width: 100%; }
+
+/* ── Session Thread ── */
+.session-thread {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  width: 580px;
+  max-width: 100%;
+  overflow: hidden;
+}
+.session-thread__header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.session-thread__title {
+  font-family: var(--font-serif);
+  font-size: 1rem; font-weight: 600;
+  color: var(--ink-primary);
+}
+.session-thread__ticket {
+  font-family: var(--font-mono); font-size: 0.7rem;
+  color: var(--ink-muted);
+}
+.session-thread__body {
+  padding: 1rem 1.25rem;
+  display: flex; flex-direction: column; gap: 1rem;
+  max-height: 400px; overflow-y: auto;
+}
+
+/* ── Session Message ── */
+.session-msg {
+  display: flex; gap: 0.65rem;
+}
+.session-msg__avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.6rem; font-weight: 700;
+  color: var(--bg-deep);
+  font-family: var(--font-sans);
+}
+.session-msg__avatar--eng { background: var(--persona-eng); }
+.session-msg__avatar--des { background: var(--persona-des); }
+.session-msg__avatar--po  { background: var(--persona-po); }
+.session-msg__avatar--qa  { background: var(--persona-qa); }
+.session-msg__content {
+  flex: 1; min-width: 0;
+}
+.session-msg__header {
+  display: flex; align-items: center; gap: 0.5rem;
+  margin-bottom: 0.2rem;
+}
+.session-msg__name {
+  font-size: 0.8rem; font-weight: 600; color: var(--ink-primary);
+}
+.session-msg__role {
+  font-size: 0.65rem; color: var(--ink-muted);
+}
+.session-msg__bubble {
+  background: var(--bg-elevated);
+  border-radius: 0 var(--radius-md) var(--radius-md) var(--radius-md);
+  padding: 0.65rem 0.85rem;
+  font-size: 0.8rem; color: var(--ink-secondary);
+  line-height: 1.5;
+}
+.session-msg__bubble--prompt {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  background: rgba(201,168,76,0.06);
+  border: 1px solid rgba(201,168,76,0.15);
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.7rem;
+  margin-top: 0.35rem;
+}
+.session-msg__action {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.68rem; color: var(--ink-muted);
+  margin-top: 0.3rem;
+  cursor: pointer;
+}
+.session-msg__action:hover { color: var(--gold); }
+
+/* ── Turn Indicator ── */
+.turn-indicator {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  background: rgba(201,168,76,0.06);
+  border: 1px solid rgba(201,168,76,0.15);
+  border-radius: var(--radius-md);
+  font-size: 0.78rem; color: var(--gold);
+  margin: 0.5rem 0;
+}
+.turn-indicator__pulse {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--gold);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ── Prompt Input ── */
+.prompt-input-wrap {
+  border-top: 1px solid var(--border-subtle);
+  padding: 0.75rem 1.25rem;
+  display: flex; gap: 0.65rem; align-items: flex-start;
+}
+.prompt-input-wrap .session-msg__avatar {
+  margin-top: 0.35rem;
+}
+.prompt-input {
+  flex: 1;
+  display: flex; flex-direction: column; gap: 0.5rem;
+}
+.prompt-input__textarea {
+  width: 100%;
+  min-height: 70px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-visible);
+  border-radius: var(--radius-md);
+  padding: 0.65rem 0.85rem;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--ink-primary);
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+.prompt-input__textarea:focus { border-color: var(--gold); }
+.prompt-input__textarea--prompt {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+}
+.prompt-input__actions {
+  display: flex; gap: 0.5rem; align-items: center;
+}
+.prompt-input__persona {
+  font-size: 0.68rem; color: var(--ink-muted);
+  margin-right: auto;
+}
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem; font-weight: 500;
+  border: none; cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: var(--font-sans);
+}
+.btn--primary {
+  background: var(--gold);
+  color: var(--bg-deep);
+}
+.btn--primary:hover { background: var(--gold-light); }
+.btn--secondary {
+  background: var(--bg-elevated);
+  color: var(--ink-secondary);
+  border: 1px solid var(--border-visible);
+}
+.btn--secondary:hover { border-color: var(--ink-muted); color: var(--ink-primary); }
+.btn--ghost {
+  background: transparent;
+  color: var(--ink-muted);
+}
+.btn--ghost:hover { color: var(--ink-primary); }
+.btn--approve {
+  background: rgba(107,143,94,0.12);
+  color: var(--olive);
+  border: 1px solid rgba(107,143,94,0.2);
+}
+.btn--approve:hover { background: rgba(107,143,94,0.2); }
+.btn--reject {
+  background: rgba(184,69,69,0.08);
+  color: var(--cardinal);
+}
+.btn--reject:hover { background: rgba(184,69,69,0.15); }
+.btn--sm { padding: 0.3rem 0.6rem; font-size: 0.7rem; }
+
+/* ── Ticket Form ── */
+.ticket-form {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  width: 440px;
+  max-width: 100%;
+}
+.ticket-form__title {
+  font-family: var(--font-serif);
+  font-size: 1.1rem; font-weight: 600;
+  color: var(--ink-primary);
+  margin-bottom: 1rem;
+}
+.form-group {
+  margin-bottom: 1rem;
+}
+.form-label {
+  display: block;
+  font-size: 0.72rem; font-weight: 600; color: var(--ink-muted);
+  margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.form-input {
+  width: 100%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-visible);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.7rem;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: var(--ink-primary);
+  outline: none;
+}
+.form-input:focus { border-color: var(--gold); }
+.form-textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+/* ── Empty State ── */
+.empty-state {
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+}
+.empty-state__icon {
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+  opacity: 0.4;
+}
+.empty-state__text {
+  font-family: var(--font-serif);
+  font-size: 1rem; color: var(--ink-muted);
+  font-style: italic;
+}
+
+/* ═══ TOKENS TABLE ═══ */
+.token-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+.token-table th {
+  text-align: left;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.65rem; font-weight: 600;
+  color: var(--ink-muted);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--border-visible);
+}
+.token-table td {
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--ink-secondary);
+}
+.token-swatch {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border-radius: 3px;
+  border: 1px solid var(--border-visible);
+  margin-right: 0.4rem;
+  vertical-align: middle;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .main { padding: 1.5rem; }
+  .comp-section__row { flex-direction: column; }
+  .ticket-card, .session-thread, .ticket-form { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <nav class="sidebar">
+    <div class="sidebar__brand">
+      <div class="sidebar__brand-icon">C</div>
+      <span class="sidebar__brand-text">Concilium</span>
+    </div>
+    <div class="sidebar__section">
+      <div class="sidebar__section-label">Tickets</div>
+      <div class="sidebar__item sidebar__item--active">All tickets</div>
+      <div class="sidebar__item">My tickets</div>
+      <div class="sidebar__item">In review</div>
+    </div>
+    <div class="sidebar__section">
+      <div class="sidebar__section-label">Sessions</div>
+      <div class="sidebar__item">Active sessions</div>
+      <div class="sidebar__item">Awaiting consensus</div>
+    </div>
+    <div class="sidebar__section">
+      <div class="sidebar__section-label">Project</div>
+      <div class="sidebar__item">Settings</div>
+      <div class="sidebar__item">Personas</div>
+    </div>
+  </nav>
+
+  <!-- ═══ MAIN ═══ -->
+  <main class="main">
+    <h1 class="page-title">Design System</h1>
+    <p class="page-subtitle">Every component Concilium needs. Dark parchment, gold accent, serif headings, monospace prompts.</p>
+
+    <!-- ═══ COLORS ═══ -->
+    <section class="comp-section">
+      <h2 class="comp-section__title">Colors</h2>
+      <p class="comp-section__desc">Warm, human palette. No cool grays. Gold is the only chromatic accent — used sparingly for CTAs and highlights.</p>
+      <table class="token-table">
+        <thead><tr><th>Token</th><th>Swatch</th><th>Value</th><th>Usage</th></tr></thead>
+        <tbody>
+          <tr><td>--bg-deep</td><td><span class="token-swatch" style="background:#1a1714"></span></td><td style="font-family:var(--font-mono);font-size:0.7rem">#1a1714</td><td>Page background</td></tr>
+          <tr><td>--bg-base</td><td><span class="token-swatch" style="background:#211e1a"></span></td><td style="font-family:var(--font-mono);font-size:0.7rem">#211e1a</td><td>Sidebar</td></tr>
+          <tr><td>--bg-raised</td><td><span class="token-swatch" style="background:#29251f"></span></td><td style="font-family:var(--font-mono);font-size:0.7rem">#29251f</td><td>Cards, surfaces</td></tr>
+          <tr><td>--bg-elevated</td><td><span class="token-swatch" style="background:#302b24"></span></td><td style="font-family:var(--font-mono);font-size:0.7rem">#302b24</td><td>Inputs, bubbles</td></tr>
+          <tr><td>--gold</td><td><span class="token-swatch" style="background:#c9a84c"></span></td><td style="font-family:var(--font-mono);font-size:0.7rem">#c9a84c</td><td>Primary CTA, accent</td></tr>
+          <tr><td>--cardinal</td><td><span class="token-swatch" style="background:#b84545"></span></td><td style="font-family:var(--font-mono);font-size:0.7rem">#b84545</td><td>Reject, errors</td></tr>
+          <tr><td>--olive</td><td><span class="token-swatch" style="background:#6b8f5e"></span></td><td style="font-family:var(--font-mono);font-size:0.7rem">#6b8f5e</td><td>Approve, done</td></tr>
+          <tr><td>--persona-eng</td><td><span class="token-swatch" style="background:#6b8fa8"></span></td><td style="font-family:var(--font-mono);font-size:0.7rem">#6b8fa8</td><td>Engineer</td></tr>
+          <tr><td>--persona-des</td><td><span class="token-swatch" style="background:#c97da0"></span></td><td style="font-family:var(--font-mono);font-size:0.7rem">#c97da0</td><td>Designer</td></tr>
+          <tr><td>--persona-po</td><td><span class="token-swatch" style="background:#c9a84c"></span></td><td style="font-family:var(--font-mono);font-size:0.7rem">#c9a84c</td><td>Product Owner</td></tr>
+          <tr><td>--persona-qa</td><td><span class="token-swatch" style="background:#6b8f5e"></span></td><td style="font-family:var(--font-mono);font-size:0.7rem">#6b8f5e</td><td>QA</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ═══ STATUS PILLS ═══ -->
+    <section class="comp-section">
+      <h2 class="comp-section__title">Status Pills</h2>
+      <p class="comp-section__desc">Linear-mapped workflow states with dot indicators.</p>
+      <div class="comp-section__row">
+        <span class="status-pill status-pill--todo"><span class="status-pill__dot"></span>Todo</span>
+        <span class="status-pill status-pill--progress"><span class="status-pill__dot"></span>In Progress</span>
+        <span class="status-pill status-pill--review"><span class="status-pill__dot"></span>In Review</span>
+        <span class="status-pill status-pill--done"><span class="status-pill__dot"></span>Done</span>
+      </div>
+    </section>
+
+    <!-- ═══ PERSONA BADGES ═══ -->
+    <section class="comp-section">
+      <h2 class="comp-section__title">Persona Badges</h2>
+      <p class="comp-section__desc">Each role gets a distinct color identity. Used in ticket cards, session threads, and turn indicators.</p>
+      <div class="comp-section__row">
+        <span class="persona-badge persona-badge--eng"><span class="persona-badge__avatar">E</span>Engineer</span>
+        <span class="persona-badge persona-badge--des"><span class="persona-badge__avatar">D</span>Designer</span>
+        <span class="persona-badge persona-badge--po"><span class="persona-badge__avatar">P</span>Product Owner</span>
+        <span class="persona-badge persona-badge--qa"><span class="persona-badge__avatar">Q</span>QA</span>
+      </div>
+    </section>
+
+    <!-- ═══ TICKET CARD ═══ -->
+    <section class="comp-section">
+      <h2 class="comp-section__title">Ticket Card</h2>
+      <p class="comp-section__desc">The core unit — a ticket showing status, personas assigned, and consensus progress.</p>
+      <div class="comp-section__row">
+        <!-- Card 1 -->
+        <div class="ticket-card">
+          <div class="ticket-card__header">
+            <span class="ticket-card__id">DEV-15</span>
+            <span class="status-pill status-pill--progress"><span class="status-pill__dot"></span>In Progress</span>
+          </div>
+          <h3 class="ticket-card__title">Multiplayer prompt session core</h3>
+          <div class="persona-row">
+            <span class="persona-badge persona-badge--eng"><span class="persona-badge__avatar">E</span></span>
+            <span class="persona-badge persona-badge--des"><span class="persona-badge__avatar">D</span></span>
+            <span class="persona-badge persona-badge--po"><span class="persona-badge__avatar">P</span></span>
+            <span class="persona-badge persona-badge--qa"><span class="persona-badge__avatar">Q</span></span>
+          </div>
+          <div class="consensus-bar">
+            <div class="consensus-bar__label">
+              <span>Consensus</span><span>2 / 4</span>
+            </div>
+            <div class="consensus-bar__track">
+              <div class="consensus-bar__fill consensus-bar__fill--mid"></div>
+            </div>
+          </div>
+          <div class="ticket-card__meta">
+            <span>Engineer + Designer approved</span>
+            <span style="color:var(--gold)">Awaiting PO</span>
+          </div>
+        </div>
+
+        <!-- Card 2 — not started -->
+        <div class="ticket-card">
+          <div class="ticket-card__header">
+            <span class="ticket-card__id">DEV-16</span>
+            <span class="status-pill status-pill--todo"><span class="status-pill__dot"></span>Todo</span>
+          </div>
+          <h3 class="ticket-card__title">Persona definition &amp; role system</h3>
+          <div class="persona-row">
+            <span class="persona-badge persona-badge--des"><span class="persona-badge__avatar">D</span></span>
+            <span class="persona-badge persona-badge--po"><span class="persona-badge__avatar">P</span></span>
+          </div>
+          <div class="consensus-bar">
+            <div class="consensus-bar__label"><span>Consensus</span><span>—</span></div>
+            <div class="consensus-bar__track">
+              <div class="consensus-bar__fill" style="background:transparent;width:0"></div>
+            </div>
+          </div>
+          <div class="ticket-card__meta">
+            <span>Waiting for first review</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ SESSION THREAD ═══ -->
+    <section class="comp-section">
+      <h2 class="comp-section__title">Multiplayer Session Thread</h2>
+      <p class="comp-section__desc">The core innovation — personas take turns shaping a prompt. Chat-like but structured. Monospace for the evolving prompt.</p>
+      <div class="session-thread">
+        <div class="session-thread__header">
+          <div>
+            <div class="session-thread__title">Multiplayer prompt session core</div>
+            <div class="session-thread__ticket">DEV-15</div>
+          </div>
+          <span class="status-pill status-pill--progress"><span class="status-pill__dot"></span>In Progress</span>
+        </div>
+
+        <div class="session-thread__body">
+
+          <!-- PO opens -->
+          <div class="session-msg">
+            <div class="session-msg__avatar session-msg__avatar--po">P</div>
+            <div class="session-msg__content">
+              <div class="session-msg__header">
+                <span class="session-msg__name">Product Owner</span>
+                <span class="session-msg__role">Scope &amp; priorities</span>
+              </div>
+              <div class="session-msg__bubble">
+                We need a real-time collaborative session where stakeholders can iteratively shape a ticket. Think Google Docs meets code review — each persona adds their lens. Engineer checks feasibility, Designer checks UX, QA finds edge cases. The prompt evolves with each contribution.
+              </div>
+              <div class="session-msg__action">✓ Approved</div>
+            </div>
+          </div>
+
+          <!-- Engineer responds -->
+          <div class="session-msg">
+            <div class="session-msg__avatar session-msg__avatar--eng">E</div>
+            <div class="session-msg__content">
+              <div class="session-msg__header">
+                <span class="session-msg__name">Engineer</span>
+                <span class="session-msg__role">Feasibility &amp; architecture</span>
+              </div>
+              <div class="session-msg__bubble">
+                I'd structure this as a versioned prompt that each persona appends to. The prompt isn't just a chat log — it's a structured artifact. Each turn adds a section: requirements, constraints, design notes, edge cases. The final prompt is what gets passed to the build system.
+              </div>
+              <div class="session-msg__bubble--prompt">
+                ## Prompt v2 (Engineer revision)<br>
+                Build a collaborative session UI where personas take turns. The session produces a versioned, structured prompt artifact with sections per persona. Backend stores session state, frontend renders threaded view with turn indicators.
+              </div>
+              <div class="session-msg__action">✓ Approved with refinement</div>
+            </div>
+          </div>
+
+          <!-- Designer responds -->
+          <div class="session-msg">
+            <div class="session-msg__avatar session-msg__avatar--des">D</div>
+            <div class="session-msg__content">
+              <div class="session-msg__header">
+                <span class="session-msg__name">Designer</span>
+                <span class="session-msg__role">UX &amp; visuals</span>
+              </div>
+              <div class="session-msg__bubble">
+                The thread needs clear turn ownership — whose turn is it right now? Also, the prompt artifact should be visible at all times, not hidden behind a toggle. Users need to see it evolve in real time. I'm thinking a two-panel layout: thread on the left, live prompt preview on the right.
+              </div>
+              <div class="session-msg__bubble--prompt">
+                ## Prompt v3 (Designer revision)<br>
+                Two-panel layout: left = threaded persona discussion, right = live prompt artifact preview. Turn indicator at top shows current persona. Prompt updates in real-time as each persona contributes.
+              </div>
+              <div class="session-msg__action">✓ Approved — needs accessibility review</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Turn indicator -->
+        <div class="turn-indicator" style="margin: 0 1.25rem;">
+          <span class="turn-indicator__pulse"></span>
+          QA's turn — waiting for edge case review
+        </div>
+
+        <!-- Input -->
+        <div class="prompt-input-wrap">
+          <div class="session-msg__avatar session-msg__avatar--qa">Q</div>
+          <div class="prompt-input">
+            <textarea class="prompt-input__textarea" placeholder="Add your perspective as QA... Edge cases? Test scenarios? Accessibility concerns?"></textarea>
+            <div class="prompt-input__actions">
+              <span class="prompt-input__persona">Responding as QA</span>
+              <button class="btn btn--secondary btn--sm">Save draft</button>
+              <button class="btn btn--primary btn--sm">Submit</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ CONSENSUS PANEL ═══ -->
+    <section class="comp-section">
+      <h2 class="comp-section__title">Consensus Panel</h2>
+      <p class="comp-section__desc">When all required personas have weighed in, the ticket reaches consensus and triggers the build. Each persona can approve, reject, or abstain.</p>
+      <div style="display:flex;gap:2rem;flex-wrap:wrap">
+        <div class="ticket-card" style="width:300px">
+          <div class="ticket-card__header">
+            <span class="ticket-card__id">DEV-17</span>
+            <span class="status-pill status-pill--review"><span class="status-pill__dot"></span>In Review</span>
+          </div>
+          <h3 class="ticket-card__title">Consensus threshold and build trigger</h3>
+          <div class="consensus-bar" style="margin-bottom:0.75rem">
+            <div class="consensus-bar__label"><span>Consensus</span><span>3 / 4</span></div>
+            <div class="consensus-bar__track">
+              <div class="consensus-bar__fill consensus-bar__fill--high"></div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:0.3rem;font-size:0.72rem">
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--persona-eng)">Engineer</span><span style="color:var(--olive)">✓ Approved</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--persona-des)">Designer</span><span style="color:var(--olive)">✓ Approved</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--persona-po)">Product Owner</span><span style="color:var(--olive)">✓ Approved</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--persona-qa)">QA</span><span style="color:var(--ink-muted)">Awaiting...</span></div>
+          </div>
+          <div style="display:flex;gap:0.5rem;margin-top:0.75rem">
+            <button class="btn btn--approve btn--sm" style="flex:1">Approve</button>
+            <button class="btn btn--reject btn--sm" style="flex:1">Request changes</button>
+          </div>
+        </div>
+
+        <!-- Consensus reached -->
+        <div class="ticket-card" style="width:300px; border-color:rgba(107,143,94,0.3)">
+          <div class="ticket-card__header">
+            <span class="ticket-card__id">DEV-18</span>
+            <span class="status-pill status-pill--done"><span class="status-pill__dot"></span>Done</span>
+          </div>
+          <h3 class="ticket-card__title">Next.js web app shell</h3>
+          <div class="consensus-bar" style="margin-bottom:0.75rem">
+            <div class="consensus-bar__label"><span>Consensus</span><span style="color:var(--olive)">Reached</span></div>
+            <div class="consensus-bar__track">
+              <div class="consensus-bar__fill consensus-bar__fill--reached"></div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:0.3rem;font-size:0.72rem">
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--persona-eng)">Engineer</span><span style="color:var(--olive)">✓ Approved</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--persona-des)">Designer</span><span style="color:var(--olive)">✓ Approved</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--persona-po)">Product Owner</span><span style="color:var(--olive)">✓ Approved</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--persona-qa)">QA</span><span style="color:var(--olive)">✓ Approved</span></div>
+          </div>
+          <div style="margin-top:0.75rem; padding:0.45rem 0.6rem; background:rgba(107,143,94,0.08); border-radius:var(--radius-sm); font-size:0.7rem; color:var(--olive)">
+            ✦ Build triggered — combined prompt dispatched
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ TICKET FORM ═══ -->
+    <section class="comp-section">
+      <h2 class="comp-section__title">Create Ticket Form</h2>
+      <p class="comp-section__desc">Modal or page for creating a new ticket. Persona assignment happens at creation time.</p>
+      <div class="ticket-form">
+        <div class="ticket-form__title">New ticket</div>
+        <div class="form-group">
+          <label class="form-label">Title</label>
+          <input class="form-input" placeholder="What needs to be built?" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-input form-textarea" placeholder="Describe the feature, scope, and any constraints..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Personas to involve</label>
+          <div class="persona-row">
+            <span class="persona-badge persona-badge--eng" style="cursor:pointer"><span class="persona-badge__avatar">E</span>Engineer</span>
+            <span class="persona-badge persona-badge--des" style="cursor:pointer"><span class="persona-badge__avatar">D</span>Designer</span>
+            <span class="persona-badge persona-badge--po" style="cursor:pointer"><span class="persona-badge__avatar">P</span>Product Owner</span>
+            <span class="persona-badge persona-badge--qa" style="cursor:pointer"><span class="persona-badge__avatar">Q</span>QA</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:0.5rem;justify-content:flex-end">
+          <button class="btn btn--secondary">Cancel</button>
+          <button class="btn btn--primary">Create ticket</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ BUTTONS ═══ -->
+    <section class="comp-section">
+      <h2 class="comp-section__title">Buttons</h2>
+      <p class="comp-section__desc">Primary = gold. Secondary = elevated surface. Ghost = transparent. Approve/reject for consensus actions.</p>
+      <div class="comp-section__row">
+        <button class="btn btn--primary">Primary action</button>
+        <button class="btn btn--secondary">Secondary</button>
+        <button class="btn btn--ghost">Ghost</button>
+        <button class="btn btn--approve">✓ Approve</button>
+        <button class="btn btn--reject">↩ Request changes</button>
+      </div>
+    </section>
+
+    <!-- ═══ EMPTY STATE ═══ -->
+    <section class="comp-section">
+      <h2 class="comp-section__title">Empty State</h2>
+      <p class="comp-section__desc">For sessions with no activity yet, or tickets with no feedback.</p>
+      <div style="background:var(--bg-raised);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);width:340px">
+        <div class="empty-state">
+          <div class="empty-state__icon">✦</div>
+          <p class="empty-state__text">No active sessions.<br>Create a ticket to begin.</p>
+          <button class="btn btn--primary" style="margin-top:1rem">Create first ticket</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ TYPOGRAPHY ═══ -->
+    <section class="comp-section">
+      <h2 class="comp-section__title">Typography</h2>
+      <p class="comp-section__desc">EB Garamond for headlines (editorial warmth), Inter for UI (clean readability), JetBrains Mono for prompts and code.</p>
+      <table class="token-table">
+        <thead><tr><th>Role</th><th>Font</th><th>Size</th><th>Weight</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>Page title</td><td style="font-family:var(--font-serif)">EB Garamond</td><td style="font-family:var(--font-mono);font-size:0.7rem">2rem</td><td>700</td><td style="font-family:var(--font-serif);font-size:2rem;font-weight:700;color:var(--ink-primary);line-height:1">Title</td></tr>
+          <tr><td>Section heading</td><td style="font-family:var(--font-serif)">EB Garamond</td><td style="font-family:var(--font-mono);font-size:0.7rem">1.35rem</td><td>600</td><td style="font-family:var(--font-serif);font-size:1.35rem;font-weight:600;color:var(--ink-primary);line-height:1">Heading</td></tr>
+          <tr><td>Card title</td><td style="font-family:var(--font-serif)">EB Garamond</td><td style="font-family:var(--font-mono);font-size:0.7rem">1.05rem</td><td>600</td><td style="font-family:var(--font-serif);font-size:1.05rem;font-weight:600;color:var(--ink-primary);line-height:1">Card Title</td></tr>
+          <tr><td>Body</td><td style="font-family:var(--font-sans)">Inter</td><td style="font-family:var(--font-mono);font-size:0.7rem">0.8rem</td><td>400</td><td style="font-family:var(--font-sans);font-size:0.8rem">Body text for UI</td></tr>
+          <tr><td>Monospace</td><td style="font-family:var(--font-mono)">JetBrains Mono</td><td style="font-family:var(--font-mono);font-size:0.7rem">0.72rem</td><td>400</td><td style="font-family:var(--font-mono);font-size:0.72rem;color:var(--ink-primary)">prompt text</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+  </main>
+</div>
+
+</body>
+</html>
