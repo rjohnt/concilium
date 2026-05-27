@@ -4,7 +4,7 @@ import type { NextRequest } from "next/server";
 /**
  * Concilium middleware — request logging only (auth redirect in DEV-4).
  *
- * Logs method, path, status, and duration for every incoming request.
+ * Logs method, path, and duration for every incoming request.
  * No blocking / redirect logic at this stage.
  */
 export function middleware(request: NextRequest) {
@@ -13,9 +13,11 @@ export function middleware(request: NextRequest) {
   const response = NextResponse.next();
 
   const duration = Date.now() - start;
-  console.log(
-    `[${new Date().toISOString()}] ${request.method} ${request.nextUrl.pathname} — ${response.status} (${duration}ms)`,
-  );
+  if (process.env.NODE_ENV === "development") {
+    console.log(
+      `[${new Date().toISOString()}] ${request.method} ${request.nextUrl.pathname} (${duration}ms)`,
+    );
+  }
 
   return response;
 }

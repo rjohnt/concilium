@@ -18,6 +18,19 @@ module.exports = {
           800: "#3b5bdb",
           900: "#364fc7",
         },
+        ink: {
+          primary: "#f5f0e8",
+          secondary: "#b8a99a",
+          muted: "#7a6e63",
+        },
+        cardinal: {
+          DEFAULT: "#b91c3b",
+          400: "#fb7185",
+          900: "#881337",
+        },
+        elevated: {
+          DEFAULT: "#2a2420",
+        },
       },
     },
   },

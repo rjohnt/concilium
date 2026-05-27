@@ -26,7 +26,8 @@ try {
   // Next.js not built yet — show fallback page
   console.warn('Next.js not available. Did you run `npm run build`?');
   createServer((req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/html' });
+    const isRoot = req.url === '/';
+    res.writeHead(isRoot ? 200 : 503, { 'Content-Type': 'text/html' });
     res.end(`<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="utf-8"><title>Concilium</title></head>
