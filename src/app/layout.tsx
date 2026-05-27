@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Sidebar } from "@/components/Sidebar";
+import { CommandPalette } from "@/components/CommandPalette";
 import { AuthProvider } from "@/lib/auth-context";
 import { AuthGuard } from "@/components/AuthGuard";
 
@@ -24,6 +25,7 @@ export default function RootLayout({
               <Sidebar />
               <main className="flex-1 ml-64 p-8">{children}</main>
             </div>
+            <CommandPalette />
           </AuthGuard>
         </AuthProvider>
       </body>
