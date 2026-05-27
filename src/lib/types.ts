@@ -63,6 +63,7 @@ export interface Ticket {
   priority: PriorityLevel;
   createdAt: string;
   updatedAt: string;
+  dueDate?: string; // optional ISO date string
   feedback: FeedbackEntry[];
   // Derived: which personas have approved?
   approvals: PersonaId[];
