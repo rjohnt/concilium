@@ -1,4 +1,4 @@
-import { Ticket, FeedbackEntry, PersonaId, TicketStatus, BuildReport } from "./types";
+import { Ticket, FeedbackEntry, PersonaId, TicketStatus, PriorityLevel, BuildReport } from "./types";
 import { getAllPersonas } from "./personas";
 import { checkConsensusThreshold, getBuildReadiness, buildBuildReport } from "./consensus-threshold";
 import {
@@ -24,44 +24,6 @@ let tickets: Ticket[] = initial.tickets;
 let nextTicketId = initial.nextTicketId;
 let nextFeedbackId = initial.nextFeedbackId;
 let nextBuildReportId = initial.nextBuildReportId;
-
-const STORAGE_KEY = "concilium-tickets";
-
-function persistState(): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tickets));
-  } catch {
-    // localStorage may be unavailable (SSR, storage full, etc.)
-  }
-}
-
-export function loadPersistedState(): void {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed)) {
-        tickets = parsed;
-        // Recalculate next IDs from loaded data
-        nextTicketId = tickets.length > 0
-          ? Math.max(...tickets.map((t) => parseInt(t.id.split("-")[1] || "0", 10))) + 1
-          : 1;
-        const allFeedback = tickets.flatMap((t) => t.feedback);
-        nextFeedbackId = allFeedback.length > 0
-          ? Math.max(...allFeedback.map((f) => parseInt(f.id.split("-")[1] || "0", 10))) + 1
-          : 1;
-        const allBuilds = tickets
-          .filter((t) => t.buildReport)
-          .map((t) => t.buildReport!);
-        nextBuildReportId = allBuilds.length > 0
-          ? Math.max(...allBuilds.map((b) => parseInt(b.id.split("-")[1] || "0", 10))) + 1
-          : 1;
-      }
-    }
-  } catch {
-    // Ignore parse errors
-  }
-}
 
 function generateId(prefix: string, counter: number): string {
   return `${prefix}-${String(counter).padStart(3, "0")}`;
@@ -121,7 +83,8 @@ export function getTicket(id: string): Ticket | undefined {
 
 export function createTicket(
   title: string,
-  description: string
+  description: string,
+  priority: PriorityLevel = 2
 ): Ticket {
   const id = generateId("TIX", nextTicketId++);
   const now = new Date().toISOString();
@@ -130,6 +93,7 @@ export function createTicket(
     title,
     description,
     status: "draft",
+    priority,
     createdAt: now,
     updatedAt: now,
     feedback: [],
@@ -156,6 +120,18 @@ export function updateTicketStatus(
   const ticket = tickets.find((t) => t.id === ticketId);
   if (!ticket) return null;
   ticket.status = status;
+  ticket.updatedAt = new Date().toISOString();
+  persistState();
+  return ticket;
+}
+
+export function updateTicketPriority(
+  ticketId: string,
+  priority: PriorityLevel
+): Ticket | null {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  if (!ticket) return null;
+  ticket.priority = priority;
   ticket.updatedAt = new Date().toISOString();
   persistState();
   return ticket;

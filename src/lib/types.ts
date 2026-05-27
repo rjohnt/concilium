@@ -4,6 +4,26 @@ export type PersonaId = "engineer" | "designer" | "product-owner" | "qa";
 
 export type TicketStatus = "draft" | "in-review" | "consensus" | "building" | "done";
 
+// Priority uses Linear's 0-4 scale
+// 0 = Urgent, 1 = High, 2 = Medium, 3 = Low, 4 = None
+export type PriorityLevel = 0 | 1 | 2 | 3 | 4;
+
+export const PRIORITY_LABELS: Record<PriorityLevel, string> = {
+  0: "Urgent",
+  1: "High",
+  2: "Medium",
+  3: "Low",
+  4: "None",
+};
+
+export const PRIORITY_COLORS: Record<PriorityLevel, string> = {
+  0: "bg-red-900/50 text-red-400 border-red-800",
+  1: "bg-orange-900/50 text-orange-400 border-orange-800",
+  2: "bg-yellow-900/50 text-yellow-400 border-yellow-800",
+  3: "bg-gray-800 text-gray-400 border-gray-700",
+  4: "hidden", // None priority — badge is hidden
+};
+
 export interface Persona {
   id: PersonaId;
   label: string;
@@ -40,6 +60,7 @@ export interface Ticket {
   title: string;
   description: string;
   status: TicketStatus;
+  priority: PriorityLevel;
   createdAt: string;
   updatedAt: string;
   feedback: FeedbackEntry[];

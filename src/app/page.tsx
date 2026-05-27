@@ -1,19 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Ticket } from "@/lib/types";
+import { Ticket, PRIORITY_LABELS, PriorityLevel } from "@/lib/types";
 import { seedData, getTickets } from "@/lib/store";
 import { TicketCard } from "@/components/TicketCard";
-import { PlusCircle, Users } from "lucide-react";
+import { PlusCircle, Users, Filter } from "lucide-react";
 import Link from "next/link";
 
 export default function DashboardPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [priorityFilter, setPriorityFilter] = useState<PriorityLevel | null>(null);
 
   useEffect(() => {
     seedData();
     setTickets(getTickets());
   }, []);
+
+  const filteredTickets = priorityFilter !== null
+    ? tickets.filter((t) => t.priority === priorityFilter)
+    : tickets;
 
   const draftCount = tickets.filter((t) => t.status === "draft").length;
   const inReviewCount = tickets.filter((t) => t.status === "in-review").length;
@@ -69,16 +74,50 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Priority filter */}
+      <div className="flex items-center gap-2 mb-6">
+        <Filter size={14} className="text-gray-500" />
+        <span className="text-xs text-gray-500 mr-1">Filter:</span>
+        <button
+          onClick={() => setPriorityFilter(null)}
+          className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
+            priorityFilter === null
+              ? "bg-brand-900/50 text-brand-400 border-brand-800"
+              : "border-gray-700 text-gray-500 hover:text-gray-300 hover:border-gray-600"
+          }`}
+        >
+          All
+        </button>
+        {([0, 1, 2, 3, 4] as PriorityLevel[]).map((p) => (
+          <button
+            key={p}
+            onClick={() => setPriorityFilter(p)}
+            className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
+              priorityFilter === p
+                ? `${p === 0 ? "bg-red-900/50 text-red-400 border-red-800" :
+                   p === 1 ? "bg-orange-900/50 text-orange-400 border-orange-800" :
+                   p === 2 ? "bg-yellow-900/50 text-yellow-400 border-yellow-800" :
+                   p === 3 ? "bg-gray-800 text-gray-400 border-gray-700" :
+                   "bg-gray-800 text-gray-300 border-gray-600"}`
+                : "border-gray-700 text-gray-500 hover:text-gray-300 hover:border-gray-600"
+            }`}
+          >
+            {PRIORITY_LABELS[p]}
+          </button>
+        ))}
+      </div>
+
       {/* Ticket list */}
       <div className="space-y-4">
-        {tickets.length === 0 ? (
+        {filteredTickets.length === 0 ? (
           <div className="card text-center py-16">
             <h3 className="text-lg font-medium text-gray-400 mb-2">
-              No tickets yet
+              {priorityFilter !== null ? "No tickets match this priority filter" : "No tickets yet"}
             </h3>
             <p className="text-sm text-gray-500 mb-4">
-              Create your first ticket to start the multiplayer collaboration
-              flow.
+              {priorityFilter !== null
+                ? "Try changing the filter or create a new ticket."
+                : "Create your first ticket to start the multiplayer collaboration flow."}
             </p>
             <Link href="/new" className="btn-primary inline-flex">
               <PlusCircle size={18} />
@@ -86,7 +125,7 @@ export default function DashboardPage() {
             </Link>
           </div>
         ) : (
-          tickets.map((ticket) => (
+          filteredTickets.map((ticket) => (
             <TicketCard key={ticket.id} ticket={ticket} />
           ))
         )}
