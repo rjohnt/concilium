@@ -10,12 +10,14 @@ export default function PageTransition({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setPrefersReducedMotion(mediaQuery.matches);
-
     const handler = (e: MediaQueryListEvent) =>
       setPrefersReducedMotion(e.matches);
     mediaQuery.addEventListener("change", handler);
@@ -32,14 +34,14 @@ export default function PageTransition({
       y: 0,
       transition: {
         duration: prefersReducedMotion ? 0 : 0.2,
-        ease: "easeOut" as const,
+        ease: "easeOut",
       },
     },
     exit: {
       opacity: 0,
       transition: {
         duration: prefersReducedMotion ? 0 : 0.15,
-        ease: "easeIn" as const,
+        ease: "easeIn",
       },
     },
   };
