@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { PersonaId, Ticket, FeedbackEntry } from "@/lib/types";
+import { PersonaId, Ticket } from "@/lib/types";
 import { getPersona, getAllPersonas } from "@/lib/personas";
 import { getFeedbackHistory } from "@/lib/store";
 import { PersonaBadge } from "./PersonaBadge";
@@ -38,18 +38,13 @@ export function FeedbackPanel({
 
   const persona = activePersona ? getPersona(activePersona) : null;
 
-  // Get all feedback entries, grouped by persona for the history view
-  const personaFeedback = activePersona
-    ? ticket.feedback.filter((f) => f.personaId === activePersona)
-    : [];
-
   // Filtered feedback history based on selected persona filter
   const filteredHistory = useMemo(
     () =>
       historyFilter === "all"
         ? getFeedbackHistory(ticket.id)
         : getFeedbackHistory(ticket.id, historyFilter),
-    [ticket.id, historyFilter]
+    [ticket, historyFilter]
   );
 
   const allPersonas = useMemo(() => getAllPersonas(), []);
@@ -169,17 +164,18 @@ export function FeedbackPanel({
 
       {/* Persona filter bar for feedback history */}
       {ticket.feedback.length > 0 && (
-        <div className="border-t border-border-subtle pt-4 space-y-3">
-          <p className="text-xs text-ink-muted uppercase tracking-wider">
+        <div className="border-t border-gray-800 pt-4 space-y-3">
+          <p className="text-xs text-gray-500 uppercase tracking-wider">
             Feedback History
           </p>
           <div className="flex flex-wrap gap-1.5">
             <button
               onClick={() => setHistoryFilter("all")}
+              aria-pressed={historyFilter === "all"}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                 historyFilter === "all"
-                  ? "text-gold border-b-2 border-gold bg-gold/10"
-                  : "text-ink-muted hover:text-ink-primary"
+                  ? "text-gray-200 bg-gray-700"
+                  : "text-gray-500 hover:text-gray-300"
               }`}
             >
               All ({ticket.feedback.length})
@@ -192,15 +188,16 @@ export function FeedbackPanel({
                 <button
                   key={p.id}
                   onClick={() => setHistoryFilter(p.id)}
+                  aria-pressed={historyFilter === p.id}
                   className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                     historyFilter === p.id
-                      ? "text-gold border-b-2 border-gold bg-gold/10"
-                      : "text-ink-muted hover:text-ink-primary"
+                      ? "text-gray-200 bg-gray-700"
+                      : "text-gray-500 hover:text-gray-300"
                   }`}
                 >
                   {p.emoji} {p.label}
                   {count > 0 && (
-                    <span className="ml-1 text-ink-ghost">({count})</span>
+                    <span className="ml-1 text-gray-600">({count})</span>
                   )}
                 </button>
               );
@@ -215,17 +212,17 @@ export function FeedbackPanel({
                 return (
                   <div
                     key={entry.id}
-                    className="bg-elevated/50 rounded-lg p-3 border border-border-subtle"
+                    className="bg-gray-800/50 rounded-lg p-3 border border-gray-800"
                   >
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
                         <span className="text-xs">
                           {entryPersona.emoji}
                         </span>
-                        <span className="text-xs font-medium text-ink-primary">
+                        <span className="text-xs font-medium text-gray-300">
                           {entryPersona.label}
                         </span>
-                        <span className="text-xs text-ink-muted">
+                        <span className="text-xs text-gray-500">
                           {new Date(entry.createdAt).toLocaleString()}
                         </span>
                       </div>
@@ -235,7 +232,7 @@ export function FeedbackPanel({
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-ink-secondary whitespace-pre-wrap mt-1">
+                    <p className="text-sm text-gray-300 whitespace-pre-wrap mt-1">
                       {entry.content}
                     </p>
                   </div>
@@ -243,7 +240,7 @@ export function FeedbackPanel({
               })}
             </div>
           ) : (
-            <p className="text-sm text-ink-ghost py-4 text-center">
+            <p className="text-sm text-gray-600 py-4 text-center">
               No feedback from this persona yet.
             </p>
           )}
