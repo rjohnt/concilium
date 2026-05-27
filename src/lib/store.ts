@@ -138,6 +138,23 @@ export function deleteTicket(ticketId: string): boolean {
   return true;
 }
 
+export function updateTicket(
+  ticketId: string,
+  updates: { title?: string; description?: string }
+): Ticket | null {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  if (!ticket) return null;
+  if (updates.title !== undefined) {
+    ticket.title = updates.title;
+  }
+  if (updates.description !== undefined) {
+    ticket.description = updates.description;
+  }
+  ticket.updatedAt = new Date().toISOString();
+  persistState();
+  return ticket;
+}
+
 // Future scaffolding – exposed for API routes and external state management.
 export function updateTicketStatus(
   ticketId: string,
