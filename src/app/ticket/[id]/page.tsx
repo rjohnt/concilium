@@ -3,12 +3,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Ticket, PersonaId } from "@/lib/types";
-import { seedData, getTicket, getConsensusProgress } from "@/lib/store";
-import { getAllPersonas, getPersona } from "@/lib/personas";
+import { seedData, getTicket } from "@/lib/store";
+import { getPersona } from "@/lib/personas";
 import { FeedbackPanel } from "@/components/FeedbackPanel";
-import { PersonaBadge } from "@/components/PersonaBadge";
 import { JoinSessionModal } from "@/components/JoinSessionModal";
-import { ArrowLeft, Clock, GitBranch, RefreshCw } from "lucide-react";
+import { ConsensusProgress } from "@/components/ConsensusProgress";
+import { ArrowLeft, Clock, GitBranch, RefreshCw, Sparkles, ExternalLink } from "lucide-react";
 import Link from "next/link";
 
 export default function TicketDetailPage() {
@@ -74,9 +74,6 @@ export default function TicketDetailPage() {
     );
   }
 
-  const consensus = getConsensusProgress(ticket.id);
-  const allPersonas = getAllPersonas();
-  const progress = consensus.approved / consensus.total;
   const activePersonaObj = sessionPersona ? getPersona(sessionPersona) : null;
 
   return (
@@ -162,43 +159,26 @@ export default function TicketDetailPage() {
               </span>
             </div>
           </div>
+
+          {/* Start Prompt Session button */}
+          <Link
+            href={`/prompt/${ticket.id}`}
+            className="btn-primary flex-shrink-0 whitespace-nowrap"
+            title="Open full-screen prompt session"
+          >
+            <Sparkles size={16} />
+            <span className="hidden sm:inline">Prompt Session</span>
+            <ExternalLink size={12} className="hidden sm:inline" />
+          </Link>
         </div>
       </div>
 
-      {/* Consensus bar */}
+      {/* Consensus progress */}
       <div className="card mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-semibold text-gray-300">
-            Consensus Progress
-          </h3>
-          <span className="text-sm text-gray-400">
-            {consensus.approved}/{consensus.total} approved
-          </span>
-        </div>
-        <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-brand-500 rounded-full transition-all duration-700"
-            style={{ width: `${progress * 100}%` }}
-          />
-        </div>
-        <div className="flex items-center gap-3 mt-3">
-          {allPersonas.map((p) => (
-            <div
-              key={p.id}
-              className="flex items-center gap-1.5"
-            >
-              <PersonaBadge
-                personaId={p.id}
-                approved={ticket.approvals.includes(p.id)}
-              />
-            </div>
-          ))}
-          {consensus.remaining.length === 0 && (
-            <span className="badge bg-emerald-900/50 text-emerald-400 ml-auto">
-              🎉 Consensus Reached
-            </span>
-          )}
-        </div>
+        <ConsensusProgress
+          ticketId={ticket.id}
+          approvals={ticket.approvals}
+        />
       </div>
 
       {/* Feedback panel — show after joining, or show hint before joining */}
