@@ -5,8 +5,10 @@ import { PersonaId, Ticket, FeedbackEntry } from "@/lib/types";
 import { getPersona, getAllPersonas } from "@/lib/personas";
 import { addFeedback } from "@/lib/store";
 import { calculateConsensus } from "@/lib/consensus-engine";
+import { formatRelativeTime, formatAbsoluteDate } from "@/lib/timeAgo";
 import { PersonaBadge } from "./PersonaBadge";
 import { EmptyState } from "./EmptyState";
+import { MarkdownPreview } from "./MarkdownPreview";
 import {
   Send,
   CheckCircle,
@@ -185,11 +187,8 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
                     <span className="text-xs font-medium text-ink-primary">
                       {entryPersona?.label}
                     </span>
-                    <span className="text-xs text-ink-muted">
-                      {new Date(entry.createdAt).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                    <span className="text-xs text-ink-muted" title={formatAbsoluteDate(entry.createdAt)}>
+                      {formatRelativeTime(entry.createdAt)}
                     </span>
                     {entry.approved && (
                       <ThumbsUp size={12} className="text-emerald-400" />
@@ -266,19 +265,20 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
           })}
         </div>
 
-        {/* Textarea */}
-        <textarea
-          ref={textareaRef}
+        {/* Textarea with markdown preview */}
+        <MarkdownPreview
           value={content}
           onChange={(e) => setContent(e.target.value)}
           onKeyDown={handleKeyDown}
+          textareaRef={textareaRef}
           placeholder={
             hasSubmitted
               ? `${persona?.label} has already submitted feedback. Add more thoughts or switch personas.`
               : `Write your assessment as ${persona?.label}...`
           }
           rows={4}
-          className="w-full bg-elevated border border-border-visible rounded-lg px-4 py-3 text-sm text-ink-primary placeholder-ink-muted focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent resize-none"
+          textareaClassName="bg-elevated border border-border-visible text-ink-primary placeholder-ink-muted focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent"
+          previewClassName="bg-elevated border border-border-visible text-ink-primary"
         />
 
         {/* Actions row */}

@@ -4,7 +4,9 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Ticket, PersonaId, PRIORITY_LABELS, PRIORITY_COLORS, PriorityLevel } from "@/lib/types";
 import { seedData, getTicket, deleteTicket, updateTicket, updateTicketPriority } from "@/lib/store";
+import { formatDueDate } from "@/lib/date-utils";
 import { getPersona } from "@/lib/personas";
+import { formatRelativeTime, formatAbsoluteDate } from "@/lib/timeAgo";
 import { FeedbackPanel } from "@/components/FeedbackPanel";
 import { BuildTrigger } from "@/components/BuildTrigger";
 import { PersonaBadge } from "@/components/PersonaBadge";
@@ -16,7 +18,7 @@ import { DeleteTicketDialog } from "@/components/DeleteTicketDialog";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { EditableField } from "@/components/EditableField";
 import { EmptyState } from "@/components/EmptyState";
-import { ArrowLeft, Clock, GitBranch, RefreshCw, Sparkles, ExternalLink, Trash2, FileQuestion } from "lucide-react";
+import { ArrowLeft, Clock, GitBranch, RefreshCw, Sparkles, ExternalLink, Trash2, FileQuestion, Calendar } from "lucide-react";
 import Link from "next/link";
 
 export default function TicketDetailPage() {
@@ -78,6 +80,12 @@ export default function TicketDetailPage() {
   const handleUpdateDescription = (newDescription: string) => {
     if (!ticket) return;
     const updated = updateTicket(ticket.id, { description: newDescription });
+    if (updated) setTicket({ ...updated });
+  };
+
+  const handleUpdateDueDate = (newDueDate: string | null) => {
+    if (!ticket) return;
+    const updated = updateTicket(ticket.id, { dueDate: newDueDate });
     if (updated) setTicket({ ...updated });
   };
 
@@ -191,13 +199,13 @@ export default function TicketDetailPage() {
               className="text-ink-secondary leading-relaxed whitespace-pre-wrap"
             />
             <div className="flex items-center gap-4 mt-4 text-xs text-ink-muted">
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1" title={formatAbsoluteDate(ticket.createdAt)}>
                 <Clock size={12} />
-                Created {new Date(ticket.createdAt).toLocaleDateString()}
+                Created {formatRelativeTime(ticket.createdAt)}
               </span>
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1" title={formatAbsoluteDate(ticket.updatedAt)}>
                 <GitBranch size={12} />
-                Updated {new Date(ticket.updatedAt).toLocaleDateString()}
+                Updated {formatRelativeTime(ticket.updatedAt)}
               </span>
             </div>
             {/* Priority editor */}
@@ -222,6 +230,37 @@ export default function TicketDetailPage() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Due date editor */}
+            <div className="mt-4 pt-4 border-t border-border-subtle">
+              <p className="text-xs font-medium text-ink-muted mb-2">Due Date</p>
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={ticket.dueDate || ""}
+                  onChange={(e) => handleUpdateDueDate(e.target.value || null)}
+                  className="bg-elevated border border-border-visible rounded-lg px-3 py-2 text-sm text-ink-primary focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent [color-scheme:dark]"
+                />
+                {ticket.dueDate && (
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateDueDate(null)}
+                    className="px-3 py-2 text-sm text-ink-muted hover:text-ink-primary transition-colors"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              {ticket.dueDate && (() => {
+                const dl = formatDueDate(ticket.dueDate);
+                return (
+                  <span className={`inline-flex items-center gap-1.5 mt-1.5 text-xs ${dl.className}`}>
+                    <Calendar size={12} />
+                    {dl.label}
+                  </span>
+                );
+              })()}
             </div>
           </div>
 

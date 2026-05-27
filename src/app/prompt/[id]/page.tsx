@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Ticket, PersonaId } from "@/lib/types";
 import { seedData, getTicket, getConsensusProgress } from "@/lib/store";
 import { getAllPersonas, getPersona } from "@/lib/personas";
+import { formatRelativeTime, formatAbsoluteDate } from "@/lib/timeAgo";
 import { SessionPrompt } from "@/components/SessionPrompt";
 import { ConsensusProgress } from "@/components/ConsensusProgress";
 import { JoinSessionModal } from "@/components/JoinSessionModal";
@@ -160,13 +161,13 @@ export default function PromptSessionPage() {
                 {ticket.description}
               </p>
               <div className="flex items-center gap-3 mt-3 text-xs text-ink-muted">
-                <span className="flex items-center gap-1">
+                <span className="flex items-center gap-1" title={formatAbsoluteDate(ticket.createdAt)}>
                   <Clock size={11} />
-                  {new Date(ticket.createdAt).toLocaleDateString()}
+                  {formatRelativeTime(ticket.createdAt)}
                 </span>
-                <span className="flex items-center gap-1">
+                <span className="flex items-center gap-1" title={formatAbsoluteDate(ticket.updatedAt)}>
                   <GitBranch size={11} />
-                  {new Date(ticket.updatedAt).toLocaleDateString()}
+                  {formatRelativeTime(ticket.updatedAt)}
                 </span>
                 <span
                   className={`badge ${

@@ -1,22 +1,11 @@
 import { Ticket, PRIORITY_LABELS, PRIORITY_COLORS } from "@/lib/types";
+import { formatDueDate } from "@/lib/date-utils";
 import { getAllPersonas } from "@/lib/personas";
 import { PersonaBadge } from "./PersonaBadge";
 import { CopyButton } from "@/components/CopyButton";
-import { Clock, MessageSquare } from "lucide-react";
+import { formatRelativeTime, formatAbsoluteDate } from "@/lib/timeAgo";
+import { Clock, MessageSquare, Calendar } from "lucide-react";
 import Link from "next/link";
-
-function timeAgo(isoString: string): string {
-  const seconds = Math.floor(
-    (Date.now() - new Date(isoString).getTime()) / 1000
-  );
-  if (seconds < 60) return "just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-}
 
 export function TicketCard({ ticket }: { ticket: Ticket }) {
   const allPersonas = getAllPersonas();
@@ -73,6 +62,25 @@ export function TicketCard({ ticket }: { ticket: Ticket }) {
           </div>
         </div>
 
+        {/* Due date */}
+        {ticket.dueDate && (
+          <div className="mt-3">
+            {(() => {
+              const dl = formatDueDate(ticket.dueDate);
+              return (
+                <span
+                  className={`inline-flex items-center gap-1.5 text-xs ${
+                    dl.className
+                  } ${dl.isOverdue ? "bg-cardinal/10 border border-cardinal/30 rounded px-2 py-0.5" : ""}`}
+                >
+                  <Calendar size={12} />
+                  {dl.label}
+                </span>
+              );
+            })()}
+          </div>
+        )}
+
         {/* Personas row */}
         <div className="flex items-center justify-between mt-3">
           <div className="flex -space-x-1">
@@ -90,9 +98,9 @@ export function TicketCard({ ticket }: { ticket: Ticket }) {
               <MessageSquare size={12} />
               {ticket.feedback.length}
             </span>
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1" title={formatAbsoluteDate(ticket.updatedAt)}>
               <Clock size={12} />
-              {timeAgo(ticket.updatedAt)}
+              {formatRelativeTime(ticket.updatedAt)}
             </span>
           </div>
         </div>

@@ -39,6 +39,9 @@ function persistState(): void {
   persistTimer = setTimeout(() => {
     saveTickets(tickets, nextTicketId, nextFeedbackId, nextBuildReportId);
     persistTimer = null;
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("tickets-changed"));
+    }
   }, 50);
 }
 
@@ -83,7 +86,8 @@ export function getTicket(id: string): Ticket | undefined {
 export function createTicket(
   title: string,
   description: string,
-  priority: PriorityLevel = 2
+  priority: PriorityLevel = 2,
+  dueDate?: string
 ): Ticket {
   const id = generateId("TIX", nextTicketId++);
   const now = new Date().toISOString();
@@ -95,6 +99,7 @@ export function createTicket(
     priority,
     createdAt: now,
     updatedAt: now,
+    dueDate,
     feedback: [],
     approvals: [],
   };
@@ -113,7 +118,7 @@ export function deleteTicket(ticketId: string): boolean {
 
 export function updateTicket(
   ticketId: string,
-  updates: { title?: string; description?: string }
+  updates: { title?: string; description?: string; dueDate?: string | null }
 ): Ticket | null {
   const ticket = tickets.find((t) => t.id === ticketId);
   if (!ticket) return null;
@@ -122,6 +127,9 @@ export function updateTicket(
   }
   if (updates.description !== undefined) {
     ticket.description = updates.description;
+  }
+  if (updates.dueDate !== undefined) {
+    ticket.dueDate = updates.dueDate || undefined;
   }
   ticket.updatedAt = new Date().toISOString();
   persistState();
@@ -404,6 +412,11 @@ export function seedData(): void {
     "Implement per-tenant rate limiting on the public API to prevent abuse and ensure fair usage across customers. Configurable limits per tier (free, pro, enterprise).",
     3 // Low
   );
+
+  // Notify listeners after seeding so sidebar badge updates on initial load
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("tickets-changed"));
+  }
 }
 
 /**

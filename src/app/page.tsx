@@ -7,7 +7,7 @@ import { TicketCard } from "@/components/TicketCard";
 import { FilterBar } from "@/components/FilterBar";
 import { DashboardSkeleton } from "@/components/Skeleton";
 import { EmptyState } from "@/components/EmptyState";
-import { PlusCircle, Users, Filter, HelpCircle, SearchX } from "lucide-react";
+import { PlusCircle, Users, Filter, HelpCircle, SearchX, Search, X } from "lucide-react";
 import Link from "next/link";
 
 type FilterKey = "all" | TicketStatus;
@@ -17,12 +17,22 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
   const [priorityFilter, setPriorityFilter] = useState<PriorityLevel | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
 
   useEffect(() => {
     seedData();
     setTickets(getTickets());
     setLoading(false);
   }, []);
+
+  // Debounce search input by 300ms
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const filteredTickets = useMemo(() => {
     let result = tickets;
@@ -32,8 +42,16 @@ export default function DashboardPage() {
     if (priorityFilter !== null) {
       result = result.filter((t) => t.priority === priorityFilter);
     }
+    if (debouncedSearchQuery.trim()) {
+      const q = debouncedSearchQuery.toLowerCase().trim();
+      result = result.filter(
+        (t) =>
+          t.title.toLowerCase().includes(q) ||
+          (t.description ?? "").toLowerCase().includes(q)
+      );
+    }
     return result;
-  }, [tickets, activeFilter, priorityFilter]);
+  }, [tickets, activeFilter, priorityFilter, debouncedSearchQuery]);
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -101,6 +119,33 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Search bar */}
+      <div className="mb-6">
+        <div className="relative">
+          <Search
+            size={18}
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none"
+          />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search tickets by title or description..."
+            aria-label="Search tickets"
+            className="w-full pl-10 pr-10 py-2.5 rounded-lg text-sm bg-elevated border border-border-visible/30 text-ink-primary placeholder:text-ink-muted/60 outline-none transition-all duration-150 focus:border-gold/50 focus:ring-1 focus:ring-gold/30 focus:bg-elevated/80"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              aria-label="Clear search"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink-primary transition-colors p-0.5 rounded"
+            >
+              <X size={16} />
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Filter bar */}
       <FilterBar
         activeFilter={activeFilter}
@@ -142,26 +187,30 @@ export default function DashboardPage() {
         {filteredTickets.length === 0 ? (
           <EmptyState
             icon={
-              activeFilter === "all" && priorityFilter === null
+              activeFilter === "all" && priorityFilter === null && !debouncedSearchQuery.trim()
                 ? HelpCircle
                 : SearchX
             }
             title={
-              priorityFilter !== null
+              debouncedSearchQuery.trim()
+                ? "No tickets match your search"
+                : priorityFilter !== null
                 ? "No tickets match this priority filter"
                 : activeFilter === "all"
                 ? "No tickets yet"
                 : `No ${activeFilter} tickets`
             }
             description={
-              priorityFilter !== null
+              debouncedSearchQuery.trim()
+                ? "Try a different search term or adjust your filters."
+                : priorityFilter !== null
                 ? "Try changing the filter or create a new ticket."
                 : activeFilter === "all"
                 ? "Create your first ticket to start the multiplayer collaboration flow."
                 : "No tickets match this filter."
             }
           >
-            {activeFilter === "all" && priorityFilter === null && (
+            {activeFilter === "all" && priorityFilter === null && !debouncedSearchQuery.trim() && (
               <Link href="/new" className="btn-primary inline-flex">
                 <PlusCircle size={18} />
                 Create First Ticket

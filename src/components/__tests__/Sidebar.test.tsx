@@ -42,6 +42,12 @@ vi.mock("@/lib/auth-context", () => ({
   })),
 }));
 
+// Mock store — getTickets returns empty by default
+const mockGetTickets = vi.fn(() => []);
+vi.mock("@/lib/store", () => ({
+  getTickets: (...args: unknown[]) => mockGetTickets(...args),
+}));
+
 // Helper to create a mock matchMedia
 function mockMatchMedia(matches: boolean) {
   return vi.fn().mockImplementation((query: string) => ({
@@ -347,5 +353,57 @@ describe("Sidebar", () => {
     expect(screen.getByText("Dashboard")).toBeInTheDocument();
     expect(screen.getByText("New Ticket")).toBeInTheDocument();
     expect(screen.getByText("VIN Decoder")).toBeInTheDocument();
+  });
+
+  // --- Ticket badge tests ---
+
+  it("badge is hidden when no tickets exist", () => {
+    mockGetTickets.mockReturnValue([]);
+    render(<Sidebar />);
+    // The count badge span should not be present
+    expect(
+      screen.queryByText(/^\d+$/, { selector: "span.min-w-\\[18px\\]" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("badge renders when tickets exist", () => {
+    mockGetTickets.mockReturnValue([{ id: "1", status: "done", updatedAt: new Date().toISOString() }]);
+    render(<Sidebar />);
+    // The count badge span with class containing min-w-[18px] should show "1"
+    const badge = document.querySelector("span.min-w-\\[18px\\]");
+    expect(badge).toBeInTheDocument();
+    expect(badge?.textContent?.trim()).toBe("1");
+  });
+
+  it("badge shows correct ticket count", () => {
+    mockGetTickets.mockReturnValue([
+      { id: "1", status: "done", updatedAt: new Date().toISOString() },
+      { id: "2", status: "draft", updatedAt: new Date().toISOString() },
+      { id: "3", status: "in-review", updatedAt: new Date().toISOString() },
+    ]);
+    render(<Sidebar />);
+    const badge = document.querySelector("span.min-w-\\[18px\\]");
+    expect(badge).toBeInTheDocument();
+    expect(badge?.textContent?.trim()).toBe("3");
+  });
+
+  it("active dot renders for active tickets (draft, in-review, consensus)", () => {
+    mockGetTickets.mockReturnValue([
+      { id: "1", status: "draft", updatedAt: new Date().toISOString() },
+    ]);
+    render(<Sidebar />);
+    // The pulsing dot wrapper is a span with class "relative flex h-2.5 w-2.5"
+    const dot = document.querySelector("span.relative.flex.h-2\\.5.w-2\\.5");
+    expect(dot).toBeInTheDocument();
+  });
+
+  it("active dot is hidden when no active tickets", () => {
+    mockGetTickets.mockReturnValue([
+      { id: "1", status: "building", updatedAt: new Date().toISOString() },
+      { id: "2", status: "done", updatedAt: new Date().toISOString() },
+    ]);
+    render(<Sidebar />);
+    const dot = document.querySelector("span.relative.flex.h-2\\.5.w-2\\.5");
+    expect(dot).not.toBeInTheDocument();
   });
 });

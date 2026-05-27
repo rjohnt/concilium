@@ -20,7 +20,7 @@ const mockStorage = getMockStorage();
 vi.stubGlobal("localStorage", mockStorage);
 
 // Also stub window so the storage event listener doesn't crash
-vi.stubGlobal("window", { addEventListener: vi.fn() });
+vi.stubGlobal("window", { addEventListener: vi.fn(), dispatchEvent: vi.fn() });
 
 // Now import store (it calls loadTickets() at module load time)
 import {
@@ -31,6 +31,7 @@ import {
   deleteTicket,
   updateTicket,
   updateTicketPriority,
+  getTicket,
 } from "../store";
 
 // --- Helpers ---
@@ -382,5 +383,97 @@ describe("updateTicketPriority", () => {
     expect(new Date(result!.updatedAt).getTime()).toBeGreaterThan(
       new Date(originalUpdatedAt).getTime()
     );
+  });
+});
+
+// ========================================================================
+// Due date tests (new tests for DEV-44)
+// ========================================================================
+
+describe("ticket due dates", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    mockStorage.clear();
+    clearStorage();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("createTicket with due date sets the field correctly", () => {
+    const dueDate = "2026-12-25";
+    const ticket = createTicket("Due Date Test", "Description", 2, dueDate);
+    expect(ticket.dueDate).toBe(dueDate);
+
+    flushDebounce();
+    const raw = mockStorage.getItem(STORAGE_KEY);
+    const parsed = JSON.parse(raw!);
+    expect(parsed.tickets[0].dueDate).toBe(dueDate);
+  });
+
+  it("createTicket without due date leaves dueDate undefined", () => {
+    const ticket = createTicket("No Due Date", "Description");
+    expect(ticket.dueDate).toBeUndefined();
+
+    flushDebounce();
+    const raw = mockStorage.getItem(STORAGE_KEY);
+    const parsed = JSON.parse(raw!);
+    expect(parsed.tickets[0].dueDate).toBeUndefined();
+  });
+
+  it("updateTicket sets a new due date", () => {
+    const ticket = createTicket("Test", "Description");
+    expect(ticket.dueDate).toBeUndefined();
+
+    const updated = updateTicket(ticket.id, { dueDate: "2026-06-15" });
+    expect(updated).not.toBeNull();
+    expect(updated!.dueDate).toBe("2026-06-15");
+
+    // Verify the in-memory ticket was also updated
+    const fetched = getTicket(ticket.id);
+    expect(fetched!.dueDate).toBe("2026-06-15");
+  });
+
+  it("updateTicket clears due date via null", () => {
+    const ticket = createTicket("Test", "Description", 2, "2026-12-25");
+    expect(ticket.dueDate).toBe("2026-12-25");
+
+    const updated = updateTicket(ticket.id, { dueDate: null });
+    expect(updated).not.toBeNull();
+    expect(updated!.dueDate).toBeUndefined();
+  });
+
+  it("updateTicket with empty string normalizes to undefined", () => {
+    const ticket = createTicket("Test", "Description", 2, "2026-12-25");
+    expect(ticket.dueDate).toBe("2026-12-25");
+
+    const updated = updateTicket(ticket.id, { dueDate: "" });
+    expect(updated).not.toBeNull();
+    expect(updated!.dueDate).toBeUndefined();
+  });
+
+  it("persists due date updates to localStorage", () => {
+    const ticket = createTicket("Persist Due Date", "Description", 2, "2026-01-01");
+    flushDebounce(); // flush create
+
+    updateTicket(ticket.id, { dueDate: "2026-06-01" });
+    flushDebounce(); // flush update
+
+    const raw = mockStorage.getItem(STORAGE_KEY);
+    const parsed = JSON.parse(raw!);
+    expect(parsed.tickets[0].dueDate).toBe("2026-06-01");
+  });
+
+  it("clearing due date is persisted", () => {
+    const ticket = createTicket("Clear Due Date", "Description", 2, "2026-01-01");
+    flushDebounce();
+
+    updateTicket(ticket.id, { dueDate: null });
+    flushDebounce();
+
+    const raw = mockStorage.getItem(STORAGE_KEY);
+    const parsed = JSON.parse(raw!);
+    expect(parsed.tickets[0].dueDate).toBeUndefined();
   });
 });
