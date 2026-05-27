@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Search, Loader2, Car, AlertCircle, Clock, ArrowRight } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 
 interface VinResult {
   Make: string;
@@ -276,13 +277,11 @@ export default function VinDecoderPage() {
 
       {/* Empty result state (decoded but no make/model) */}
       {!loading && result && !hasResult && !error && (
-        <div className="card text-center py-12">
-          <AlertCircle size={40} className="text-ink-ghost mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-ink-secondary mb-2">No Results</h3>
-          <p className="text-sm text-ink-muted">
-            The VIN was not found in the NHTSA database. It may be invalid or from an unsupported manufacturer.
-          </p>
-        </div>
+        <EmptyState
+          icon={AlertCircle}
+          title="No Results"
+          description="The VIN was not found in the NHTSA database. It may be invalid or from an unsupported manufacturer."
+        />
       )}
 
       {/* Recent lookups */}
@@ -318,16 +317,11 @@ export default function VinDecoderPage() {
 
       {/* Empty state: no results and no recent lookups */}
       {!loading && !hasResult && !error && recentLookups.length === 0 && (
-        <div className="card text-center py-16">
-          <Car size={48} className="text-ink-ghost mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-ink-secondary mb-2">
-            Enter a VIN to decode
-          </h3>
-          <p className="text-sm text-ink-muted max-w-md mx-auto">
-            Enter any 17-character Vehicle Identification Number above to retrieve
-            detailed vehicle information from the NHTSA database.
-          </p>
-        </div>
+        <EmptyState
+          icon={Car}
+          title="Enter a VIN to decode"
+          description="Enter any 17-character Vehicle Identification Number above to retrieve detailed vehicle information from the NHTSA database."
+        />
       )}
     </div>
   );

@@ -5,6 +5,7 @@ import { PersonaId, Ticket } from "@/lib/types";
 import { getPersona, getAllPersonas } from "@/lib/personas";
 import { getFeedbackHistory } from "@/lib/store";
 import { PersonaBadge } from "./PersonaBadge";
+import { EmptyState } from "./EmptyState";
 import { MessageSquare, CheckCircle, ThumbsUp, RefreshCw } from "lucide-react";
 
 export function FeedbackPanel({
@@ -240,9 +241,12 @@ export function FeedbackPanel({
               })}
             </div>
           ) : (
-            <p className="text-sm text-gray-600 py-4 text-center">
-              No feedback from this persona yet.
-            </p>
+            <EmptyState
+              icon={MessageSquare}
+              title="No feedback yet"
+              description="No feedback from this persona yet."
+              className="bg-transparent border-0"
+            />
           )}
         </div>
       )}

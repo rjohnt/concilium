@@ -15,7 +15,8 @@ import { DetailSkeleton } from "@/components/Skeleton";
 import { DeleteTicketDialog } from "@/components/DeleteTicketDialog";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { EditableField } from "@/components/EditableField";
-import { ArrowLeft, Clock, GitBranch, RefreshCw, Sparkles, ExternalLink, Trash2 } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
+import { ArrowLeft, Clock, GitBranch, RefreshCw, Sparkles, ExternalLink, Trash2, FileQuestion } from "lucide-react";
 import Link from "next/link";
 
 export default function TicketDetailPage() {
@@ -86,14 +87,13 @@ export default function TicketDetailPage() {
 
   if (!ticket) {
     return (
-      <div className="max-w-4xl mx-auto text-center py-16">
-        <h3 className="text-lg font-medium text-ink-secondary mb-2">
-          Ticket not found
-        </h3>
-        <Link href="/" className="btn-secondary inline-flex mt-4">
-          <ArrowLeft size={16} />
-          Back to Dashboard
-        </Link>
+      <div className="max-w-4xl mx-auto py-16">
+        <EmptyState
+          icon={FileQuestion}
+          title="Ticket not found"
+          description="This ticket may have been deleted or the link is invalid."
+          action={{ label: "Back to Dashboard", href: "/" }}
+        />
       </div>
     );
   }

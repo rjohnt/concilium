@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { useEffect, useState } from "react";
 
 export default function PageTransition({
@@ -34,17 +34,17 @@ export default function PageTransition({
       y: 0,
       transition: {
         duration: prefersReducedMotion ? 0 : 0.2,
-        ease: "easeOut",
+        ease: [0.25, 0.1, 0.25, 1] as const,
       },
     },
     exit: {
       opacity: 0,
       transition: {
         duration: prefersReducedMotion ? 0 : 0.15,
-        ease: "easeIn",
+        ease: [0.42, 0, 1, 1] as const,
       },
     },
-  };
+  } satisfies Variants;
 
   return (
     <AnimatePresence mode="wait">

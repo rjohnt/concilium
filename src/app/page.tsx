@@ -6,7 +6,8 @@ import { seedData, getTickets } from "@/lib/store";
 import { TicketCard } from "@/components/TicketCard";
 import { FilterBar } from "@/components/FilterBar";
 import { DashboardSkeleton } from "@/components/Skeleton";
-import { PlusCircle, Users, Filter } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
+import { PlusCircle, Users, Filter, HelpCircle, SearchX } from "lucide-react";
 import Link from "next/link";
 
 type FilterKey = "all" | TicketStatus;
@@ -139,28 +140,36 @@ export default function DashboardPage() {
       {/* Ticket list */}
       <div className="space-y-4">
         {filteredTickets.length === 0 ? (
-          <div className="card text-center py-16">
-            <h3 className="text-lg font-medium text-ink-muted mb-2">
-              {priorityFilter !== null
+          <EmptyState
+            icon={
+              priorityFilter !== null
+                ? SearchX
+                : activeFilter === "all"
+                ? HelpCircle
+                : SearchX
+            }
+            title={
+              priorityFilter !== null
                 ? "No tickets match this priority filter"
                 : activeFilter === "all"
                 ? "No tickets yet"
-                : `No ${activeFilter} tickets`}
-            </h3>
-            <p className="text-sm text-ink-secondary mb-4">
-              {priorityFilter !== null
+                : `No ${activeFilter} tickets`
+            }
+            description={
+              priorityFilter !== null
                 ? "Try changing the filter or create a new ticket."
                 : activeFilter === "all"
                 ? "Create your first ticket to start the multiplayer collaboration flow."
-                : "No tickets match this filter."}
-            </p>
+                : "No tickets match this filter."
+            }
+          >
             {activeFilter === "all" && priorityFilter === null && (
               <Link href="/new" className="btn-primary inline-flex">
                 <PlusCircle size={18} />
                 Create First Ticket
               </Link>
             )}
-          </div>
+          </EmptyState>
         ) : (
           filteredTickets.map((ticket) => (
             <TicketCard key={ticket.id} ticket={ticket} />
