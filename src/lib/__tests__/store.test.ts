@@ -29,6 +29,7 @@ import {
   getTickets,
   clearStorage,
   deleteTicket,
+  updateTicket,
 } from "../store";
 
 // --- Helpers ---
@@ -208,5 +209,118 @@ describe("deleteTicket", () => {
     // The ticket should still be gone after re-loading from storage
     // (clearStorage already clears, but in real life loadTickets() would run)
     expect(getTickets()).toHaveLength(0);
+  });
+});
+
+// ========================================================================
+// updateTicket tests (new tests for DEV-37)
+// ========================================================================
+
+describe("updateTicket", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    mockStorage.clear();
+    clearStorage();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("updates ticket title only and returns the updated ticket", () => {
+    const ticket = createTicket("Original Title", "Original description");
+    const originalUpdatedAt = ticket.updatedAt;
+
+    // Advance time so updatedAt will be different
+    vi.advanceTimersByTime(1000);
+
+    const result = updateTicket(ticket.id, { title: "Updated Title" });
+
+    expect(result).not.toBeNull();
+    expect(result!.title).toBe("Updated Title");
+    expect(result!.description).toBe("Original description"); // unchanged
+    expect(result!.updatedAt).not.toBe(originalUpdatedAt);
+  });
+
+  it("updates ticket description only and returns the updated ticket", () => {
+    const ticket = createTicket("A Title", "Old description");
+    const originalUpdatedAt = ticket.updatedAt;
+
+    vi.advanceTimersByTime(1000);
+
+    const result = updateTicket(ticket.id, { description: "New description" });
+
+    expect(result).not.toBeNull();
+    expect(result!.title).toBe("A Title"); // unchanged
+    expect(result!.description).toBe("New description");
+    expect(result!.updatedAt).not.toBe(originalUpdatedAt);
+  });
+
+  it("updates both title and description simultaneously", () => {
+    const ticket = createTicket("Old Title", "Old Desc");
+    const originalUpdatedAt = ticket.updatedAt;
+
+    vi.advanceTimersByTime(1000);
+
+    const result = updateTicket(ticket.id, {
+      title: "New Title",
+      description: "New Desc",
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.title).toBe("New Title");
+    expect(result!.description).toBe("New Desc");
+    expect(result!.updatedAt).not.toBe(originalUpdatedAt);
+  });
+
+  it("returns null for non-existent ticket ID", () => {
+    const result = updateTicket("NONEXISTENT-999", { title: "Ghost" });
+    expect(result).toBeNull();
+  });
+
+  it("updates updatedAt timestamp on every update", () => {
+    const ticket = createTicket("Timing Test", "Check timestamps");
+
+    // First update
+    vi.advanceTimersByTime(500);
+    const first = updateTicket(ticket.id, { title: "First Update" });
+    const firstTimestamp = first!.updatedAt;
+
+    // Second update
+    vi.advanceTimersByTime(1000);
+    const second = updateTicket(ticket.id, { description: "Second Update" });
+    const secondTimestamp = second!.updatedAt;
+
+    expect(firstTimestamp).not.toBe(secondTimestamp);
+    // Second timestamp should be later than first
+    expect(new Date(secondTimestamp).getTime()).toBeGreaterThan(
+      new Date(firstTimestamp).getTime()
+    );
+  });
+
+  it("persists ticket update to localStorage after debounce", () => {
+    const ticket = createTicket("Persist Me", "Old value");
+    flushDebounce(); // flush initial create
+
+    updateTicket(ticket.id, { title: "Persisted Title" });
+    flushDebounce(); // flush update persist
+
+    const raw = mockStorage.getItem(STORAGE_KEY);
+    expect(raw).not.toBeNull();
+    const parsed = JSON.parse(raw!);
+    expect(parsed.tickets).toHaveLength(1);
+    expect(parsed.tickets[0].title).toBe("Persisted Title");
+  });
+
+  it("does not modify other tickets when updating one", () => {
+    const t1 = createTicket("Ticket 1", "Desc 1");
+    const t2 = createTicket("Ticket 2", "Desc 2");
+
+    updateTicket(t1.id, { title: "Updated Ticket 1" });
+
+    const allTickets = getTickets();
+    const updatedT2 = allTickets.find((t) => t.id === t2.id);
+    expect(updatedT2).toBeDefined();
+    expect(updatedT2!.title).toBe("Ticket 2"); // unchanged
   });
 });

@@ -24,6 +24,7 @@ export function EditableField({
 }: EditableFieldProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
+  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -45,15 +46,21 @@ export function EditableField({
 
   const handleSave = () => {
     const trimmed = draft.trim();
-    if (trimmed && trimmed !== value) {
+    if (!trimmed) {
+      setError(`${label} cannot be empty`);
+      return;
+    }
+    if (trimmed !== value) {
       onSave(trimmed);
     }
     setEditing(false);
+    setError(null);
   };
 
   const handleCancel = () => {
     setDraft(value);
     setEditing(false);
+    setError(null);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -77,7 +84,10 @@ export function EditableField({
           <textarea
             ref={textareaRef}
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            onChange={(e) => {
+              setDraft(e.target.value);
+              setError(null);
+            }}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             rows={4}
@@ -89,7 +99,10 @@ export function EditableField({
             ref={inputRef}
             type="text"
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            onChange={(e) => {
+              setDraft(e.target.value);
+              setError(null);
+            }}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             className="w-full bg-[#1a1714] border border-gold/40 rounded-lg px-3 py-2 text-ink-primary placeholder:text-ink-muted/50 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold/30 text-2xl font-bold"
@@ -114,6 +127,11 @@ export function EditableField({
             Cancel
           </button>
         </div>
+        {error && (
+          <p className="mt-1.5 text-xs text-red-400" role="alert">
+            {error}
+          </p>
+        )}
       </div>
     );
   }
