@@ -2,6 +2,6 @@
   "name": "concilium",
   "private": true,
   "scripts": {
-    "start": "npx serve public -l 3000"
+    "start": "node server.js"
   }
 }
