@@ -9,6 +9,7 @@ import { FeedbackPanel } from "@/components/FeedbackPanel";
 import { BuildTrigger } from "@/components/BuildTrigger";
 import { PersonaBadge } from "@/components/PersonaBadge";
 import { JoinSessionModal } from "@/components/JoinSessionModal";
+import { CopyButton } from "@/components/CopyButton";
 import { ConsensusProgress } from "@/components/ConsensusProgress";
 import { DeleteTicketDialog } from "@/components/DeleteTicketDialog";
 import { ArrowLeft, Clock, GitBranch, RefreshCw, Sparkles, ExternalLink, Trash2 } from "lucide-react";
@@ -142,6 +143,7 @@ export default function TicketDetailPage() {
               <span className="text-sm font-mono text-ink-muted">
                 {ticket.id}
               </span>
+              <CopyButton text={ticket.id} label={ticket.id} />
               <span
                 className={`badge ${
                   ticket.status === "draft"
@@ -174,8 +176,28 @@ export default function TicketDetailPage() {
             </div>
           </div>
 
-          {/* Start Prompt Session button */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Actions */}
+          <div className="flex items-start gap-2 flex-shrink-0">
+            <div className="flex flex-col items-end gap-2">
+              {/* Copy Link button */}
+              <CopyButton
+                label="Copy link to this ticket"
+                icon="link"
+              />
+
+              {/* Start Prompt Session button */}
+              <Link
+                href={`/prompt/${ticket.id}`}
+                className="btn-primary whitespace-nowrap"
+                title="Open full-screen prompt session"
+              >
+                <Sparkles size={16} />
+                <span className="hidden sm:inline">Prompt Session</span>
+                <ExternalLink size={12} className="hidden sm:inline" />
+              </Link>
+            </div>
+
+            {/* Delete button */}
             <button
               onClick={() => setShowDeleteDialog(true)}
               className="p-2 rounded-lg text-ink-muted hover:text-cardinal hover:bg-cardinal/10 transition-colors"
@@ -183,15 +205,6 @@ export default function TicketDetailPage() {
             >
               <Trash2 size={16} />
             </button>
-            <Link
-              href={`/prompt/${ticket.id}`}
-              className="btn-primary whitespace-nowrap"
-              title="Open full-screen prompt session"
-            >
-              <Sparkles size={16} />
-              <span className="hidden sm:inline">Prompt Session</span>
-              <ExternalLink size={12} className="hidden sm:inline" />
-            </Link>
           </div>
         </div>
       </div>
