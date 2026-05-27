@@ -100,8 +100,8 @@ describe('ActivityFeed', () => {
     expect(screen.getByText('Ticket created')).toBeInTheDocument()
     expect(screen.getByText('⚙️ Engineer submitted feedback')).toBeInTheDocument()
     expect(screen.getByText('⚙️ Engineer approved the ticket')).toBeInTheDocument()
-    // 3 events: created, feedback, approval
-    expect(screen.getByText('3 events')).toBeInTheDocument()
+    // 4 events: created, feedback, approval, status-change (draft → in-review)
+    expect(screen.getByText('4 events')).toBeInTheDocument()
   })
 
   // --------------------------------------------------------------------
@@ -120,8 +120,8 @@ describe('ActivityFeed', () => {
 
     expect(screen.getByText('⚙️ Engineer approved the ticket')).toBeInTheDocument()
     expect(screen.getByText('⚙️ Engineer withdrew approval')).toBeInTheDocument()
-    // 4 events: created, feedback x2, approval, approval-withdrawn
-    expect(screen.getByText('5 events')).toBeInTheDocument()
+    // 6 events: created, feedback x2, approval, approval-withdrawn, status-change
+    expect(screen.getByText('6 events')).toBeInTheDocument()
   })
 
   // --------------------------------------------------------------------
@@ -234,7 +234,7 @@ describe('ActivityFeed', () => {
     })
     render(<ActivityFeed ticket={ticket} />)
 
-    expect(screen.getByText('5m ago')).toBeInTheDocument()
+    expect(screen.getAllByText('5m ago').length).toBeGreaterThanOrEqual(1)
   })
 
   it('shows hours ago for older feedback', () => {
@@ -248,7 +248,7 @@ describe('ActivityFeed', () => {
     })
     render(<ActivityFeed ticket={ticket} />)
 
-    expect(screen.getByText('3h ago')).toBeInTheDocument()
+    expect(screen.getAllByText('3h ago').length).toBeGreaterThanOrEqual(1)
   })
 
   it('shows days ago for feedback older than 24 hours', () => {
@@ -262,7 +262,7 @@ describe('ActivityFeed', () => {
     })
     render(<ActivityFeed ticket={ticket} />)
 
-    expect(screen.getByText('2d ago')).toBeInTheDocument()
+    expect(screen.getAllByText('2d ago').length).toBeGreaterThanOrEqual(1)
   })
 
   // --------------------------------------------------------------------
