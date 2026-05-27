@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Sidebar } from "@/components/Sidebar";
 import { CommandPalette } from "@/components/CommandPalette";
+import { KeyboardShortcutsSheet } from "@/components/KeyboardShortcutsSheet";
 import { AuthProvider } from "@/lib/auth-context";
 import { AuthGuard } from "@/components/AuthGuard";
 import PageTransition from "@/components/PageTransition";
@@ -29,6 +30,7 @@ export default function RootLayout({
               </main>
             </div>
             <CommandPalette />
+            <KeyboardShortcutsSheet />
           </AuthGuard>
         </AuthProvider>
       </body>
