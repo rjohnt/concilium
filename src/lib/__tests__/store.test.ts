@@ -30,6 +30,7 @@ import {
   clearStorage,
   deleteTicket,
   updateTicket,
+  updateTicketPriority,
 } from "../store";
 
 // --- Helpers ---
@@ -322,5 +323,64 @@ describe("updateTicket", () => {
     const updatedT2 = allTickets.find((t) => t.id === t2.id);
     expect(updatedT2).toBeDefined();
     expect(updatedT2!.title).toBe("Ticket 2"); // unchanged
+  });
+});
+
+// ========================================================================
+// updateTicketPriority tests (new tests for DEV-38)
+// ========================================================================
+
+describe("updateTicketPriority", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    mockStorage.clear();
+    clearStorage();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("updates priority on valid ticket and returns the updated ticket", () => {
+    const ticket = createTicket("Priority Test", "Testing priority updates");
+    expect(ticket.priority).toBe(2); // default is Medium
+
+    const result = updateTicketPriority(ticket.id, 0); // Urgent
+
+    expect(result).not.toBeNull();
+    expect(result!.priority).toBe(0);
+    expect(result!.id).toBe(ticket.id);
+  });
+
+  it("returns null for non-existent ticket", () => {
+    const result = updateTicketPriority("NONEXISTENT-999", 1);
+    expect(result).toBeNull();
+  });
+
+  it("persists priority update to localStorage after debounce", () => {
+    const ticket = createTicket("Persist Priority", "Testing persistence");
+    flushDebounce(); // flush initial create
+
+    updateTicketPriority(ticket.id, 4); // None
+    flushDebounce(); // flush update persist
+
+    const raw = mockStorage.getItem(STORAGE_KEY);
+    expect(raw).not.toBeNull();
+    const parsed = JSON.parse(raw!);
+    expect(parsed.tickets).toHaveLength(1);
+    expect(parsed.tickets[0].priority).toBe(4);
+  });
+
+  it("updates updatedAt timestamp on priority change", () => {
+    const ticket = createTicket("Timestamp Test", "Check timestamps");
+    const originalUpdatedAt = ticket.updatedAt;
+
+    vi.advanceTimersByTime(1000);
+
+    const result = updateTicketPriority(ticket.id, 1); // High
+    expect(result!.updatedAt).not.toBe(originalUpdatedAt);
+    expect(new Date(result!.updatedAt).getTime()).toBeGreaterThan(
+      new Date(originalUpdatedAt).getTime()
+    );
   });
 });

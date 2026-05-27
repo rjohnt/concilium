@@ -1,4 +1,4 @@
-import { Ticket } from "@/lib/types";
+import { Ticket, PRIORITY_LABELS, PRIORITY_COLORS } from "@/lib/types";
 import { getAllPersonas } from "@/lib/personas";
 import { PersonaBadge } from "./PersonaBadge";
 import { CopyButton } from "@/components/CopyButton";
@@ -42,6 +42,11 @@ export function TicketCard({ ticket }: { ticket: Ticket }) {
               >
                 {ticket.status}
               </span>
+              {ticket.priority !== 4 && (
+                <span className={`badge border ${PRIORITY_COLORS[ticket.priority]}`}>
+                  {PRIORITY_LABELS[ticket.priority]}
+                </span>
+              )}
             </div>
             <h3 className="text-lg font-semibold text-gray-100 group-hover:text-brand-400 transition-colors truncate">
               {ticket.title}

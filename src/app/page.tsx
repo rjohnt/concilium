@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { Ticket, TicketStatus } from "@/lib/types";
+import { Ticket, TicketStatus, PRIORITY_LABELS, PRIORITY_COLORS, PriorityLevel } from "@/lib/types";
 import { seedData, getTickets } from "@/lib/store";
 import { TicketCard } from "@/components/TicketCard";
 import { FilterBar } from "@/components/FilterBar";
 import { DashboardSkeleton } from "@/components/Skeleton";
-import { PlusCircle, Users } from "lucide-react";
+import { PlusCircle, Users, Filter } from "lucide-react";
 import Link from "next/link";
 
 type FilterKey = "all" | TicketStatus;
@@ -15,6 +15,7 @@ export default function DashboardPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
+  const [priorityFilter, setPriorityFilter] = useState<PriorityLevel | null>(null);
 
   useEffect(() => {
     seedData();
@@ -23,9 +24,15 @@ export default function DashboardPage() {
   }, []);
 
   const filteredTickets = useMemo(() => {
-    if (activeFilter === "all") return tickets;
-    return tickets.filter((t) => t.status === activeFilter);
-  }, [tickets, activeFilter]);
+    let result = tickets;
+    if (activeFilter !== "all") {
+      result = result.filter((t) => t.status === activeFilter);
+    }
+    if (priorityFilter !== null) {
+      result = result.filter((t) => t.priority === priorityFilter);
+    }
+    return result;
+  }, [tickets, activeFilter, priorityFilter]);
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -100,21 +107,54 @@ export default function DashboardPage() {
         counts={statusCounts}
       />
 
+      {/* Priority filter */}
+      <div className="flex items-center gap-2 mb-6">
+        <Filter size={14} className="text-ink-muted" />
+        <span className="text-xs text-ink-muted mr-1">Priority:</span>
+        <button
+          onClick={() => setPriorityFilter(null)}
+          className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
+            priorityFilter === null
+              ? "bg-brand-900/50 text-brand-400 border-brand-800"
+              : "border-border-subtle text-ink-muted hover:text-ink-primary hover:border-border-default"
+          }`}
+        >
+          All
+        </button>
+        {([0, 1, 2, 3, 4] as PriorityLevel[]).map((p) => (
+          <button
+            key={p}
+            onClick={() => setPriorityFilter(p)}
+            className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
+              priorityFilter === p
+                ? PRIORITY_COLORS[p]
+                : "border-border-subtle text-ink-muted hover:text-ink-primary hover:border-border-default"
+            }`}
+          >
+            {PRIORITY_LABELS[p]}
+          </button>
+        ))}
+      </div>
+
       {/* Ticket list */}
       <div className="space-y-4">
         {filteredTickets.length === 0 ? (
           <div className="card text-center py-16">
             <h3 className="text-lg font-medium text-ink-muted mb-2">
-              {activeFilter === "all"
+              {priorityFilter !== null
+                ? "No tickets match this priority filter"
+                : activeFilter === "all"
                 ? "No tickets yet"
                 : `No ${activeFilter} tickets`}
             </h3>
             <p className="text-sm text-ink-secondary mb-4">
-              {activeFilter === "all"
+              {priorityFilter !== null
+                ? "Try changing the filter or create a new ticket."
+                : activeFilter === "all"
                 ? "Create your first ticket to start the multiplayer collaboration flow."
                 : "No tickets match this filter."}
             </p>
-            {activeFilter === "all" && (
+            {activeFilter === "all" && priorityFilter === null && (
               <Link href="/new" className="btn-primary inline-flex">
                 <PlusCircle size={18} />
                 Create First Ticket
