@@ -1,0 +1,178 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { FeedbackPanel } from '../FeedbackPanel'
+import type { Ticket, FeedbackEntry } from '@/lib/types'
+
+const mockFeedback: FeedbackEntry[] = [
+  {
+    id: 'FB-001',
+    ticketId: 'TIX-001',
+    personaId: 'engineer',
+    content: 'Engineer feedback content',
+    createdAt: '2025-01-01T00:00:00.000Z',
+    approved: true,
+  },
+  {
+    id: 'FB-002',
+    ticketId: 'TIX-001',
+    personaId: 'designer',
+    content: 'Designer feedback content',
+    createdAt: '2025-01-02T00:00:00.000Z',
+    approved: false,
+  },
+]
+
+const mockTicket: Ticket = {
+  id: 'TIX-001',
+  title: 'Test Ticket',
+  description: 'A test ticket for feedback panel',
+  status: 'in-review',
+  createdAt: '2025-01-01T00:00:00.000Z',
+  updatedAt: '2025-01-02T00:00:00.000Z',
+  feedback: mockFeedback,
+  approvals: ['engineer'],
+}
+
+vi.mock('@/lib/store', () => ({
+  getFeedbackHistory: vi.fn(
+    (ticketId: string, personaId?: string) => {
+      if (!personaId) return [...mockFeedback]
+      return mockFeedback.filter((f) => f.personaId === personaId)
+    }
+  ),
+  addFeedback: vi.fn(),
+}))
+
+/** Get persona filter buttons (they have aria-pressed attributes) */
+function getFilterButtons() {
+  return screen.getAllByRole('button').filter((btn) =>
+    btn.hasAttribute('aria-pressed')
+  )
+}
+
+describe('FeedbackPanel', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('renders the stakeholder feedback heading', () => {
+    render(
+      <FeedbackPanel
+        ticket={mockTicket}
+        onFeedbackAdded={vi.fn()}
+      />
+    )
+    expect(screen.getByText('Stakeholder Feedback')).toBeInTheDocument()
+  })
+
+  it('shows the contribution count', () => {
+    render(
+      <FeedbackPanel
+        ticket={mockTicket}
+        onFeedbackAdded={vi.fn()}
+      />
+    )
+    expect(screen.getByText('2 contributions')).toBeInTheDocument()
+  })
+
+  it('renders persona filter buttons when feedback exists', () => {
+    render(
+      <FeedbackPanel
+        ticket={mockTicket}
+        onFeedbackAdded={vi.fn()}
+      />
+    )
+    expect(screen.getByRole('button', { name: /All \(2\)/ })).toBeInTheDocument()
+
+    const filterButtons = getFilterButtons()
+    // "All" + 4 persona buttons = 5 total filter buttons
+    expect(filterButtons).toHaveLength(5)
+  })
+
+  it('hides the filter bar when there is no feedback', () => {
+    const emptyTicket = { ...mockTicket, feedback: [] }
+    render(
+      <FeedbackPanel
+        ticket={emptyTicket}
+        onFeedbackAdded={vi.fn()}
+      />
+    )
+    expect(screen.queryByText('Feedback History')).not.toBeInTheDocument()
+  })
+
+  it('marks the "All" filter button as pressed by default', () => {
+    render(
+      <FeedbackPanel
+        ticket={mockTicket}
+        onFeedbackAdded={vi.fn()}
+      />
+    )
+    const allButton = screen.getByRole('button', { name: /All \(2\)/ })
+    expect(allButton.getAttribute('aria-pressed')).toBe('true')
+  })
+
+  it('filters history to show only entries for selected persona', () => {
+    render(
+      <FeedbackPanel
+        ticket={mockTicket}
+        onFeedbackAdded={vi.fn()}
+      />
+    )
+
+    // Initially shows all feedback
+    expect(screen.getByText('Engineer feedback content')).toBeInTheDocument()
+    expect(screen.getByText('Designer feedback content')).toBeInTheDocument()
+
+    // Click engineer filter button (the one with aria-pressed)
+    const engineerFilterBtn = screen.getByRole('button', {
+      name: /⚙️ Engineer/,
+      pressed: false,
+    })
+    fireEvent.click(engineerFilterBtn)
+
+    // Should still show engineer entry but not designer
+    expect(screen.getByText('Engineer feedback content')).toBeInTheDocument()
+    expect(screen.queryByText('Designer feedback content')).not.toBeInTheDocument()
+  })
+
+  it('updates aria-pressed when switching filters', () => {
+    render(
+      <FeedbackPanel
+        ticket={mockTicket}
+        onFeedbackAdded={vi.fn()}
+      />
+    )
+
+    const allButton = screen.getByRole('button', { name: /All \(2\)/ })
+    const engineerFilterBtn = screen.getByRole('button', {
+      name: /⚙️ Engineer/,
+      pressed: false,
+    })
+
+    expect(allButton.getAttribute('aria-pressed')).toBe('true')
+    expect(engineerFilterBtn.getAttribute('aria-pressed')).toBe('false')
+
+    fireEvent.click(engineerFilterBtn)
+
+    expect(allButton.getAttribute('aria-pressed')).toBe('false')
+    expect(engineerFilterBtn.getAttribute('aria-pressed')).toBe('true')
+  })
+
+  it('shows empty state when selected persona has no feedback', () => {
+    render(
+      <FeedbackPanel
+        ticket={mockTicket}
+        onFeedbackAdded={vi.fn()}
+      />
+    )
+
+    // Click QA filter (has no feedback)  — use pressed:false to get the filter button
+    const qaFilterBtn = screen.getByRole('button', {
+      name: /🧪 QA/,
+      pressed: false,
+    })
+    fireEvent.click(qaFilterBtn)
+
+    expect(screen.getByText('No feedback from this persona yet.')).toBeInTheDocument()
+  })
+})
