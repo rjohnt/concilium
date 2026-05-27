@@ -12,6 +12,7 @@ export default function NewTicketPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<PriorityLevel>(2);
+  const [dueDate, setDueDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -19,7 +20,12 @@ export default function NewTicketPage() {
     if (!title.trim() || !description.trim()) return;
 
     setSubmitting(true);
-    const ticket = createTicket(title.trim(), description.trim(), priority);
+    const ticket = createTicket(
+      title.trim(),
+      description.trim(),
+      priority,
+      dueDate || undefined
+    );
 
     // Navigate to the new ticket
     router.push(`/ticket/${ticket.id}`);
@@ -99,6 +105,33 @@ export default function NewTicketPage() {
                   {PRIORITY_LABELS[p]}
                 </button>
               ))}
+            </div>
+          </div>
+
+          <div>
+            <label
+              htmlFor="dueDate"
+              className="block text-sm font-medium text-gray-300 mb-1.5"
+            >
+              Due Date <span className="text-gray-600">(optional)</span>
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                id="dueDate"
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent [color-scheme:dark]"
+              />
+              {dueDate && (
+                <button
+                  type="button"
+                  onClick={() => setDueDate("")}
+                  className="px-3 py-3 text-sm text-gray-500 hover:text-gray-300 transition-colors"
+                >
+                  Clear
+                </button>
+              )}
             </div>
           </div>
 

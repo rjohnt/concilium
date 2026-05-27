@@ -1,8 +1,9 @@
 import { Ticket, PRIORITY_LABELS, PRIORITY_COLORS } from "@/lib/types";
+import { formatDueDate } from "@/lib/date-utils";
 import { getAllPersonas } from "@/lib/personas";
 import { PersonaBadge } from "./PersonaBadge";
 import { CopyButton } from "@/components/CopyButton";
-import { Clock, MessageSquare } from "lucide-react";
+import { Clock, MessageSquare, Calendar } from "lucide-react";
 import Link from "next/link";
 
 function timeAgo(isoString: string): string {
@@ -72,6 +73,25 @@ export function TicketCard({ ticket }: { ticket: Ticket }) {
             />
           </div>
         </div>
+
+        {/* Due date */}
+        {ticket.dueDate && (
+          <div className="mt-3">
+            {(() => {
+              const dl = formatDueDate(ticket.dueDate);
+              return (
+                <span
+                  className={`inline-flex items-center gap-1.5 text-xs ${
+                    dl.className
+                  } ${dl.isOverdue ? "bg-cardinal/10 border border-cardinal/30 rounded px-2 py-0.5" : ""}`}
+                >
+                  <Calendar size={12} />
+                  {dl.label}
+                </span>
+              );
+            })()}
+          </div>
+        )}
 
         {/* Personas row */}
         <div className="flex items-center justify-between mt-3">
