@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Sidebar } from "@/components/Sidebar";
+import { AuthProvider } from "@/lib/auth-context";
+import { AuthGuard } from "@/components/AuthGuard";
 
 export const metadata: Metadata = {
   title: "Concilium — Multiplayer AI-Assisted Tickets",
@@ -15,11 +17,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className="min-h-screen bg-gray-950">
-        <div className="flex min-h-screen">
-          <Sidebar />
-          <main className="flex-1 ml-64 p-8">{children}</main>
-        </div>
+      <body className="min-h-screen bg-[#1a1714]">
+        <AuthProvider>
+          <AuthGuard>
+            <div className="flex min-h-screen">
+              <Sidebar />
+              <main className="flex-1 ml-64 p-8">{children}</main>
+            </div>
+          </AuthGuard>
+        </AuthProvider>
       </body>
     </html>
   );

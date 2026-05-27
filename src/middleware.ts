@@ -1,30 +1,38 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
 
-/**
- * Concilium middleware — request logging only (auth redirect in DEV-4).
- *
- * Logs method, path, and duration for every incoming request.
- * No blocking / redirect logic at this stage.
- */
-export function middleware(request: NextRequest) {
-  const start = Date.now();
+export async function middleware(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({ request });
 
-  const response = NextResponse.next();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          supabaseResponse = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
 
-  const duration = Date.now() - start;
-  if (process.env.NODE_ENV === "development") {
-    console.log(
-      `[${new Date().toISOString()}] ${request.method} ${request.nextUrl.pathname} (${duration}ms)`,
-    );
-  }
+  // Refresh the auth session on every request
+  await supabase.auth.getUser();
 
-  return response;
+  return supabaseResponse;
 }
 
-/**
- * Match all request paths except static files, images, and Next.js internals.
- */
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|screenshots|design-system).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };

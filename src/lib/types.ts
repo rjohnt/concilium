@@ -22,6 +22,19 @@ export interface FeedbackEntry {
   approved: boolean; // has this persona approved the current state?
 }
 
+export interface BuildReport {
+  id: string;
+  ticketId: string;
+  createdAt: string;
+  completedAt?: string;
+  status: "building" | "completed" | "failed";
+  requirements: string[];
+  designDecisions: string[];
+  qaCriteria: string[];
+  implementationPlan: string;
+  consensusSummary: string;
+}
+
 export interface Ticket {
   id: string;
   title: string;
@@ -32,4 +45,5 @@ export interface Ticket {
   feedback: FeedbackEntry[];
   // Derived: which personas have approved?
   approvals: PersonaId[];
+  buildReport?: BuildReport;
 }
