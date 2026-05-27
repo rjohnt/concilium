@@ -34,14 +34,14 @@ export default function PageTransition({
       y: 0,
       transition: {
         duration: prefersReducedMotion ? 0 : 0.2,
-        ease: "easeOut",
+        ease: "easeOut" as const,
       },
     },
     exit: {
       opacity: 0,
       transition: {
         duration: prefersReducedMotion ? 0 : 0.15,
-        ease: "easeIn",
+        ease: "easeIn" as const,
       },
     },
   };
