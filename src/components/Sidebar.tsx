@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, PlusCircle, GitBranch, LogOut, User } from "lucide-react";
+import { LayoutDashboard, PlusCircle, GitBranch, LogOut, User, Car } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
 export function Sidebar() {
@@ -13,6 +13,7 @@ export function Sidebar() {
   const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/new", label: "New Ticket", icon: PlusCircle },
+    { href: "/vin", label: "VIN Decoder", icon: Car },
   ];
 
   const handleSignOut = async () => {
