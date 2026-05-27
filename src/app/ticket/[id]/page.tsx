@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Ticket, PersonaId } from "@/lib/types";
-import { seedData, getTicket } from "@/lib/store";
+import { seedData, getTicket, deleteTicket } from "@/lib/store";
 import { getPersona } from "@/lib/personas";
 import { FeedbackPanel } from "@/components/FeedbackPanel";
 import { BuildTrigger } from "@/components/BuildTrigger";
@@ -11,7 +11,8 @@ import { PersonaBadge } from "@/components/PersonaBadge";
 import { JoinSessionModal } from "@/components/JoinSessionModal";
 import { CopyButton } from "@/components/CopyButton";
 import { ConsensusProgress } from "@/components/ConsensusProgress";
-import { ArrowLeft, Clock, GitBranch, RefreshCw, Sparkles, ExternalLink } from "lucide-react";
+import { DeleteTicketDialog } from "@/components/DeleteTicketDialog";
+import { ArrowLeft, Clock, GitBranch, RefreshCw, Sparkles, ExternalLink, Trash2 } from "lucide-react";
 import Link from "next/link";
 
 export default function TicketDetailPage() {
@@ -23,6 +24,9 @@ export default function TicketDetailPage() {
   // Session state
   const [sessionPersona, setSessionPersona] = useState<PersonaId | null>(null);
   const [showJoinModal, setShowJoinModal] = useState(false);
+
+  // Delete dialog state
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const loadTicket = useCallback(() => {
     seedData();
@@ -51,6 +55,14 @@ export default function TicketDetailPage() {
 
   const handleSwitchPersona = () => {
     setShowJoinModal(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!ticket) return;
+    const success = deleteTicket(ticket.id);
+    if (success) {
+      router.push("/");
+    }
   };
 
   if (loading) {
@@ -165,23 +177,34 @@ export default function TicketDetailPage() {
           </div>
 
           {/* Actions */}
-          <div className="flex flex-col items-end gap-2 flex-shrink-0">
-            {/* Copy Link button */}
-            <CopyButton
-              label="Copy link to this ticket"
-              icon="link"
-            />
+          <div className="flex items-start gap-2 flex-shrink-0">
+            <div className="flex flex-col items-end gap-2">
+              {/* Copy Link button */}
+              <CopyButton
+                label="Copy link to this ticket"
+                icon="link"
+              />
 
-            {/* Start Prompt Session button */}
-            <Link
-              href={`/prompt/${ticket.id}`}
-              className="btn-primary whitespace-nowrap"
-              title="Open full-screen prompt session"
+              {/* Start Prompt Session button */}
+              <Link
+                href={`/prompt/${ticket.id}`}
+                className="btn-primary whitespace-nowrap"
+                title="Open full-screen prompt session"
+              >
+                <Sparkles size={16} />
+                <span className="hidden sm:inline">Prompt Session</span>
+                <ExternalLink size={12} className="hidden sm:inline" />
+              </Link>
+            </div>
+
+            {/* Delete button */}
+            <button
+              onClick={() => setShowDeleteDialog(true)}
+              className="p-2 rounded-lg text-ink-muted hover:text-cardinal hover:bg-cardinal/10 transition-colors"
+              title="Delete ticket"
             >
-              <Sparkles size={16} />
-              <span className="hidden sm:inline">Prompt Session</span>
-              <ExternalLink size={12} className="hidden sm:inline" />
-            </Link>
+              <Trash2 size={16} />
+            </button>
           </div>
         </div>
       </div>
@@ -216,6 +239,14 @@ export default function TicketDetailPage() {
           <BuildTrigger ticket={ticket} onBuildTriggered={() => loadTicket()} />
         </div>
       )}
+
+      {/* Delete Ticket Dialog */}
+      <DeleteTicketDialog
+        isOpen={showDeleteDialog}
+        ticketTitle={ticket.title}
+        onCancel={() => setShowDeleteDialog(false)}
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   );
 }

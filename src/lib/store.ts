@@ -25,6 +25,44 @@ let nextTicketId = initial.nextTicketId;
 let nextFeedbackId = initial.nextFeedbackId;
 let nextBuildReportId = initial.nextBuildReportId;
 
+const STORAGE_KEY = "concilium-tickets";
+
+function persistState(): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tickets));
+  } catch {
+    // localStorage may be unavailable (SSR, storage full, etc.)
+  }
+}
+
+export function loadPersistedState(): void {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        tickets = parsed;
+        // Recalculate next IDs from loaded data
+        nextTicketId = tickets.length > 0
+          ? Math.max(...tickets.map((t) => parseInt(t.id.split("-")[1] || "0", 10))) + 1
+          : 1;
+        const allFeedback = tickets.flatMap((t) => t.feedback);
+        nextFeedbackId = allFeedback.length > 0
+          ? Math.max(...allFeedback.map((f) => parseInt(f.id.split("-")[1] || "0", 10))) + 1
+          : 1;
+        const allBuilds = tickets
+          .filter((t) => t.buildReport)
+          .map((t) => t.buildReport!);
+        nextBuildReportId = allBuilds.length > 0
+          ? Math.max(...allBuilds.map((b) => parseInt(b.id.split("-")[1] || "0", 10))) + 1
+          : 1;
+      }
+    }
+  } catch {
+    // Ignore parse errors
+  }
+}
+
 function generateId(prefix: string, counter: number): string {
   return `${prefix}-${String(counter).padStart(3, "0")}`;
 }
@@ -100,6 +138,14 @@ export function createTicket(
   tickets.push(ticket);
   persistState();
   return ticket;
+}
+
+export function deleteTicket(ticketId: string): boolean {
+  const index = tickets.findIndex((t) => t.id === ticketId);
+  if (index === -1) return false;
+  tickets.splice(index, 1);
+  persistState();
+  return true;
 }
 
 // Future scaffolding – exposed for API routes and external state management.
