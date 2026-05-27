@@ -1,38 +1,37 @@
-# Next Feature Plan — Run 1 (2026-05-26)
+# Next Feature Plan — Run 2 (2026-05-27)
 
 ## Context
-Greenfield project. Only README.md exists. Need to bootstrap the entire application.
+v0.1 has ticket CRUD, personas, consensus, and a prompt session UI. But the prompt session is manual text entry — the AI-mediated collaboration is missing.
 
 ## What We're Building
-**Foundation: Ticket Dashboard + Persona-Aware Detail View**
+**AI-Mediated Prompting Pipeline** — The infrastructure that makes prompt sessions actually AI-assisted:
 
-The core multiplayer concept requires a place where stakeholders see tickets, open them, and contribute from their persona's perspective. This run builds the shell:
-
-1. Bootstrap Next.js 14 + TypeScript + Tailwind
-2. Define data models (Ticket, Persona, FeedbackEntry)
-3. Build ticket dashboard (list view with persona status indicators)
-4. Build ticket detail page with persona tabs/panels
-5. Persona configuration (Engineer, Designer, Product Owner, QA) with expertise descriptions
-6. Feedback entry per persona (text-based for now, AI-mediated prompting next run)
+1. **`/api/prompt` POST route** — Accepts {ticketId, personaId, message}, runs through mediator, returns AI-refined response
+2. **Mediator engine (`src/lib/mediator.ts`)** — Rules-based persona-aware response generator that:
+   - Takes the persona's prompt template + ticket context
+   - Analyzes user input against persona expertise areas
+   - Generates structured feedback (concerns, recommendations, edge cases)
+   - Produces follow-up questions to deepen conversation
+   - Feels like a real AI conversation partner
+3. **Enhanced SessionPrompt** — Calls `/api/prompt`, shows the AI-refined feedback, allows editing before submission
+4. **Conversation threading** — Multiple exchanges per persona session (not just one-off)
+5. **Session state tracking** — Track active sessions, rounds, persona turn order
 
 ## Out of Scope This Run
-- AI-mediated prompting (needs API integration — next run)
-- Consensus threshold logic
-- Persistence (in-memory store for now)
-- Authentication / multi-user
+- Real AI API integration (needs keys — but the mediator is the right abstraction)
+- Multi-user real-time collaboration
+- WebSocket transport
 
 ## Files to Create/Modify
-- `package.json`, `tsconfig.json`, `next.config.js`, `tailwind.config.ts` — project scaffold
-- `src/app/layout.tsx`, `src/app/page.tsx` — root layout + dashboard
-- `src/app/ticket/[id]/page.tsx` — ticket detail
-- `src/lib/types.ts` — shared types
-- `src/lib/store.ts` — in-memory ticket/feedback store
-- `src/lib/personas.ts` — persona definitions
-- `src/components/*` — UI components
-- Update `README.md` with status
+- `src/app/api/prompt/route.ts` — API route for AI-mediated prompting
+- `src/lib/mediator.ts` — Mediator engine (rules-based for now, swappable for real AI)
+- `src/components/SessionPrompt.tsx` — Enhanced to call API, show threading
+- `src/lib/types.ts` — Add PromptSession, PromptRound, SessionMessage types
+- `src/lib/store.ts` — Add session state management
+- Update `README.md`
 
 ## Success Criteria
-- `npm run dev` starts a working app
-- Dashboard shows tickets with persona avatars
-- Each ticket has a detail page where you can select a persona and leave feedback
-- Feedback accumulates per ticket, per persona
+- Prompt session calls `/api/prompt` and gets a persona-aware response
+- Response includes: formatted feedback, concerns, follow-up questions
+- User can continue the conversation (multi-turn)
+- Feedback accumulates and feeds into consensus
