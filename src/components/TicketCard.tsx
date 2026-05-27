@@ -1,6 +1,7 @@
 import { Ticket } from "@/lib/types";
 import { getAllPersonas } from "@/lib/personas";
 import { PersonaBadge } from "./PersonaBadge";
+import { CopyButton } from "./CopyButton";
 import { Clock, MessageSquare } from "lucide-react";
 import Link from "next/link";
 
@@ -27,6 +28,7 @@ export function TicketCard({ ticket }: { ticket: Ticket }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-mono text-gray-500">{ticket.id}</span>
+            <CopyButton text={ticket.id} label={ticket.id} />
             <span
               className={`badge ${
                 ticket.status === "draft"
