@@ -11,6 +11,7 @@ import { PersonaBadge } from "@/components/PersonaBadge";
 import { JoinSessionModal } from "@/components/JoinSessionModal";
 import { CopyButton } from "@/components/CopyButton";
 import { ConsensusProgress } from "@/components/ConsensusProgress";
+import { DetailSkeleton } from "@/components/Skeleton";
 import { DeleteTicketDialog } from "@/components/DeleteTicketDialog";
 import { EditableField } from "@/components/EditableField";
 import { ArrowLeft, Clock, GitBranch, RefreshCw, Sparkles, ExternalLink, Trash2 } from "lucide-react";
@@ -79,13 +80,7 @@ export default function TicketDetailPage() {
   };
 
   if (loading) {
-    return (
-      <div className="max-w-4xl mx-auto animate-pulse space-y-4">
-        <div className="h-8 bg-elevated rounded w-1/3" />
-        <div className="h-4 bg-elevated rounded w-2/3" />
-        <div className="h-64 bg-elevated rounded" />
-      </div>
-    );
+    return <DetailSkeleton />;
   }
 
   if (!ticket) {

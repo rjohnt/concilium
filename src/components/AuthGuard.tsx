@@ -5,15 +5,31 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { Loader2 } from "lucide-react";
 
-const PUBLIC_PATHS = ["/login", "/signup", "/auth/callback", "/ticket", "/new", "/vin", "/prompt", "/build"];
+const PUBLIC_PATHS = ["/login", "/signup", "/auth/callback", "/vin"];
+const PUBLIC_EXACT_PATHS = ["/"];
+
+// In development without Supabase credentials, bypass auth entirely
+const isDevBypass =
+  typeof window !== "undefined" &&
+  (!process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder"));
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
 
+  // Dev bypass: no Supabase configured, let everything through
+  if (isDevBypass) {
+    return <>{children}</>;
+  }
+
   // Allow public paths without auth
-  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
+  const isPublic =
+    PUBLIC_PATHS.some((p) => pathname.startsWith(p)) ||
+    PUBLIC_EXACT_PATHS.includes(pathname);
+
+  if (isPublic) {
     // If already logged in and on auth page, redirect to home
     if (!loading && user && (pathname === "/login" || pathname === "/signup")) {
       router.replace("/");
