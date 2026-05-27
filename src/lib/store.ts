@@ -126,7 +126,7 @@ export function updateTicket(
     ticket.description = updates.description;
   }
   if (updates.dueDate !== undefined) {
-    ticket.dueDate = updates.dueDate ?? undefined;
+    ticket.dueDate = updates.dueDate || undefined;
   }
   ticket.updatedAt = new Date().toISOString();
   persistState();
