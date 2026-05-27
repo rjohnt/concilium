@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Ticket, PersonaId, PRIORITY_LABELS, PRIORITY_COLORS, PriorityLevel } from "@/lib/types";
-import { seedData, getTicket, deleteTicket, updateTicketPriority } from "@/lib/store";
+import { seedData, getTicket, deleteTicket, updateTicket, updateTicketPriority } from "@/lib/store";
 import { getPersona } from "@/lib/personas";
 import { FeedbackPanel } from "@/components/FeedbackPanel";
 import { BuildTrigger } from "@/components/BuildTrigger";
@@ -11,7 +11,9 @@ import { PersonaBadge } from "@/components/PersonaBadge";
 import { JoinSessionModal } from "@/components/JoinSessionModal";
 import { CopyButton } from "@/components/CopyButton";
 import { ConsensusProgress } from "@/components/ConsensusProgress";
+import { DetailSkeleton } from "@/components/Skeleton";
 import { DeleteTicketDialog } from "@/components/DeleteTicketDialog";
+import { EditableField } from "@/components/EditableField";
 import { ArrowLeft, Clock, GitBranch, RefreshCw, Sparkles, ExternalLink, Trash2 } from "lucide-react";
 import Link from "next/link";
 
@@ -65,14 +67,20 @@ export default function TicketDetailPage() {
     }
   };
 
+  const handleUpdateTitle = (newTitle: string) => {
+    if (!ticket) return;
+    const updated = updateTicket(ticket.id, { title: newTitle });
+    if (updated) setTicket({ ...updated });
+  };
+
+  const handleUpdateDescription = (newDescription: string) => {
+    if (!ticket) return;
+    const updated = updateTicket(ticket.id, { description: newDescription });
+    if (updated) setTicket({ ...updated });
+  };
+
   if (loading) {
-    return (
-      <div className="max-w-4xl mx-auto animate-pulse space-y-4">
-        <div className="h-8 bg-elevated rounded w-1/3" />
-        <div className="h-4 bg-elevated rounded w-2/3" />
-        <div className="h-64 bg-elevated rounded" />
-      </div>
-    );
+    return <DetailSkeleton />;
   }
 
   if (!ticket) {
@@ -164,12 +172,23 @@ export default function TicketDetailPage() {
                 </span>
               )}
             </div>
-            <h1 className="text-2xl font-bold text-ink-primary mb-3">
-              {ticket.title}
-            </h1>
-            <p className="text-ink-secondary leading-relaxed whitespace-pre-wrap">
-              {ticket.description}
-            </p>
+            <EditableField
+              value={ticket.title}
+              onSave={handleUpdateTitle}
+              label="Ticket title"
+              type="input"
+              placeholder="Enter ticket title"
+              className="mb-3"
+              displayClassName="text-2xl font-bold text-ink-primary"
+            />
+            <EditableField
+              value={ticket.description}
+              onSave={handleUpdateDescription}
+              label="Ticket description"
+              type="textarea"
+              placeholder="Enter ticket description"
+              className="text-ink-secondary leading-relaxed whitespace-pre-wrap"
+            />
             <div className="flex items-center gap-4 mt-4 text-xs text-ink-muted">
               <span className="flex items-center gap-1">
                 <Clock size={12} />

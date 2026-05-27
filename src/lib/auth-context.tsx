@@ -29,21 +29,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const supabase = useMemo(() => {
-    try {
-      return createClient();
-    } catch {
-      return null;
-    }
-  }, []);
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
-    // If supabase isn't available, just mark as not loading
-    if (!supabase) {
-      setLoading(false);
-      return;
-    }
-
     // Restore session on mount
     const restoreSession = async () => {
       try {
@@ -76,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [supabase]);
 
   const signOut = useCallback(async () => {
-    if (supabase) await supabase.auth.signOut();
+    await supabase.auth.signOut();
   }, [supabase]);
 
   return (

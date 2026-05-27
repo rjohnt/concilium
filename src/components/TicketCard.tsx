@@ -1,4 +1,4 @@
-import { Ticket, PRIORITY_LABELS, PRIORITY_COLORS, PriorityLevel } from "@/lib/types";
+import { Ticket, PRIORITY_LABELS, PRIORITY_COLORS } from "@/lib/types";
 import { getAllPersonas } from "@/lib/personas";
 import { PersonaBadge } from "./PersonaBadge";
 import { CopyButton } from "@/components/CopyButton";

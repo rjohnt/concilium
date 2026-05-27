@@ -1,35 +1,61 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Ticket, PRIORITY_LABELS, PriorityLevel } from "@/lib/types";
+import { useEffect, useState, useMemo } from "react";
+import { Ticket, TicketStatus, PRIORITY_LABELS, PRIORITY_COLORS, PriorityLevel } from "@/lib/types";
 import { seedData, getTickets } from "@/lib/store";
 import { TicketCard } from "@/components/TicketCard";
+import { FilterBar } from "@/components/FilterBar";
+import { DashboardSkeleton } from "@/components/Skeleton";
 import { PlusCircle, Users, Filter } from "lucide-react";
 import Link from "next/link";
 
+type FilterKey = "all" | TicketStatus;
+
 export default function DashboardPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
   const [priorityFilter, setPriorityFilter] = useState<PriorityLevel | null>(null);
 
   useEffect(() => {
     seedData();
     setTickets(getTickets());
+    setLoading(false);
   }, []);
 
-  const filteredTickets = priorityFilter !== null
-    ? tickets.filter((t) => t.priority === priorityFilter)
-    : tickets;
+  const filteredTickets = useMemo(() => {
+    let result = tickets;
+    if (activeFilter !== "all") {
+      result = result.filter((t) => t.status === activeFilter);
+    }
+    if (priorityFilter !== null) {
+      result = result.filter((t) => t.priority === priorityFilter);
+    }
+    return result;
+  }, [tickets, activeFilter, priorityFilter]);
 
-  const draftCount = tickets.filter((t) => t.status === "draft").length;
-  const inReviewCount = tickets.filter((t) => t.status === "in-review").length;
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const t of tickets) {
+      counts[t.status] = (counts[t.status] ?? 0) + 1;
+    }
+    return counts;
+  }, [tickets]);
+
+  const draftCount = statusCounts["draft"] ?? 0;
+  const inReviewCount = statusCounts["in-review"] ?? 0;
+
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <div className="max-w-5xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-white">Tickets</h2>
-          <p className="text-sm text-gray-400 mt-1">
+          <h2 className="text-2xl font-bold text-ink-primary">Tickets</h2>
+          <p className="text-sm text-ink-muted mt-1">
             Multiplayer stakeholder collaboration
           </p>
         </div>
@@ -42,12 +68,12 @@ export default function DashboardPage() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-8">
         <div className="card flex items-center gap-4">
-          <div className="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center">
-            <Users size={20} className="text-gray-400" />
+          <div className="w-10 h-10 rounded-lg bg-elevated flex items-center justify-center">
+            <Users size={20} className="text-ink-muted" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-white">{tickets.length}</p>
-            <p className="text-xs text-gray-500">Total Tickets</p>
+            <p className="text-2xl font-bold text-ink-primary">{tickets.length}</p>
+            <p className="text-xs text-ink-secondary">Total Tickets</p>
           </div>
         </div>
         <div className="card flex items-center gap-4">
@@ -57,33 +83,40 @@ export default function DashboardPage() {
             </span>
           </div>
           <div>
-            <p className="text-2xl font-bold text-white">{inReviewCount}</p>
-            <p className="text-xs text-gray-500">In Review</p>
+            <p className="text-2xl font-bold text-ink-primary">{inReviewCount}</p>
+            <p className="text-xs text-ink-secondary">In Review</p>
           </div>
         </div>
         <div className="card flex items-center gap-4">
-          <div className="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center">
-            <span className="text-gray-400 font-bold text-lg">
+          <div className="w-10 h-10 rounded-lg bg-elevated flex items-center justify-center">
+            <span className="text-ink-muted font-bold text-lg">
               {draftCount}
             </span>
           </div>
           <div>
-            <p className="text-2xl font-bold text-white">{draftCount}</p>
-            <p className="text-xs text-gray-500">Drafts</p>
+            <p className="text-2xl font-bold text-ink-primary">{draftCount}</p>
+            <p className="text-xs text-ink-secondary">Drafts</p>
           </div>
         </div>
       </div>
 
+      {/* Filter bar */}
+      <FilterBar
+        activeFilter={activeFilter}
+        onFilterChange={setActiveFilter}
+        counts={statusCounts}
+      />
+
       {/* Priority filter */}
       <div className="flex items-center gap-2 mb-6">
-        <Filter size={14} className="text-gray-500" />
-        <span className="text-xs text-gray-500 mr-1">Filter:</span>
+        <Filter size={14} className="text-ink-muted" />
+        <span className="text-xs text-ink-muted mr-1">Priority:</span>
         <button
           onClick={() => setPriorityFilter(null)}
           className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
             priorityFilter === null
               ? "bg-brand-900/50 text-brand-400 border-brand-800"
-              : "border-gray-700 text-gray-500 hover:text-gray-300 hover:border-gray-600"
+              : "border-border-subtle text-ink-muted hover:text-ink-primary hover:border-border-default"
           }`}
         >
           All
@@ -94,12 +127,8 @@ export default function DashboardPage() {
             onClick={() => setPriorityFilter(p)}
             className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
               priorityFilter === p
-                ? `${p === 0 ? "bg-red-900/50 text-red-400 border-red-800" :
-                   p === 1 ? "bg-orange-900/50 text-orange-400 border-orange-800" :
-                   p === 2 ? "bg-yellow-900/50 text-yellow-400 border-yellow-800" :
-                   p === 3 ? "bg-gray-800 text-gray-400 border-gray-700" :
-                   "bg-gray-800 text-gray-300 border-gray-600"}`
-                : "border-gray-700 text-gray-500 hover:text-gray-300 hover:border-gray-600"
+                ? PRIORITY_COLORS[p]
+                : "border-border-subtle text-ink-muted hover:text-ink-primary hover:border-border-default"
             }`}
           >
             {PRIORITY_LABELS[p]}
@@ -111,18 +140,26 @@ export default function DashboardPage() {
       <div className="space-y-4">
         {filteredTickets.length === 0 ? (
           <div className="card text-center py-16">
-            <h3 className="text-lg font-medium text-gray-400 mb-2">
-              {priorityFilter !== null ? "No tickets match this priority filter" : "No tickets yet"}
+            <h3 className="text-lg font-medium text-ink-muted mb-2">
+              {priorityFilter !== null
+                ? "No tickets match this priority filter"
+                : activeFilter === "all"
+                ? "No tickets yet"
+                : `No ${activeFilter} tickets`}
             </h3>
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-sm text-ink-secondary mb-4">
               {priorityFilter !== null
                 ? "Try changing the filter or create a new ticket."
-                : "Create your first ticket to start the multiplayer collaboration flow."}
+                : activeFilter === "all"
+                ? "Create your first ticket to start the multiplayer collaboration flow."
+                : "No tickets match this filter."}
             </p>
-            <Link href="/new" className="btn-primary inline-flex">
-              <PlusCircle size={18} />
-              Create First Ticket
-            </Link>
+            {activeFilter === "all" && priorityFilter === null && (
+              <Link href="/new" className="btn-primary inline-flex">
+                <PlusCircle size={18} />
+                Create First Ticket
+              </Link>
+            )}
           </div>
         ) : (
           filteredTickets.map((ticket) => (

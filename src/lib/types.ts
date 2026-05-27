@@ -21,7 +21,7 @@ export const PRIORITY_COLORS: Record<PriorityLevel, string> = {
   1: "bg-orange-900/50 text-orange-400 border-orange-800",
   2: "bg-yellow-900/50 text-yellow-400 border-yellow-800",
   3: "bg-gray-800 text-gray-400 border-gray-700",
-  4: "hidden", // None priority — badge is hidden
+  4: "bg-gray-900/30 text-gray-600 border-gray-800", // None priority — subtle styling
 };
 
 export interface Persona {
