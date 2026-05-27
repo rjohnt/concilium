@@ -1,14 +1,9 @@
 import { Ticket, PersonaId, TicketStatus } from "./types";
 import { getAllPersonas } from "./personas";
-import { getTickets, getTicket } from "./store";
+import { getTicket } from "./store";
 
-// Dynamically import store to avoid circular deps at module level
-async function updateTicketStatus(
-  ticketId: string,
-  status: TicketStatus
-): Promise<void> {
-  const { getTicket: gt } = await import("./store");
-  const ticket = gt(ticketId);
+function updateTicketStatus(ticketId: string, status: TicketStatus): void {
+  const ticket = getTicket(ticketId);
   if (ticket) {
     ticket.status = status;
     ticket.updatedAt = new Date().toISOString();
@@ -41,7 +36,7 @@ export async function calculateConsensus(ticketId: string): Promise<{
 
   // Auto-transition to consensus when threshold met
   if (reached && ticket.status !== "consensus" && ticket.status !== "building" && ticket.status !== "done") {
-    await updateTicketStatus(ticketId, "consensus");
+    updateTicketStatus(ticketId, "consensus");
   }
 
   return { reached, approved, total, percentage };

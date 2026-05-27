@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { PersonaId } from "@/lib/types";
-import { getConsensusProgress } from "@/lib/store";
 import { getAllPersonas } from "@/lib/personas";
 import { PersonaBadge } from "./PersonaBadge";
 import { CheckCircle, Clock, Sparkles, Trophy } from "lucide-react";
@@ -63,7 +62,7 @@ export function ConsensusProgress({
       ? "bg-yellow-400"
       : percentage >= 25
       ? "bg-amber-500"
-      : "bg-gray-600";
+      : "bg-ink-ghost";
 
   const progressGlow =
     percentage >= 75 ? "shadow-[0_0_12px_rgba(52,211,153,0.4)]" : "";
@@ -112,11 +111,11 @@ export function ConsensusProgress({
 
       {/* Progress header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">
+        <h3 className="text-sm font-semibold text-ink-primary uppercase tracking-wider">
           Consensus Progress
         </h3>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-400">
+          <span className="text-sm text-ink-secondary">
             <span
               className={
                 consensusReached ? "text-emerald-400 font-semibold" : ""
@@ -124,7 +123,7 @@ export function ConsensusProgress({
             >
               {approved}
             </span>
-            <span className="text-gray-600">/{total}</span> approved
+            <span className="text-ink-ghost">/{total}</span> approved
           </span>
           <span
             className={`badge text-xs ${
@@ -132,7 +131,7 @@ export function ConsensusProgress({
                 ? "bg-emerald-900/50 text-emerald-400"
                 : percentage >= 50
                 ? "bg-yellow-900/50 text-yellow-400"
-                : "bg-gray-800 text-gray-400"
+                : "bg-elevated text-ink-secondary"
             }`}
           >
             {Math.round(percentage)}%
@@ -141,7 +140,7 @@ export function ConsensusProgress({
       </div>
 
       {/* Progress bar */}
-      <div className="relative h-3 bg-gray-800 rounded-full overflow-hidden">
+      <div className="relative h-3 bg-elevated rounded-full overflow-hidden">
         {/* Background grid effect */}
         <div
           className="absolute inset-0 opacity-10"
@@ -168,7 +167,7 @@ export function ConsensusProgress({
 
       {/* Per-persona status */}
       <div className="space-y-2">
-        <p className="text-xs text-gray-500 uppercase tracking-wider">
+        <p className="text-xs text-ink-muted uppercase tracking-wider">
           Persona Status
         </p>
         <div className="grid grid-cols-2 gap-2">
@@ -176,7 +175,7 @@ export function ConsensusProgress({
           {approvedPersonas.map((persona) => (
             <div
               key={persona.id}
-              className="flex items-center gap-2 p-2 rounded-lg bg-gray-800/40 border border-gray-800"
+              className="flex items-center gap-2 p-2 rounded-lg bg-elevated/40 border border-border-subtle"
             >
               <PersonaBadge personaId={persona.id} approved={true} />
               <CheckCircle size={14} className="text-emerald-400 ml-auto flex-shrink-0" />
@@ -186,10 +185,10 @@ export function ConsensusProgress({
           {remaining.map((persona) => (
             <div
               key={persona.id}
-              className="flex items-center gap-2 p-2 rounded-lg bg-gray-800/20 border border-gray-800/50 opacity-70"
+              className="flex items-center gap-2 p-2 rounded-lg bg-elevated/20 border border-border-subtle/50 opacity-70"
             >
               <PersonaBadge personaId={persona.id} approved={false} />
-              <Clock size={14} className="text-gray-500 ml-auto flex-shrink-0" />
+              <Clock size={14} className="text-ink-muted ml-auto flex-shrink-0" />
             </div>
           ))}
         </div>

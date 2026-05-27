@@ -7,7 +7,6 @@ import { seedData, getTicket, getConsensusProgress } from "@/lib/store";
 import { getAllPersonas, getPersona } from "@/lib/personas";
 import { SessionPrompt } from "@/components/SessionPrompt";
 import { ConsensusProgress } from "@/components/ConsensusProgress";
-import { PersonaBadge } from "@/components/PersonaBadge";
 import { JoinSessionModal } from "@/components/JoinSessionModal";
 import {
   ArrowLeft,
@@ -62,9 +61,9 @@ export default function PromptSessionPage() {
     return (
       <div className="h-screen flex items-center justify-center">
         <div className="animate-pulse space-y-4 w-full max-w-2xl">
-          <div className="h-8 bg-gray-800 rounded w-1/3 mx-auto" />
-          <div className="h-4 bg-gray-800 rounded w-2/3 mx-auto" />
-          <div className="h-64 bg-gray-800 rounded" />
+          <div className="h-8 bg-elevated rounded w-1/3 mx-auto" />
+          <div className="h-4 bg-elevated rounded w-2/3 mx-auto" />
+          <div className="h-64 bg-elevated rounded" />
         </div>
       </div>
     );
@@ -74,7 +73,7 @@ export default function PromptSessionPage() {
     return (
       <div className="h-screen flex items-center justify-center">
         <div className="text-center">
-          <h3 className="text-lg font-medium text-gray-400 mb-2">
+          <h3 className="text-lg font-medium text-ink-secondary mb-2">
             Ticket not found
           </h3>
           <Link href="/" className="btn-secondary inline-flex mt-4">
@@ -89,7 +88,7 @@ export default function PromptSessionPage() {
   const activePersonaObj = sessionPersona ? getPersona(sessionPersona) : null;
 
   return (
-    <div className="h-screen flex flex-col bg-gray-950">
+    <div className="h-screen flex flex-col bg-deep">
       {/* Join Session Modal */}
       <JoinSessionModal
         isOpen={showJoinModal && !sessionPersona}
@@ -101,22 +100,22 @@ export default function PromptSessionPage() {
       />
 
       {/* Top bar */}
-      <header className="flex-shrink-0 border-b border-gray-800 bg-gray-900/80 backdrop-blur-sm">
+      <header className="flex-shrink-0 border-b border-border-subtle bg-raised/80 backdrop-blur-sm">
         <div className="flex items-center justify-between h-14 px-6">
           <div className="flex items-center gap-4">
             <Link
               href={`/ticket/${ticket.id}`}
-              className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-200 transition-colors"
+              className="flex items-center gap-1.5 text-sm text-ink-secondary hover:text-ink-primary transition-colors"
             >
               <ArrowLeft size={16} />
               <span className="hidden sm:inline">Back to Ticket</span>
             </Link>
-            <div className="h-5 w-px bg-gray-800" />
+            <div className="h-5 w-px bg-border-subtle" />
             <div className="flex items-center gap-2">
-              <span className="text-sm font-mono text-gray-500">
+              <span className="text-sm font-mono text-ink-muted">
                 {ticket.id}
               </span>
-              <span className="text-sm font-medium text-gray-300 truncate max-w-[200px] sm:max-w-md">
+              <span className="text-sm font-medium text-ink-primary truncate max-w-[200px] sm:max-w-md">
                 {ticket.title}
               </span>
             </div>
@@ -125,17 +124,17 @@ export default function PromptSessionPage() {
           <div className="flex items-center gap-3">
             {/* Active persona */}
             {activePersonaObj ? (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-800/60 border border-gray-700/50">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-elevated/60 border border-border-visible/50">
                 <span>{activePersonaObj.emoji}</span>
-                <span className="text-sm font-medium text-gray-200">
+                <span className="text-sm font-medium text-ink-primary">
                   {activePersonaObj.label}
                 </span>
                 <button
                   onClick={handleSwitchPersona}
-                  className="ml-1 p-1 rounded hover:bg-gray-700 transition-colors"
+                  className="ml-1 p-1 rounded hover:bg-overlay transition-colors"
                   title="Switch persona"
                 >
-                  <RefreshCw size={14} className="text-gray-400" />
+                  <RefreshCw size={14} className="text-ink-secondary" />
                 </button>
               </div>
             ) : (
@@ -154,21 +153,21 @@ export default function PromptSessionPage() {
       {/* Main content: two-panel layout */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left panel: ticket info + consensus */}
-        <div className="w-80 lg:w-96 flex-shrink-0 border-r border-gray-800 bg-gray-900/40 overflow-y-auto p-6">
+        <div className="w-80 lg:w-96 flex-shrink-0 border-r border-border-subtle bg-base/40 overflow-y-auto p-6">
           <div className="space-y-6">
             {/* Session title */}
             <div>
-              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-xs font-medium mb-3">
+              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-gold/10 border border-gold/20 text-gold text-xs font-medium mb-3">
                 <Sparkles size={12} />
                 Prompt Session
               </div>
-              <h1 className="text-lg font-bold text-white mb-2">
+              <h1 className="text-lg font-bold text-ink-primary mb-2">
                 {ticket.title}
               </h1>
-              <p className="text-sm text-gray-400 leading-relaxed whitespace-pre-wrap">
+              <p className="text-sm text-ink-secondary leading-relaxed whitespace-pre-wrap">
                 {ticket.description}
               </p>
-              <div className="flex items-center gap-3 mt-3 text-xs text-gray-500">
+              <div className="flex items-center gap-3 mt-3 text-xs text-ink-muted">
                 <span className="flex items-center gap-1">
                   <Clock size={11} />
                   {new Date(ticket.createdAt).toLocaleDateString()}
@@ -180,7 +179,7 @@ export default function PromptSessionPage() {
                 <span
                   className={`badge ${
                     ticket.status === "draft"
-                      ? "bg-gray-800 text-gray-400"
+                      ? "bg-elevated text-ink-secondary"
                       : ticket.status === "in-review"
                       ? "bg-yellow-900/50 text-yellow-400"
                       : ticket.status === "consensus"
@@ -202,21 +201,21 @@ export default function PromptSessionPage() {
 
             {/* Stats */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 rounded-lg bg-gray-800/40 border border-gray-800">
-                <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
+              <div className="p-3 rounded-lg bg-elevated/40 border border-border-subtle">
+                <div className="flex items-center gap-1.5 text-xs text-ink-muted mb-1">
                   <MessageSquare size={12} />
                   Feedback
                 </div>
-                <p className="text-2xl font-bold text-white">
+                <p className="text-2xl font-bold text-ink-primary">
                   {ticket.feedback.length}
                 </p>
               </div>
-              <div className="p-3 rounded-lg bg-gray-800/40 border border-gray-800">
-                <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
+              <div className="p-3 rounded-lg bg-elevated/40 border border-border-subtle">
+                <div className="flex items-center gap-1.5 text-xs text-ink-muted mb-1">
                   <Sparkles size={12} />
                   Consensus
                 </div>
-                <p className="text-2xl font-bold text-white">
+                <p className="text-2xl font-bold text-ink-primary">
                   {Math.round(
                     (ticket.approvals.length / getAllPersonas().length) * 100
                   )}
@@ -236,13 +235,13 @@ export default function PromptSessionPage() {
           ) : (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center max-w-sm">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-800 flex items-center justify-center">
-                  <Sparkles size={28} className="text-gray-600" />
+                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-elevated flex items-center justify-center">
+                  <Sparkles size={28} className="text-ink-ghost" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-400 mb-2">
+                <h3 className="text-lg font-semibold text-ink-secondary mb-2">
                   Ready to Start
                 </h3>
-                <p className="text-sm text-gray-500 mb-6">
+                <p className="text-sm text-ink-muted mb-6">
                   Join this session as a persona to provide AI-mediated
                   feedback. Your perspective will help shape this feature.
                 </p>

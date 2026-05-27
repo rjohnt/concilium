@@ -35,6 +35,11 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
   const persona = getPersona(activePersona);
   const allPersonas = getAllPersonas();
 
+  // Sync feedbackEntries when ticket.feedback changes externally
+  useEffect(() => {
+    setFeedbackEntries(ticket.feedback);
+  }, [ticket.feedback]);
+
   // Scroll to bottom when new feedback arrives
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -85,6 +90,12 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
     }
   };
 
+  // Determine platform for keyboard shortcut hint
+  const isMac = typeof navigator !== "undefined" &&
+    navigator.userAgentData?.platform === "macOS" ||
+    (typeof navigator !== "undefined" &&
+      /Mac/.test(navigator.userAgent));
+
   // Sort feedback chronologically
   const sortedFeedback = [...feedbackEntries].sort(
     (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
@@ -93,14 +104,14 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
   return (
     <div className="space-y-4">
       {/* Prompt template header */}
-      <div className="p-4 rounded-xl bg-gray-900/80 border border-gray-800">
+      <div className="p-4 rounded-xl bg-raised/80 border border-border-subtle">
         <div className="flex items-center gap-2 mb-3">
           <span className="text-xl">{persona?.emoji}</span>
           <div>
-            <h3 className="text-sm font-semibold text-white">
+            <h3 className="text-sm font-semibold text-ink-primary">
               {persona?.label} Assessment
             </h3>
-            <p className="text-xs text-gray-500">{persona?.expertise}</p>
+            <p className="text-xs text-ink-muted">{persona?.expertise}</p>
           </div>
           {hasApproved && (
             <span className="ml-auto badge bg-emerald-900/50 text-emerald-400">
@@ -111,33 +122,33 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
         </div>
 
         {/* Prompt template */}
-        <div className="p-3 rounded-lg bg-gray-950/80 border border-gray-800/60 mb-3">
-          <p className="text-xs text-gray-400 font-mono leading-relaxed whitespace-pre-wrap">
+        <div className="p-3 rounded-lg bg-deep/80 border border-border-subtle/60 mb-3">
+          <p className="text-xs text-ink-secondary font-mono leading-relaxed whitespace-pre-wrap">
             {persona?.promptTemplate}
           </p>
         </div>
 
         {/* Ticket description context */}
-        <div className="p-3 rounded-lg bg-gray-800/40 border border-gray-800/60">
-          <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+        <div className="p-3 rounded-lg bg-elevated/40 border border-border-subtle/60">
+          <p className="text-xs text-ink-muted uppercase tracking-wider mb-1">
             Ticket
           </p>
-          <p className="text-sm font-medium text-gray-200">{ticket.title}</p>
-          <p className="text-sm text-gray-400 mt-1 leading-relaxed">
+          <p className="text-sm font-medium text-ink-primary">{ticket.title}</p>
+          <p className="text-sm text-ink-secondary mt-1 leading-relaxed">
             {ticket.description}
           </p>
         </div>
       </div>
 
       {/* Chat-like feedback timeline */}
-      <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+      <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
         {sortedFeedback.length === 0 && (
           <div className="text-center py-8">
             <MessageSquare
               size={32}
-              className="mx-auto text-gray-700 mb-2"
+              className="mx-auto text-ink-ghost mb-2"
             />
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-ink-ghost">
               No feedback yet. Be the first to weigh in!
             </p>
           </div>
@@ -154,8 +165,8 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
               {/* Avatar */}
               <div
                 className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm ${
-                  entryPersona?.color || "bg-gray-700"
-                } ${isCurrentPersona ? "ring-2 ring-brand-400" : ""}`}
+                  entryPersona?.color || "bg-overlay"
+                } ${isCurrentPersona ? "ring-2 ring-gold" : ""}`}
               >
                 {entryPersona?.emoji}
               </div>
@@ -169,15 +180,15 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
                 <div
                   className={`inline-block p-3 rounded-xl text-left ${
                     isCurrentPersona
-                      ? "bg-brand-600/20 border border-brand-500/30 rounded-tr-sm"
-                      : "bg-gray-800 border border-gray-700 rounded-tl-sm"
+                      ? "bg-gold/20 border border-gold/30 rounded-tr-sm"
+                      : "bg-elevated border border-border-visible rounded-tl-sm"
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-medium text-gray-300">
+                    <span className="text-xs font-medium text-ink-primary">
                       {entryPersona?.label}
                     </span>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-ink-muted">
                       {new Date(entry.createdAt).toLocaleTimeString([], {
                         hour: "2-digit",
                         minute: "2-digit",
@@ -187,7 +198,7 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
                       <ThumbsUp size={12} className="text-emerald-400" />
                     )}
                   </div>
-                  <p className="text-sm text-gray-200 whitespace-pre-wrap">
+                  <p className="text-sm text-ink-primary whitespace-pre-wrap">
                     {entry.content}
                   </p>
                 </div>
@@ -197,7 +208,7 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
                       <CheckCircle size={10} /> Approved
                     </span>
                   ) : (
-                    <span className="text-xs text-gray-500 flex items-center gap-1 justify-end">
+                    <span className="text-xs text-ink-muted flex items-center gap-1 justify-end">
                       <Clock size={10} /> Feedback
                     </span>
                   )}
@@ -222,7 +233,7 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
       )}
 
       {/* Input area */}
-      <div className="border-t border-gray-800 pt-4 space-y-3">
+      <div className="border-t border-border-subtle pt-4 space-y-3">
         {/* Tabs: who has/hasn't submitted */}
         <div className="flex flex-wrap gap-2">
           {allPersonas.map((p) => {
@@ -235,12 +246,12 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
                 key={p.id}
                 className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs ${
                   p.id === activePersona
-                    ? "bg-brand-500/20 border border-brand-500/30 text-brand-300"
+                    ? "bg-gold/20 border border-gold/30 text-gold-light"
                     : approvedP
                     ? "bg-emerald-900/20 border border-emerald-500/20 text-emerald-400"
                     : submitted
                     ? "bg-yellow-900/20 border border-yellow-500/20 text-yellow-400"
-                    : "bg-gray-800/50 border border-gray-700/30 text-gray-500"
+                    : "bg-elevated/50 border border-border-visible/30 text-ink-muted"
                 }`}
               >
                 <span>{p.emoji}</span>
@@ -270,17 +281,17 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
               : `Write your assessment as ${persona?.label}...`
           }
           rows={4}
-          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
+          className="w-full bg-elevated border border-border-visible rounded-lg px-4 py-3 text-sm text-ink-primary placeholder-ink-muted focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent resize-none"
         />
 
         {/* Actions row */}
         <div className="flex items-center justify-between">
-          <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer select-none">
+          <label className="flex items-center gap-2 text-sm text-ink-secondary cursor-pointer select-none">
             <input
               type="checkbox"
               checked={approved}
               onChange={(e) => setApproved(e.target.checked)}
-              className="rounded bg-gray-700 border-gray-600 text-brand-500 focus:ring-brand-500"
+              className="rounded bg-overlay border-border-visible text-gold focus:ring-gold"
             />
             <span>Approve as {persona?.label}</span>
             {approved && (
@@ -289,8 +300,8 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
           </label>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500 hidden sm:inline">
-              {navigator?.platform?.includes("Mac") ? "⌘" : "Ctrl"}+Enter
+            <span className="text-xs text-ink-muted hidden sm:inline">
+              {isMac ? "⌘" : "Ctrl"}+Enter
             </span>
             <button
               onClick={handleSubmit}
