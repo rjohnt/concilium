@@ -27,22 +27,26 @@ Instead of throw-it-over-the-wall ticket workflows, Concilium creates a *living 
 
 ## Status
 
-🏗️ **v0.1** — Foundation built.
+🏗️ **v0.2** — AI-mediated prompting + consensus pipeline built.
 
 ### What Works
 - Ticket dashboard with persona status indicators and consensus progress bars
 - Ticket detail page with stakeholder feedback panel
 - Per-persona feedback entry (Engineer, Designer, PO, QA)
+- **AI-mediated persona prompting** — click "Generate AI Feedback" to get AI-drafted analysis in the selected persona's voice
+- **Consensus auto-build pipeline** — when all 4 personas approve, ticket auto-advances: in-review → consensus → building → done
+- **Session timeline** — chronological activity feed showing all persona contributions, AI events, and build phases
+- **Build progress visualization** — 6-phase pipeline with live phase indicators and build logs
 - Approval tracking and consensus visualization
 - New ticket creation flow
 - Seed data with realistic multi-persona feedback
 
 ### Next Up
-- AI-mediated persona prompting sessions (the core innovation)
-- Backend API routes for persistence
-- Session-based multi-user collaboration
-- Consensus auto-build trigger
+- Real LLM integration (swap template-driven AI for OpenAI/Anthropic/Hermes Agent)
+- Database persistence (SQLite or Supabase tables)
+- Real-time multi-user session collaboration (WebSocket)
 - Designer persona UI polish
+- GitHub integration for actual code generation during build phase
 
 ## Development
 
