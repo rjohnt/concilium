@@ -20,7 +20,7 @@ const mockStorage = getMockStorage();
 vi.stubGlobal("localStorage", mockStorage);
 
 // Also stub window so the storage event listener doesn't crash
-vi.stubGlobal("window", { addEventListener: vi.fn() });
+vi.stubGlobal("window", { addEventListener: vi.fn(), dispatchEvent: vi.fn() });
 
 // Now import store (it calls loadTickets() at module load time)
 import {

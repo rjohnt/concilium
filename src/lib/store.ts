@@ -39,6 +39,9 @@ function persistState(): void {
   persistTimer = setTimeout(() => {
     saveTickets(tickets, nextTicketId, nextFeedbackId, nextBuildReportId);
     persistTimer = null;
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("tickets-changed"));
+    }
   }, 50);
 }
 
@@ -409,6 +412,11 @@ export function seedData(): void {
     "Implement per-tenant rate limiting on the public API to prevent abuse and ensure fair usage across customers. Configurable limits per tier (free, pro, enterprise).",
     3 // Low
   );
+
+  // Notify listeners after seeding so sidebar badge updates on initial load
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("tickets-changed"));
+  }
 }
 
 /**
