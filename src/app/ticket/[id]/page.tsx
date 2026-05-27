@@ -11,6 +11,7 @@ import { PersonaBadge } from "@/components/PersonaBadge";
 import { JoinSessionModal } from "@/components/JoinSessionModal";
 import { CopyButton } from "@/components/CopyButton";
 import { ConsensusProgress } from "@/components/ConsensusProgress";
+import { DetailSkeleton } from "@/components/Skeleton";
 import { DeleteTicketDialog } from "@/components/DeleteTicketDialog";
 import { ArrowLeft, Clock, GitBranch, RefreshCw, Sparkles, ExternalLink, Trash2 } from "lucide-react";
 import Link from "next/link";
@@ -36,7 +37,11 @@ export default function TicketDetailPage() {
   }, [params.id]);
 
   useEffect(() => {
-    loadTicket();
+    // Brief delay to show skeleton loading state
+    const timer = setTimeout(() => {
+      loadTicket();
+    }, 1500);
+    return () => clearTimeout(timer);
   }, [loadTicket]);
 
   // After ticket loads, show the join modal if no session is active
@@ -66,13 +71,7 @@ export default function TicketDetailPage() {
   };
 
   if (loading) {
-    return (
-      <div className="max-w-4xl mx-auto animate-pulse space-y-4">
-        <div className="h-8 bg-elevated rounded w-1/3" />
-        <div className="h-4 bg-elevated rounded w-2/3" />
-        <div className="h-64 bg-elevated rounded" />
-      </div>
-    );
+    return <DetailSkeleton />;
   }
 
   if (!ticket) {
