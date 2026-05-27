@@ -27,7 +27,7 @@ Instead of throw-it-over-the-wall ticket workflows, Concilium creates a *living 
 
 ## Status
 
-🏗️ **v0.1** — Foundation built.
+🏗️ **v0.2** — AI-mediated prompting pipeline operational.
 
 ### What Works
 - Ticket dashboard with persona status indicators and consensus progress bars
@@ -36,13 +36,17 @@ Instead of throw-it-over-the-wall ticket workflows, Concilium creates a *living 
 - Approval tracking and consensus visualization
 - New ticket creation flow
 - Seed data with realistic multi-persona feedback
+- **AI-mediated prompting session** — write raw thoughts, mediator refines through persona lens
+- **Mediator engine** — rules-based persona-aware response generation (concerns, recommendations, follow-ups)
+- **`/api/prompt` route** — GET for session context, POST for mediation
+- **Multi-turn conversation** — follow-up question chaining within a session
+- **Consensus auto-build trigger** — auto-transitions draft→in-review→consensus→building→done
 
 ### Next Up
-- AI-mediated persona prompting sessions (the core innovation)
-- Backend API routes for persistence
-- Session-based multi-user collaboration
-- Consensus auto-build trigger
-- Designer persona UI polish
+- Real LLM integration to replace rules-based mediator (swap in Claude/GPT)
+- Session-based multi-user collaboration (multiple real users weighing in simultaneously)
+- Backend persistence (SQLite/Postgres replacing localStorage)
+- Designer persona UI polish / design system refinements
 
 ## Development
 
