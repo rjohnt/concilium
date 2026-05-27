@@ -35,11 +35,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   }
 
   // Redirect to login if not authenticated
-  // TEMPORARILY BYPASSED for screenshot
-  // if (!user) {
-  //   router.replace("/login");
-  //   return null;
-  // }
+  if (!user) {
+    router.replace("/login");
+    return null;
+  }
 
   return <>{children}</>;
 }
