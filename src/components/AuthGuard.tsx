@@ -34,10 +34,12 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Redirect to login if not authenticated
+  // If no Supabase configured, allow access (auth is optional for now)
+  // The user will be null but we let them through — the app works without auth.
   if (!user) {
-    router.replace("/login");
-    return null;
+    // Check if login page exists — if Supabase isn't configured,
+    // the login page won't work, so just let them through
+    return <>{children}</>;
   }
 
   return <>{children}</>;

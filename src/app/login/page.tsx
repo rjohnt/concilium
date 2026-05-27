@@ -20,6 +20,7 @@ export default function LoginPage() {
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!supabase) return;
     setError("");
     setLoading(true);
 
@@ -38,6 +39,7 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = async () => {
+    if (!supabase) return;
     setGoogleLoading(true);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -66,6 +68,22 @@ export default function LoginPage() {
 
         {/* Auth Card */}
         <div className="bg-raised border border-border-subtle rounded-xl p-6">
+          {!supabase ? (
+            <div className="text-center py-8">
+              <p className="text-ink-muted text-sm mb-2">Authentication not configured</p>
+              <p className="text-ink-ghost text-xs">
+                Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY
+                to enable login.
+              </p>
+              <Link
+                href="/"
+                className="inline-block mt-4 text-sm text-gold hover:text-gold-light"
+              >
+                Back to Dashboard →
+              </Link>
+            </div>
+          ) : (
+            <>
           {message && (
             <div className="mb-4 bg-gold/10 border border-gold/30 rounded-lg px-4 py-2.5 text-sm text-gold">
               {message}
@@ -182,6 +200,8 @@ export default function LoginPage() {
               Sign in
             </button>
           </form>
+          </>
+          )}
         </div>
 
         {/* Sign up link */}

@@ -1,4 +1,12 @@
-import { Ticket, FeedbackEntry, PersonaId, TicketStatus } from "./types";
+import {
+  Ticket,
+  FeedbackEntry,
+  PersonaId,
+  TicketStatus,
+  BuildPhase,
+  SessionEvent,
+  BuildState,
+} from "./types";
 import { getAllPersonas } from "./personas";
 
 // === In-memory store ===
@@ -7,6 +15,7 @@ import { getAllPersonas } from "./personas";
 let tickets: Ticket[] = [];
 let nextTicketId = 1;
 let nextFeedbackId = 1;
+let nextEventId = 1;
 
 function generateId(prefix: string, counter: number): string {
   return `${prefix}-${String(counter).padStart(3, "0")}`;
@@ -39,8 +48,11 @@ export function createTicket(
     updatedAt: now,
     feedback: [],
     approvals: [],
+    sessionEvents: [],
+    buildState: null,
   };
   tickets.push(ticket);
+  addSessionEvent(id, "persona_joined", "Ticket created — session is open.", undefined);
   return ticket;
 }
 
@@ -50,7 +62,8 @@ export function addFeedback(
   ticketId: string,
   personaId: PersonaId,
   content: string,
-  approved: boolean
+  approved: boolean,
+  source: "human" | "ai" = "human"
 ): FeedbackEntry | null {
   const ticket = tickets.find((t) => t.id === ticketId);
   if (!ticket) return null;
@@ -63,6 +76,7 @@ export function addFeedback(
     content,
     createdAt: new Date().toISOString(),
     approved,
+    source,
   };
 
   ticket.feedback.push(entry);
@@ -80,20 +94,53 @@ export function addFeedback(
     ticket.status = "in-review";
   }
 
+  // Add session event
+  const sourceLabel = source === "ai" ? " (AI-generated)" : "";
+  addSessionEvent(
+    ticketId,
+    "feedback",
+    `${personaId}${sourceLabel}: ${approved ? "APPROVED" : "COMMENTED"} — "${content.slice(0, 80)}${content.length > 80 ? "..." : ""}"`,
+    personaId,
+    { approved: String(approved), source }
+  );
+
+  // Check consensus after feedback
+  checkConsensus(ticket);
+
   return entry;
 }
 
-export function getFeedbackHistory(
+// --- Session Events ---
+
+export function addSessionEvent(
   ticketId: string,
-  personaId?: PersonaId
-): FeedbackEntry[] {
+  type: SessionEvent["type"],
+  message: string,
+  personaId?: PersonaId,
+  metadata?: Record<string, string>
+): SessionEvent | null {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  if (!ticket) return null;
+
+  const event: SessionEvent = {
+    id: generateId("EVT", nextEventId++),
+    ticketId,
+    type,
+    personaId,
+    message,
+    timestamp: new Date().toISOString(),
+    metadata,
+  };
+
+  ticket.sessionEvents.push(event);
+  return event;
+}
+
+export function getSessionEvents(ticketId: string): SessionEvent[] {
   const ticket = tickets.find((t) => t.id === ticketId);
   if (!ticket) return [];
-  const entries = personaId
-    ? ticket.feedback.filter((f) => f.personaId === personaId)
-    : ticket.feedback;
-  return entries.sort(
-    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  return ticket.sessionEvents.sort(
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
   );
 }
 
@@ -115,6 +162,136 @@ export function getConsensusProgress(ticketId: string): {
     approved: ticket.approvals.length,
     remaining,
   };
+}
+
+function checkConsensus(ticket: Ticket): void {
+  const consensus = getConsensusProgress(ticket.id);
+
+  if (
+    consensus.remaining.length === 0 &&
+    consensus.total > 0 &&
+    (ticket.status === "in-review" || ticket.status === "draft")
+  ) {
+    // All personas approved — transition to consensus
+    ticket.status = "consensus";
+    addSessionEvent(
+      ticket.id,
+      "consensus",
+      "🎉 All personas have approved! Consensus reached. Build will begin automatically.",
+      undefined
+    );
+
+    // Auto-trigger build after a short delay (handled via API route in real app)
+    triggerBuild(ticket);
+  }
+}
+
+// --- Build Pipeline ---
+
+function triggerBuild(ticket: Ticket): void {
+  if (ticket.status !== "consensus") return;
+  if (ticket.buildState && ticket.buildState.phase !== "failed") return;
+
+  ticket.status = "building";
+  const now = new Date().toISOString();
+
+  ticket.buildState = {
+    phase: "queued",
+    startedAt: now,
+    log: [],
+    completedAt: undefined,
+  };
+
+  addSessionEvent(
+    ticket.id,
+    "build_start",
+    "🔨 Build pipeline initiated. The combined stakeholder feedback will now be synthesized into implementation.",
+    undefined
+  );
+
+  // Simulate build phases (in production, this would be a real pipeline)
+  simulateBuild(ticket);
+}
+
+function simulateBuild(ticket: Ticket): void {
+  const phases: BuildPhase[] = [
+    "analyzing",
+    "scaffolding",
+    "implementing",
+    "testing",
+    "deploying",
+    "complete",
+  ];
+
+  const tick = (index: number) => {
+    if (index >= phases.length) return;
+    if (!ticket.buildState) return;
+
+    const phase = phases[index];
+    ticket.buildState.phase = phase;
+
+    const messages: Record<BuildPhase, string> = {
+      queued: "Build queued — preparing environment.",
+      analyzing: "Analyzing stakeholder feedback and generating implementation plan...",
+      scaffolding: "Scaffolding project structure from consensus-driven requirements...",
+      implementing: "Implementing feature based on combined persona feedback...",
+      testing: "Running test suites and acceptance criteria validation...",
+      deploying: "🚀 Deploying to staging environment...",
+      complete: "✅ Build complete! Feature deployed successfully.",
+      failed: "❌ Build failed. Review logs for details.",
+    };
+
+    ticket.buildState.log.push(messages[phase]);
+    addSessionEvent(ticket.id, "build_phase", messages[phase], undefined);
+
+    // Move to next phase
+    setTimeout(() => {
+      if (index === phases.length - 1) {
+        // Build complete
+        if (ticket.buildState) {
+          ticket.buildState.completedAt = new Date().toISOString();
+        }
+        ticket.status = "done";
+        addSessionEvent(
+          ticket.id,
+          "build_complete",
+          "🎉 Build finished successfully. Ticket is now DONE.",
+          undefined
+        );
+      } else {
+        tick(index + 1);
+      }
+    }, 800 + Math.random() * 400);
+  };
+
+  // Start after a brief "queued" pause with faster times in dev
+  const isBrowser = typeof window !== "undefined";
+  setTimeout(() => tick(0), isBrowser ? 1000 : 200);
+}
+
+export function retryBuild(ticketId: string): boolean {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  if (!ticket || !ticket.buildState || ticket.buildState.phase !== "failed")
+    return false;
+
+  ticket.buildState = null;
+  ticket.status = "consensus";
+  triggerBuild(ticket);
+  return true;
+}
+
+export function getFeedbackHistory(
+  ticketId: string,
+  personaId?: PersonaId
+): FeedbackEntry[] {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  if (!ticket) return [];
+  const entries = personaId
+    ? ticket.feedback.filter((f) => f.personaId === personaId)
+    : ticket.feedback;
+  return entries.sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  );
 }
 
 // --- Seed Data ---

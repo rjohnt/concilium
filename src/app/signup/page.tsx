@@ -18,6 +18,7 @@ export default function SignupPage() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!supabase) return;
     setError("");
 
     if (password !== confirmPassword) {

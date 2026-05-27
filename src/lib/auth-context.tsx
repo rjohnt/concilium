@@ -32,6 +32,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
+    if (!supabase) {
+      // No Supabase configured — skip auth, consider user "authenticated"
+      setLoading(false);
+      return;
+    }
+
     // Restore session on mount
     const restoreSession = async () => {
       try {
@@ -64,7 +70,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [supabase]);
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
   }, [supabase]);
 
   return (

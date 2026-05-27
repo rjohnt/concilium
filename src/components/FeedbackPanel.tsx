@@ -1,10 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { PersonaId, Ticket, FeedbackEntry } from "@/lib/types";
+import { PersonaId, Ticket, FeedbackEntry, AIPromptResponse } from "@/lib/types";
 import { getPersona } from "@/lib/personas";
 import { PersonaBadge } from "./PersonaBadge";
-import { MessageSquare, CheckCircle, ThumbsUp, RefreshCw } from "lucide-react";
+import {
+  MessageSquare,
+  CheckCircle,
+  ThumbsUp,
+  RefreshCw,
+  Sparkles,
+  Loader,
+  Bot,
+} from "lucide-react";
 
 export function FeedbackPanel({
   ticket,
@@ -30,9 +38,13 @@ export function FeedbackPanel({
       setActivePersona(initialPersona);
     }
   }, [initialPersona]);
+
   const [content, setContent] = useState("");
   const [approved, setApproved] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiResponse, setAiResponse] = useState<AIPromptResponse | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   const persona = activePersona ? getPersona(activePersona) : null;
 
@@ -41,19 +53,56 @@ export function FeedbackPanel({
     ? ticket.feedback.filter((f) => f.personaId === activePersona)
     : [];
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (source: "human" | "ai" = "human") => {
     if (!activePersona || !content.trim()) return;
     setSubmitting(true);
 
-    // In a real app this would be an API call
-    await new Promise((r) => setTimeout(r, 300));
     const { addFeedback } = await import("@/lib/store");
-    addFeedback(ticket.id, activePersona, content.trim(), approved);
+    addFeedback(ticket.id, activePersona, content.trim(), approved, source);
 
     setContent("");
     setApproved(false);
+    setAiResponse(null);
+    setAiError(null);
     setSubmitting(false);
     onFeedbackAdded();
+  };
+
+  const handleGenerateAI = async () => {
+    if (!activePersona) return;
+    setAiGenerating(true);
+    setAiError(null);
+    setAiResponse(null);
+
+    try {
+      const res = await fetch(`/api/sessions/${ticket.id}/prompt`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ personaId: activePersona }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to generate AI feedback");
+      }
+
+      const data: AIPromptResponse = await res.json();
+      setAiResponse(data);
+      setContent(data.feedback);
+      setApproved(data.recommendedApproval);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      setAiError(message);
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
+  const handleClearAI = () => {
+    setAiResponse(null);
+    setAiError(null);
+    setContent("");
+    setApproved(false);
   };
 
   return (
@@ -79,7 +128,11 @@ export function FeedbackPanel({
           return (
             <button
               key={pid}
-              onClick={() => setActivePersona(pid)}
+              onClick={() => {
+                setActivePersona(pid);
+                setAiResponse(null);
+                setAiError(null);
+              }}
               className={`transition-all ${
                 activePersona === pid
                   ? "ring-2 ring-brand-400 rounded-full scale-105"
@@ -109,23 +162,96 @@ export function FeedbackPanel({
               </span>{" "}
               — {persona.expertise}
             </p>
-            {onSwitchPersona && (
+            <div className="flex items-center gap-2">
+              {onSwitchPersona && (
+                <button
+                  onClick={onSwitchPersona}
+                  className="flex items-center gap-1 text-xs text-gray-500 hover:text-brand-400 transition-colors"
+                  title="Switch persona"
+                >
+                  <RefreshCw size={12} />
+                  Switch Persona
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* AI Generation Button */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleGenerateAI}
+              disabled={aiGenerating}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium
+                bg-purple-900/20 text-purple-400 border border-purple-500/20
+                hover:bg-purple-900/40 hover:border-purple-500/40
+                disabled:opacity-50 disabled:cursor-not-allowed
+                transition-all"
+            >
+              {aiGenerating ? (
+                <>
+                  <Loader size={12} className="animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Bot size={12} />
+                  Generate AI Feedback
+                </>
+              )}
+            </button>
+            {aiResponse && (
               <button
-                onClick={onSwitchPersona}
-                className="flex items-center gap-1 text-xs text-gray-500 hover:text-brand-400 transition-colors"
-                title="Switch persona"
+                onClick={handleClearAI}
+                className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
               >
-                <RefreshCw size={12} />
-                Switch Persona
+                Clear
               </button>
             )}
           </div>
 
+          {/* AI response info */}
+          {aiResponse && (
+            <div className="bg-purple-900/10 border border-purple-500/20 rounded-lg p-3 space-y-1">
+              <div className="flex items-center gap-2">
+                <Sparkles size={14} className="text-purple-400" />
+                <span className="text-xs font-medium text-purple-300">
+                  AI-generated feedback
+                </span>
+                <span className="text-[10px] text-purple-500">
+                  {(aiResponse.confidence * 100).toFixed(0)}% confidence
+                </span>
+                {aiResponse.recommendedApproval ? (
+                  <span className="badge bg-emerald-900/30 text-emerald-400 text-[10px]">
+                    Suggests Approve
+                  </span>
+                ) : (
+                  <span className="badge bg-amber-900/30 text-amber-400 text-[10px]">
+                    Suggests Changes
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-purple-400/70 italic">
+                {aiResponse.reasoning}
+              </p>
+            </div>
+          )}
+
+          {/* AI error */}
+          {aiError && (
+            <div className="bg-red-900/10 border border-red-500/20 rounded-lg p-3">
+              <p className="text-xs text-red-400">{aiError}</p>
+            </div>
+          )}
+
           <textarea
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={(e) => {
+              setContent(e.target.value);
+              // If user edits AI-generated content, clear AI attribution
+              if (aiResponse) setAiResponse(null);
+            }}
             placeholder={persona.promptTemplate}
-            rows={4}
+            rows={6}
             className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
           />
 
@@ -144,7 +270,7 @@ export function FeedbackPanel({
             </label>
 
             <button
-              onClick={handleSubmit}
+              onClick={() => handleSubmit(aiResponse ? "ai" : "human")}
               disabled={!content.trim() || submitting}
               className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -166,9 +292,16 @@ export function FeedbackPanel({
               className="bg-gray-800/50 rounded-lg p-3 border border-gray-800"
             >
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs text-gray-500">
-                  {new Date(entry.createdAt).toLocaleString()}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">
+                    {new Date(entry.createdAt).toLocaleString()}
+                  </span>
+                  {entry.source === "ai" && (
+                    <span className="badge bg-purple-900/30 text-purple-400 text-[10px]">
+                      <Bot size={10} /> AI
+                    </span>
+                  )}
+                </div>
                 {entry.approved && (
                   <span className="badge bg-emerald-900/50 text-emerald-400">
                     <CheckCircle size={10} /> Approved
