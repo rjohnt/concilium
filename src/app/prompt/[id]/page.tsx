@@ -8,6 +8,7 @@ import { getAllPersonas, getPersona } from "@/lib/personas";
 import { SessionPrompt } from "@/components/SessionPrompt";
 import { ConsensusProgress } from "@/components/ConsensusProgress";
 import { JoinSessionModal } from "@/components/JoinSessionModal";
+import { PromptSessionSkeleton } from "@/components/Skeleton";
 import {
   ArrowLeft,
   Clock,
@@ -58,15 +59,7 @@ export default function PromptSessionPage() {
   };
 
   if (loading) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="animate-pulse space-y-4 w-full max-w-2xl">
-          <div className="h-8 bg-elevated rounded w-1/3 mx-auto" />
-          <div className="h-4 bg-elevated rounded w-2/3 mx-auto" />
-          <div className="h-64 bg-elevated rounded" />
-        </div>
-      </div>
-    );
+    return <PromptSessionSkeleton />;
   }
 
   if (!ticket) {

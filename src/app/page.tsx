@@ -5,6 +5,7 @@ import { Ticket, TicketStatus } from "@/lib/types";
 import { seedData, getTickets } from "@/lib/store";
 import { TicketCard } from "@/components/TicketCard";
 import { FilterBar } from "@/components/FilterBar";
+import { DashboardSkeleton } from "@/components/Skeleton";
 import { PlusCircle, Users } from "lucide-react";
 import Link from "next/link";
 
@@ -12,11 +13,13 @@ type FilterKey = "all" | TicketStatus;
 
 export default function DashboardPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
 
   useEffect(() => {
     seedData();
     setTickets(getTickets());
+    setLoading(false);
   }, []);
 
   const filteredTickets = useMemo(() => {
@@ -34,6 +37,10 @@ export default function DashboardPage() {
 
   const draftCount = statusCounts["draft"] ?? 0;
   const inReviewCount = statusCounts["in-review"] ?? 0;
+
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <div className="max-w-5xl mx-auto">
