@@ -5,6 +5,7 @@ import { PersonaId, Ticket } from "@/lib/types";
 import { getPersona, getAllPersonas } from "@/lib/personas";
 import { getFeedbackHistory } from "@/lib/store";
 import { PersonaBadge } from "./PersonaBadge";
+import { MarkdownPreview } from "./MarkdownPreview";
 import { MessageSquare, CheckCircle, ThumbsUp, RefreshCw } from "lucide-react";
 
 export function FeedbackPanel({
@@ -129,12 +130,13 @@ export function FeedbackPanel({
             )}
           </div>
 
-          <textarea
+          <MarkdownPreview
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder={persona.promptTemplate}
             rows={4}
-            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
+            textareaClassName="bg-gray-800 border border-gray-700 text-gray-200 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+            previewClassName="bg-gray-800 border border-gray-700 text-gray-200"
           />
 
           <div className="flex items-center justify-between">
