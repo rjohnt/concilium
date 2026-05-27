@@ -27,7 +27,7 @@ Instead of throw-it-over-the-wall ticket workflows, Concilium creates a *living 
 
 ## Status
 
-🏗️ **v0.2** — AI-mediated prompting pipeline operational.
+🏗️ **v0.3** — Design system uniformity + prompt session polish.
 
 ### What Works
 - Ticket dashboard with persona status indicators and consensus progress bars
@@ -36,17 +36,19 @@ Instead of throw-it-over-the-wall ticket workflows, Concilium creates a *living 
 - Approval tracking and consensus visualization
 - New ticket creation flow
 - Seed data with realistic multi-persona feedback
-- **AI-mediated prompting session** — write raw thoughts, mediator refines through persona lens
-- **Mediator engine** — rules-based persona-aware response generation (concerns, recommendations, follow-ups)
+- **AI-mediated prompting session** — write raw thoughts, DeepSeek V4 Flash mediator refines through persona lens
+- **LLM-powered mediator** — DeepSeek V4 Flash-powered persona-aware response generation (concerns, recommendations, follow-ups)
 - **`/api/prompt` route** — GET for session context, POST for mediation
 - **Multi-turn conversation** — follow-up question chaining within a session
 - **Consensus auto-build trigger** — auto-transitions draft→in-review→consensus→building→done
+- **Dark parchment design system** — unified `ink-*`, `bg-*` (raised/elevated/deep), `gold`, `olive`, `cardinal`, `blue-steel` tokens across all components
+- **Build report viewer** — `/build/[id]` page with structured requirements, design decisions, QA criteria
 
 ### Next Up
-- Real LLM integration to replace rules-based mediator (swap in Claude/GPT)
-- Session-based multi-user collaboration (multiple real users weighing in simultaneously)
 - Backend persistence (SQLite/Postgres replacing localStorage)
-- Designer persona UI polish / design system refinements
+- Session-based multi-user collaboration (multiple real users weighing in simultaneously)
+- Notification system for persona feedback triggers
+- VIN lookup tool completion
 
 ## Development
 
