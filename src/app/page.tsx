@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { Ticket, TicketStatus, PersonaId, PRIORITY_LABELS, PRIORITY_COLORS, PriorityLevel } from "@/lib/types";
+import { Ticket, TicketStatus, PersonaId, PRIORITY_LABELS, PRIORITY_COLORS, PriorityLevel, PREDEFINED_TAGS } from "@/lib/types";
 import { seedData, getTickets } from "@/lib/store";
 import { getAllPersonas } from "@/lib/personas";
 import { TicketCard } from "@/components/TicketCard";
+import { TagChip } from "@/components/TagChip";
 import { FilterBar } from "@/components/FilterBar";
 import { DashboardSkeleton } from "@/components/Skeleton";
 import { EmptyState } from "@/components/EmptyState";
@@ -20,6 +21,7 @@ export default function DashboardPage() {
   const [priorityFilter, setPriorityFilter] = useState<PriorityLevel | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [personaFilter, setPersonaFilter] = useState<PersonaId[]>([]);
   const [personaFilterMode, setPersonaFilterMode] = useState<"reviewed-by" | "awaiting-review">("reviewed-by");
 
@@ -45,6 +47,11 @@ export default function DashboardPage() {
     if (priorityFilter !== null) {
       result = result.filter((t) => t.priority === priorityFilter);
     }
+    if (tagFilter.length > 0) {
+      result = result.filter((t) =>
+        t.tags.some((tag) => tagFilter.includes(tag.id))
+      );
+    }
     if (debouncedSearchQuery.trim()) {
       const q = debouncedSearchQuery.toLowerCase().trim();
       result = result.filter(
@@ -62,7 +69,7 @@ export default function DashboardPage() {
       });
     }
     return result;
-  }, [tickets, activeFilter, priorityFilter, debouncedSearchQuery, personaFilter, personaFilterMode]);
+  }, [tickets, activeFilter, priorityFilter, tagFilter, debouncedSearchQuery, personaFilter, personaFilterMode]);
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -220,6 +227,37 @@ export default function DashboardPage() {
         ))}
       </div>
 
+      {/* Tag filter */}
+      <div className="flex items-center gap-2 mb-6">
+        <Filter size={14} className="text-ink-muted" />
+        <span className="text-xs text-ink-muted mr-1">Tags:</span>
+        <button
+          onClick={() => setTagFilter([])}
+          className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
+            tagFilter.length === 0
+              ? "bg-brand-900/50 text-brand-400 border-brand-800"
+              : "border-border-subtle text-ink-muted hover:text-ink-primary hover:border-border-default"
+          }`}
+        >
+          All
+        </button>
+        {PREDEFINED_TAGS.map((tag) => (
+          <TagChip
+            key={tag.id}
+            tag={tag}
+            mode="toggle"
+            selected={tagFilter.includes(tag.id)}
+            onToggle={(id) =>
+              setTagFilter((prev) =>
+                prev.includes(id)
+                  ? prev.filter((t) => t !== id)
+                  : [...prev, id]
+              )
+            }
+          />
+        ))}
+      </div>
+
       {/* Persona filter */}
       {getAllPersonas().length > 0 && (
         <div className="flex items-center gap-2 mb-6 flex-wrap">
@@ -290,16 +328,15 @@ export default function DashboardPage() {
         {filteredTickets.length === 0 ? (
           <EmptyState
             icon={
-              activeFilter === "all" &&
-              priorityFilter === null &&
-              personaFilter.length === 0 &&
-              !debouncedSearchQuery.trim()
+              activeFilter === "all" && priorityFilter === null && tagFilter.length === 0 && personaFilter.length === 0 && !debouncedSearchQuery.trim()
                 ? HelpCircle
                 : SearchX
             }
             title={
               debouncedSearchQuery.trim()
                 ? "No tickets match your search"
+                : tagFilter.length > 0
+                ? "No tickets match these tag filters"
                 : personaFilter.length > 0
                 ? personaFilterMode === "reviewed-by"
                   ? "No tickets reviewed by selected personas"
@@ -313,6 +350,8 @@ export default function DashboardPage() {
             description={
               debouncedSearchQuery.trim()
                 ? "Try a different search term or adjust your filters."
+                : tagFilter.length > 0
+                ? "Try removing some tag filters or create a new ticket with these tags."
                 : personaFilter.length > 0
                 ? "Try selecting different personas or switching modes."
                 : priorityFilter !== null
@@ -322,10 +361,7 @@ export default function DashboardPage() {
                 : "No tickets match this filter."
             }
           >
-            {activeFilter === "all" &&
-              priorityFilter === null &&
-              personaFilter.length === 0 &&
-              !debouncedSearchQuery.trim() && (
+            {activeFilter === "all" && priorityFilter === null && tagFilter.length === 0 && personaFilter.length === 0 && !debouncedSearchQuery.trim() && (
               <Link href="/new" className="btn-primary inline-flex">
                 <PlusCircle size={18} />
                 Create First Ticket

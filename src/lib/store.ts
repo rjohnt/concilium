@@ -1,4 +1,4 @@
-import { Ticket, FeedbackEntry, PersonaId, TicketStatus, PriorityLevel, BuildReport } from "./types";
+import { Ticket, FeedbackEntry, PersonaId, TicketStatus, PriorityLevel, BuildReport, Tag } from "./types";
 import { getAllPersonas } from "./personas";
 import { checkConsensusThreshold, getBuildReadiness, buildBuildReport } from "./consensus-threshold";
 import {
@@ -87,7 +87,8 @@ export function createTicket(
   title: string,
   description: string,
   priority: PriorityLevel = 2,
-  dueDate?: string
+  dueDate?: string,
+  tags: Tag[] = []
 ): Ticket {
   const id = generateId("TIX", nextTicketId++);
   const now = new Date().toISOString();
@@ -100,6 +101,7 @@ export function createTicket(
     createdAt: now,
     updatedAt: now,
     dueDate,
+    tags,
     feedback: [],
     approvals: [],
   };
@@ -156,6 +158,18 @@ export function updateTicketPriority(
   const ticket = tickets.find((t) => t.id === ticketId);
   if (!ticket) return null;
   ticket.priority = priority;
+  ticket.updatedAt = new Date().toISOString();
+  persistState();
+  return ticket;
+}
+
+export function updateTicketTags(
+  ticketId: string,
+  tags: Tag[]
+): Ticket | null {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  if (!ticket) return null;
+  ticket.tags = tags;
   ticket.updatedAt = new Date().toISOString();
   persistState();
   return ticket;
@@ -362,7 +376,9 @@ export function seedData(): void {
   const t1 = createTicket(
     "Dark mode toggle in user settings",
     "Users have been requesting dark mode for months. We need a toggle in the settings panel that switches between light and dark themes, persisting the preference in localStorage.",
-    0 // Urgent
+    0, // Urgent
+    undefined,
+    [{ id: "design", label: "Design", color: "bg-purple-900/50 text-purple-400 border-purple-700" }, { id: "feature", label: "Feature", color: "bg-gold/20 text-gold-light border-gold/40" }]
   );
   addFeedback(
     t1.id,
@@ -386,7 +402,9 @@ export function seedData(): void {
   const t2 = createTicket(
     "Real-time collaborative cursors in the whiteboard",
     "When multiple users are on the whiteboard, show each user's cursor position in real-time with their name/color. This is critical for the remote design review workflow.",
-    1 // High
+    1, // High
+    undefined,
+    [{ id: "feature", label: "Feature", color: "bg-gold/20 text-gold-light border-gold/40" }, { id: "performance", label: "Performance", color: "bg-orange-900/50 text-orange-400 border-orange-800" }]
   );
   addFeedback(
     t2.id,
@@ -404,13 +422,17 @@ export function seedData(): void {
   const t3 = createTicket(
     "Export dashboard as PDF report",
     "Product managers need to export the analytics dashboard as a branded PDF report for stakeholder presentations. Should include charts, KPIs, and a configurable date range.",
-    2 // Medium
+    2, // Medium
+    undefined,
+    [{ id: "feature", label: "Feature", color: "bg-gold/20 text-gold-light border-gold/40" }, { id: "docs", label: "Docs", color: "bg-blue-steel/20 text-blue-steel border-blue-steel/40" }]
   );
 
   const t4 = createTicket(
     "API rate limiting by tenant",
     "Implement per-tenant rate limiting on the public API to prevent abuse and ensure fair usage across customers. Configurable limits per tier (free, pro, enterprise).",
-    3 // Low
+    3, // Low
+    undefined,
+    [{ id: "security", label: "Security", color: "bg-red-950/60 text-red-400 border-red-900" }, { id: "performance", label: "Performance", color: "bg-orange-900/50 text-orange-400 border-orange-800" }]
   );
 
   // Notify listeners after seeding so sidebar badge updates on initial load

@@ -24,6 +24,7 @@ function makeTicket(overrides: Partial<Ticket> = {}): Ticket {
     priority: 2,
     createdAt: '2025-06-14T10:00:00.000Z',
     updatedAt: '2025-06-14T10:00:00.000Z',
+    tags: [],
     feedback: [],
     approvals: [],
     ...overrides,

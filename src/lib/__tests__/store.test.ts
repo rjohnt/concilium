@@ -31,6 +31,7 @@ import {
   deleteTicket,
   updateTicket,
   updateTicketPriority,
+  updateTicketTags,
   getTicket,
 } from "../store";
 
@@ -475,5 +476,107 @@ describe("ticket due dates", () => {
     const raw = mockStorage.getItem(STORAGE_KEY);
     const parsed = JSON.parse(raw!);
     expect(parsed.tickets[0].dueDate).toBeUndefined();
+  });
+});
+
+// ========================================================================
+// updateTicketTags tests (new tests for DEV-53)
+// ========================================================================
+
+describe("updateTicketTags", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    mockStorage.clear();
+    clearStorage();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("updates tags on a valid ticket and returns the updated ticket", () => {
+    const ticket = createTicket("Tag Test", "Testing tag updates");
+    expect(ticket.tags).toEqual([]);
+
+    const newTags = [
+      { id: "bug", label: "Bug", color: "bg-cardinal/20 text-cardinal border-cardinal/40" },
+      { id: "feature", label: "Feature", color: "bg-gold/20 text-gold-light border-gold/40" },
+    ];
+
+    const result = updateTicketTags(ticket.id, newTags);
+
+    expect(result).not.toBeNull();
+    expect(result!.tags).toEqual(newTags);
+    expect(result!.id).toBe(ticket.id);
+  });
+
+  it("returns null for non-existent ticket", () => {
+    const result = updateTicketTags("NONEXISTENT-999", []);
+    expect(result).toBeNull();
+  });
+
+  it("allows clearing all tags by passing an empty array", () => {
+    const ticket = createTicket(
+      "Clear Tags",
+      "Testing tag clearing",
+      2,
+      undefined,
+      [{ id: "bug", label: "Bug", color: "bg-cardinal/20 text-cardinal border-cardinal/40" }]
+    );
+    expect(ticket.tags).toHaveLength(1);
+
+    const result = updateTicketTags(ticket.id, []);
+    expect(result).not.toBeNull();
+    expect(result!.tags).toEqual([]);
+  });
+
+  it("persists tag update to localStorage after debounce", () => {
+    const ticket = createTicket("Persist Tags", "Testing persistence");
+    flushDebounce(); // flush initial create
+
+    const newTags = [
+      { id: "security", label: "Security", color: "bg-red-950/60 text-red-400 border-red-900" },
+    ];
+    updateTicketTags(ticket.id, newTags);
+    flushDebounce(); // flush update persist
+
+    const raw = mockStorage.getItem(STORAGE_KEY);
+    expect(raw).not.toBeNull();
+    const parsed = JSON.parse(raw!);
+    expect(parsed.tickets).toHaveLength(1);
+    expect(parsed.tickets[0].tags).toEqual(newTags);
+  });
+
+  it("updates updatedAt timestamp on tag change", () => {
+    const ticket = createTicket("Timestamp Test", "Check timestamps");
+    const originalUpdatedAt = ticket.updatedAt;
+
+    vi.advanceTimersByTime(1000);
+
+    const result = updateTicketTags(ticket.id, [
+      { id: "docs", label: "Docs", color: "bg-blue-steel/20 text-blue-steel border-blue-steel/40" },
+    ]);
+    expect(result!.updatedAt).not.toBe(originalUpdatedAt);
+    expect(new Date(result!.updatedAt).getTime()).toBeGreaterThan(
+      new Date(originalUpdatedAt).getTime()
+    );
+  });
+
+  it("createTicket accepts tags and sets them correctly", () => {
+    const tagList = [
+      { id: "bug", label: "Bug", color: "bg-cardinal/20 text-cardinal border-cardinal/40" },
+    ];
+    const ticket = createTicket("Tagged ticket", "Has tags", 2, undefined, tagList);
+    expect(ticket.tags).toEqual(tagList);
+
+    flushDebounce();
+    const raw = mockStorage.getItem(STORAGE_KEY);
+    const parsed = JSON.parse(raw!);
+    expect(parsed.tickets[0].tags).toEqual(tagList);
+  });
+
+  it("createTicket without tags defaults to empty array", () => {
+    const ticket = createTicket("No tags", "Description");
+    expect(ticket.tags).toEqual([]);
   });
 });

@@ -2,6 +2,7 @@ import { Ticket, PRIORITY_LABELS, PRIORITY_COLORS } from "@/lib/types";
 import { formatDueDate } from "@/lib/date-utils";
 import { getAllPersonas } from "@/lib/personas";
 import { PersonaBadge } from "./PersonaBadge";
+import { TagChip } from "./TagChip";
 import { CopyButton } from "@/components/CopyButton";
 import { formatRelativeTime, formatAbsoluteDate } from "@/lib/timeAgo";
 import { Clock, MessageSquare, Calendar } from "lucide-react";
@@ -36,6 +37,9 @@ export function TicketCard({ ticket }: { ticket: Ticket }) {
                   {PRIORITY_LABELS[ticket.priority]}
                 </span>
               )}
+              {ticket.tags.map((tag) => (
+                <TagChip key={tag.id} tag={tag} mode="display" />
+              ))}
             </div>
             <h3 className="text-lg font-semibold text-gray-100 group-hover:text-brand-400 transition-colors truncate">
               {ticket.title}

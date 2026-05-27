@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Ticket, PersonaId, PRIORITY_LABELS, PRIORITY_COLORS, PriorityLevel } from "@/lib/types";
-import { seedData, getTicket, deleteTicket, updateTicket, updateTicketPriority } from "@/lib/store";
+import { Ticket, PersonaId, PRIORITY_LABELS, PRIORITY_COLORS, PriorityLevel, PREDEFINED_TAGS } from "@/lib/types";
+import { seedData, getTicket, deleteTicket, updateTicket, updateTicketPriority, updateTicketTags } from "@/lib/store";
 import { formatDueDate } from "@/lib/date-utils";
 import { getPersona } from "@/lib/personas";
 import { formatRelativeTime, formatAbsoluteDate } from "@/lib/timeAgo";
@@ -17,6 +17,7 @@ import { DetailSkeleton } from "@/components/Skeleton";
 import { DeleteTicketDialog } from "@/components/DeleteTicketDialog";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { EditableField } from "@/components/EditableField";
+import { TagChip } from "@/components/TagChip";
 import { EmptyState } from "@/components/EmptyState";
 import { ArrowLeft, Clock, GitBranch, RefreshCw, Sparkles, ExternalLink, Trash2, FileQuestion, Calendar } from "lucide-react";
 import Link from "next/link";
@@ -180,6 +181,10 @@ export default function TicketDetailPage() {
                   {PRIORITY_LABELS[ticket.priority]}
                 </span>
               )}
+              {/* Tags — display pills with toggle editing */}
+              {ticket.tags.map((tag) => (
+                <TagChip key={tag.id} tag={tag} mode="display" />
+              ))}
             </div>
             <EditableField
               value={ticket.title}
@@ -228,6 +233,30 @@ export default function TicketDetailPage() {
                   >
                     {PRIORITY_LABELS[p]}
                   </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Tags editor */}
+            <div className="mt-4 pt-4 border-t border-border-subtle">
+              <p className="text-xs font-medium text-ink-muted mb-2">Tags</p>
+              <div className="flex flex-wrap gap-2">
+                {PREDEFINED_TAGS.map((tag) => (
+                  <TagChip
+                    key={tag.id}
+                    tag={tag}
+                    mode="toggle"
+                    selected={ticket.tags.some((t) => t.id === tag.id)}
+                    onToggle={(id) => {
+                      const currentIds = ticket.tags.map((t) => t.id);
+                      const newIds = currentIds.includes(id)
+                        ? currentIds.filter((tid) => tid !== id)
+                        : [...currentIds, id];
+                      const newTags = PREDEFINED_TAGS.filter((t) => newIds.includes(t.id));
+                      const updated = updateTicketTags(ticket.id, newTags);
+                      if (updated) setTicket(updated);
+                    }}
+                  />
                 ))}
               </div>
             </div>
