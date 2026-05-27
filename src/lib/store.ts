@@ -46,6 +46,13 @@ export function createTicket(
   return ticket;
 }
 
+export function deleteTicket(ticketId: string): boolean {
+  const index = tickets.findIndex((t) => t.id === ticketId);
+  if (index === -1) return false;
+  tickets.splice(index, 1);
+  return true;
+}
+
 // Future scaffolding – exposed for API routes and external state management.
 export function updateTicketStatus(
   ticketId: string,
