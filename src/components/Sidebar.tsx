@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, PlusCircle, GitBranch, LogOut, User, Car, Menu, X } from "lucide-react";
+import { motion } from "framer-motion";
 import { useAuth } from "@/lib/auth-context";
+import { getTickets } from "@/lib/store";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -57,6 +59,28 @@ export function Sidebar() {
       document.body.style.overflow = "";
     };
   }, [isMobileOpen]);
+
+  const [ticketCounts, setTicketCounts] = useState({ total: 0, active: 0 });
+
+  // Refresh ticket counts on mount, navigation, and window focus
+  useEffect(() => {
+    const refresh = () => {
+      const allTickets = getTickets();
+      setTicketCounts({
+        total: allTickets.length,
+        active: allTickets.filter(
+          (t) => t.status === "draft" || t.status === "in-review"
+        ).length,
+      });
+    };
+    refresh();
+    window.addEventListener("focus", refresh);
+    window.addEventListener("storage", refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("storage", refresh);
+    };
+  }, [pathname]);
 
   const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -131,6 +155,7 @@ export function Sidebar() {
         <nav className="flex-1 p-4 space-y-1">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
+            const isDashboard = item.href === "/";
             return (
               <Link
                 key={item.href}
@@ -143,7 +168,37 @@ export function Sidebar() {
                 }`}
               >
                 <item.icon size={18} />
-                {item.label}
+                <span className="flex-1">{item.label}</span>
+                {isDashboard && ticketCounts.total > 0 && (
+                  <span className="flex items-center gap-1.5 ml-auto">
+                    {ticketCounts.active > 0 && (
+                      <motion.span
+                        className="relative flex h-2.5 w-2.5"
+                        animate={{ opacity: [1, 0.3, 1] }}
+                        transition={{
+                          duration: 1.8,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                        }}
+                      >
+                        <span className="absolute inline-flex h-full w-full rounded-full bg-gold opacity-75" />
+                        <motion.span
+                          className="absolute inline-flex h-full w-full rounded-full bg-gold"
+                          animate={{ scale: [1, 1.8, 1] }}
+                          transition={{
+                            duration: 1.8,
+                            repeat: Infinity,
+                            ease: "easeInOut",
+                          }}
+                          style={{ originX: 0.5, originY: 0.5 }}
+                        />
+                      </motion.span>
+                    )}
+                    <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-semibold leading-none rounded-full bg-gold/20 text-gold">
+                      {ticketCounts.total}
+                    </span>
+                  </span>
+                )}
               </Link>
             );
           })}
