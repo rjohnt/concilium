@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { CommandPalette } from "@/components/CommandPalette";
 import { AuthProvider } from "@/lib/auth-context";
 import { AuthGuard } from "@/components/AuthGuard";
+import PageTransition from "@/components/PageTransition";
 
 export const metadata: Metadata = {
   title: "Concilium — Multiplayer AI-Assisted Tickets",
@@ -23,7 +24,9 @@ export default function RootLayout({
           <AuthGuard>
             <div className="flex min-h-screen">
               <Sidebar />
-              <main className="flex-1 md:ml-64 pt-14 p-8 md:pt-8">{children}</main>
+              <main className="flex-1 md:ml-64 pt-14 p-8 md:pt-8">
+                <PageTransition>{children}</PageTransition>
+              </main>
             </div>
             <CommandPalette />
           </AuthGuard>
