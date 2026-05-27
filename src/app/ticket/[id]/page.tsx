@@ -3,12 +3,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Ticket, PersonaId } from "@/lib/types";
-import { seedData, getTicket, getConsensusProgress } from "@/lib/store";
-import { getAllPersonas, getPersona } from "@/lib/personas";
+import { seedData, getTicket } from "@/lib/store";
+import { getPersona } from "@/lib/personas";
 import { FeedbackPanel } from "@/components/FeedbackPanel";
-import { PersonaBadge } from "@/components/PersonaBadge";
 import { JoinSessionModal } from "@/components/JoinSessionModal";
-import { ArrowLeft, Clock, GitBranch, RefreshCw } from "lucide-react";
+import { ConsensusProgress } from "@/components/ConsensusProgress";
+import { ArrowLeft, Clock, GitBranch, RefreshCw, Sparkles, ExternalLink } from "lucide-react";
 import Link from "next/link";
 
 export default function TicketDetailPage() {
@@ -53,9 +53,9 @@ export default function TicketDetailPage() {
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto animate-pulse space-y-4">
-        <div className="h-8 bg-gray-800 rounded w-1/3" />
-        <div className="h-4 bg-gray-800 rounded w-2/3" />
-        <div className="h-64 bg-gray-800 rounded" />
+        <div className="h-8 bg-elevated rounded w-1/3" />
+        <div className="h-4 bg-elevated rounded w-2/3" />
+        <div className="h-64 bg-elevated rounded" />
       </div>
     );
   }
@@ -63,7 +63,7 @@ export default function TicketDetailPage() {
   if (!ticket) {
     return (
       <div className="max-w-4xl mx-auto text-center py-16">
-        <h3 className="text-lg font-medium text-gray-400 mb-2">
+        <h3 className="text-lg font-medium text-ink-secondary mb-2">
           Ticket not found
         </h3>
         <Link href="/" className="btn-secondary inline-flex mt-4">
@@ -74,9 +74,6 @@ export default function TicketDetailPage() {
     );
   }
 
-  const consensus = getConsensusProgress(ticket.id);
-  const allPersonas = getAllPersonas();
-  const progress = consensus.approved / consensus.total;
   const activePersonaObj = sessionPersona ? getPersona(sessionPersona) : null;
 
   return (
@@ -96,7 +93,7 @@ export default function TicketDetailPage() {
       {/* Breadcrumb */}
       <Link
         href="/"
-        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-300 mb-6 transition-colors"
+        className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-ink-primary mb-6 transition-colors"
       >
         <ArrowLeft size={14} />
         Back to Dashboard
@@ -104,18 +101,18 @@ export default function TicketDetailPage() {
 
       {/* Active persona indicator */}
       {activePersonaObj && (
-        <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-gray-900/60 border border-gray-800">
+        <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-raised/60 border border-border-subtle">
           <span className="text-lg">{activePersonaObj.emoji}</span>
           <div className="flex-1">
-            <p className="text-sm font-medium text-gray-200">
+            <p className="text-sm font-medium text-ink-primary">
               Viewing as{" "}
-              <span className="text-white">{activePersonaObj.label}</span>
+              <span className="text-ink-primary">{activePersonaObj.label}</span>
             </p>
-            <p className="text-xs text-gray-500">{activePersonaObj.expertise}</p>
+            <p className="text-xs text-ink-muted">{activePersonaObj.expertise}</p>
           </div>
           <button
             onClick={handleSwitchPersona}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-gray-400 hover:text-brand-400 hover:bg-gray-800 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-ink-secondary hover:text-gold-light hover:bg-elevated transition-colors"
           >
             <RefreshCw size={12} />
             Switch
@@ -128,13 +125,13 @@ export default function TicketDetailPage() {
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-3 mb-2">
-              <span className="text-sm font-mono text-gray-500">
+              <span className="text-sm font-mono text-ink-muted">
                 {ticket.id}
               </span>
               <span
                 className={`badge ${
                   ticket.status === "draft"
-                    ? "bg-gray-800 text-gray-400"
+                    ? "bg-elevated text-ink-secondary"
                     : ticket.status === "in-review"
                     ? "bg-yellow-900/50 text-yellow-400"
                     : ticket.status === "consensus"
@@ -145,13 +142,13 @@ export default function TicketDetailPage() {
                 {ticket.status}
               </span>
             </div>
-            <h1 className="text-2xl font-bold text-white mb-3">
+            <h1 className="text-2xl font-bold text-ink-primary mb-3">
               {ticket.title}
             </h1>
-            <p className="text-gray-400 leading-relaxed whitespace-pre-wrap">
+            <p className="text-ink-secondary leading-relaxed whitespace-pre-wrap">
               {ticket.description}
             </p>
-            <div className="flex items-center gap-4 mt-4 text-xs text-gray-500">
+            <div className="flex items-center gap-4 mt-4 text-xs text-ink-muted">
               <span className="flex items-center gap-1">
                 <Clock size={12} />
                 Created {new Date(ticket.createdAt).toLocaleDateString()}
@@ -162,43 +159,26 @@ export default function TicketDetailPage() {
               </span>
             </div>
           </div>
+
+          {/* Start Prompt Session button */}
+          <Link
+            href={`/prompt/${ticket.id}`}
+            className="btn-primary flex-shrink-0 whitespace-nowrap"
+            title="Open full-screen prompt session"
+          >
+            <Sparkles size={16} />
+            <span className="hidden sm:inline">Prompt Session</span>
+            <ExternalLink size={12} className="hidden sm:inline" />
+          </Link>
         </div>
       </div>
 
-      {/* Consensus bar */}
+      {/* Consensus progress */}
       <div className="card mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-semibold text-gray-300">
-            Consensus Progress
-          </h3>
-          <span className="text-sm text-gray-400">
-            {consensus.approved}/{consensus.total} approved
-          </span>
-        </div>
-        <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-brand-500 rounded-full transition-all duration-700"
-            style={{ width: `${progress * 100}%` }}
-          />
-        </div>
-        <div className="flex items-center gap-3 mt-3">
-          {allPersonas.map((p) => (
-            <div
-              key={p.id}
-              className="flex items-center gap-1.5"
-            >
-              <PersonaBadge
-                personaId={p.id}
-                approved={ticket.approvals.includes(p.id)}
-              />
-            </div>
-          ))}
-          {consensus.remaining.length === 0 && (
-            <span className="badge bg-emerald-900/50 text-emerald-400 ml-auto">
-              🎉 Consensus Reached
-            </span>
-          )}
-        </div>
+        <ConsensusProgress
+          ticketId={ticket.id}
+          approvals={ticket.approvals}
+        />
       </div>
 
       {/* Feedback panel — show after joining, or show hint before joining */}
@@ -211,7 +191,7 @@ export default function TicketDetailPage() {
         />
       ) : (
         <div className="card text-center py-12 opacity-60">
-          <p className="text-gray-500 text-sm">
+          <p className="text-ink-muted text-sm">
             Choose a persona to join the session and provide feedback.
           </p>
         </div>
