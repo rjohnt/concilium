@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Ticket, PersonaId, PRIORITY_LABELS, PRIORITY_COLORS, PriorityLevel } from "@/lib/types";
 import { seedData, getTicket, deleteTicket, updateTicket, updateTicketPriority } from "@/lib/store";
+import { formatDueDate } from "@/lib/date-utils";
 import { getPersona } from "@/lib/personas";
 import { FeedbackPanel } from "@/components/FeedbackPanel";
 import { BuildTrigger } from "@/components/BuildTrigger";
@@ -238,41 +239,24 @@ export default function TicketDetailPage() {
                   type="date"
                   value={ticket.dueDate || ""}
                   onChange={(e) => handleUpdateDueDate(e.target.value || null)}
-                  className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent [color-scheme:dark]"
+                  className="bg-elevated border border-border-visible rounded-lg px-3 py-2 text-sm text-ink-primary focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent [color-scheme:dark]"
                 />
                 {ticket.dueDate && (
                   <button
                     type="button"
                     onClick={() => handleUpdateDueDate(null)}
-                    className="px-3 py-2 text-sm text-gray-500 hover:text-gray-300 transition-colors"
+                    className="px-3 py-2 text-sm text-ink-muted hover:text-ink-primary transition-colors"
                   >
                     Clear
                   </button>
                 )}
               </div>
               {ticket.dueDate && (() => {
-                const now = Date.now();
-                const due = new Date(ticket.dueDate).getTime();
-                const diffMs = due - now;
-                const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-                const diffHours = Math.ceil(diffMs / (1000 * 60 * 60));
-                let label: string;
-                let labelClass: string;
-                if (diffMs < 0) {
-                  const overdueDays = Math.abs(Math.floor(diffMs / (1000 * 60 * 60 * 24)));
-                  label = overdueDays === 0 ? "Overdue today" : `Overdue by ${overdueDays}d`;
-                  labelClass = "text-red-400";
-                } else if (diffHours <= 24) {
-                  label = `Due in ${diffHours}h`;
-                  labelClass = "text-yellow-400";
-                } else {
-                  label = `Due in ${diffDays}d`;
-                  labelClass = "text-gray-400";
-                }
+                const dl = formatDueDate(ticket.dueDate);
                 return (
-                  <span className={`inline-flex items-center gap-1.5 mt-1.5 text-xs ${labelClass}`}>
+                  <span className={`inline-flex items-center gap-1.5 mt-1.5 text-xs ${dl.className}`}>
                     <Calendar size={12} />
-                    {label}
+                    {dl.label}
                   </span>
                 );
               })()}
