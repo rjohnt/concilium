@@ -1,4 +1,4 @@
-import { Ticket, FeedbackEntry, PersonaId, TicketStatus, BuildReport } from "./types";
+import { Ticket, FeedbackEntry, PersonaId, TicketStatus, PriorityLevel, BuildReport } from "./types";
 import { getAllPersonas } from "./personas";
 import { checkConsensusThreshold, getBuildReadiness, buildBuildReport } from "./consensus-threshold";
 import {
@@ -28,7 +28,6 @@ let nextBuildReportId = initial.nextBuildReportId;
 // --- Debounced persistence ---
 
 let persistTimer: ReturnType<typeof setTimeout> | null = null;
-
 function generateId(prefix: string, counter: number): string {
   return `${prefix}-${String(counter).padStart(3, "0")}`;
 }
@@ -83,7 +82,8 @@ export function getTicket(id: string): Ticket | undefined {
 
 export function createTicket(
   title: string,
-  description: string
+  description: string,
+  priority: PriorityLevel = 2
 ): Ticket {
   const id = generateId("TIX", nextTicketId++);
   const now = new Date().toISOString();
@@ -92,6 +92,7 @@ export function createTicket(
     title,
     description,
     status: "draft",
+    priority,
     createdAt: now,
     updatedAt: now,
     feedback: [],
@@ -110,6 +111,23 @@ export function deleteTicket(ticketId: string): boolean {
   return true;
 }
 
+export function updateTicket(
+  ticketId: string,
+  updates: { title?: string; description?: string }
+): Ticket | null {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  if (!ticket) return null;
+  if (updates.title !== undefined) {
+    ticket.title = updates.title;
+  }
+  if (updates.description !== undefined) {
+    ticket.description = updates.description;
+  }
+  ticket.updatedAt = new Date().toISOString();
+  persistState();
+  return ticket;
+}
+
 // Future scaffolding – exposed for API routes and external state management.
 export function updateTicketStatus(
   ticketId: string,
@@ -118,6 +136,18 @@ export function updateTicketStatus(
   const ticket = tickets.find((t) => t.id === ticketId);
   if (!ticket) return null;
   ticket.status = status;
+  ticket.updatedAt = new Date().toISOString();
+  persistState();
+  return ticket;
+}
+
+export function updateTicketPriority(
+  ticketId: string,
+  priority: PriorityLevel
+): Ticket | null {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  if (!ticket) return null;
+  ticket.priority = priority;
   ticket.updatedAt = new Date().toISOString();
   persistState();
   return ticket;
@@ -323,7 +353,8 @@ export function seedData(): void {
 
   const t1 = createTicket(
     "Dark mode toggle in user settings",
-    "Users have been requesting dark mode for months. We need a toggle in the settings panel that switches between light and dark themes, persisting the preference in localStorage."
+    "Users have been requesting dark mode for months. We need a toggle in the settings panel that switches between light and dark themes, persisting the preference in localStorage.",
+    0 // Urgent
   );
   addFeedback(
     t1.id,
@@ -346,7 +377,8 @@ export function seedData(): void {
 
   const t2 = createTicket(
     "Real-time collaborative cursors in the whiteboard",
-    "When multiple users are on the whiteboard, show each user's cursor position in real-time with their name/color. This is critical for the remote design review workflow."
+    "When multiple users are on the whiteboard, show each user's cursor position in real-time with their name/color. This is critical for the remote design review workflow.",
+    1 // High
   );
   addFeedback(
     t2.id,
@@ -363,12 +395,14 @@ export function seedData(): void {
 
   const t3 = createTicket(
     "Export dashboard as PDF report",
-    "Product managers need to export the analytics dashboard as a branded PDF report for stakeholder presentations. Should include charts, KPIs, and a configurable date range."
+    "Product managers need to export the analytics dashboard as a branded PDF report for stakeholder presentations. Should include charts, KPIs, and a configurable date range.",
+    2 // Medium
   );
 
   const t4 = createTicket(
     "API rate limiting by tenant",
-    "Implement per-tenant rate limiting on the public API to prevent abuse and ensure fair usage across customers. Configurable limits per tier (free, pro, enterprise)."
+    "Implement per-tenant rate limiting on the public API to prevent abuse and ensure fair usage across customers. Configurable limits per tier (free, pro, enterprise).",
+    3 // Low
   );
 }
 

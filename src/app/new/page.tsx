@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createTicket } from "@/lib/store";
+import { PRIORITY_LABELS, PRIORITY_COLORS, PriorityLevel } from "@/lib/types";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
@@ -10,6 +11,7 @@ export default function NewTicketPage() {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [priority, setPriority] = useState<PriorityLevel>(2);
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -17,7 +19,7 @@ export default function NewTicketPage() {
     if (!title.trim() || !description.trim()) return;
 
     setSubmitting(true);
-    const ticket = createTicket(title.trim(), description.trim());
+    const ticket = createTicket(title.trim(), description.trim(), priority);
 
     // Navigate to the new ticket
     router.push(`/ticket/${ticket.id}`);
@@ -73,6 +75,31 @@ export default function NewTicketPage() {
               rows={6}
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
             />
+          </div>
+
+          <div>
+            <label
+              htmlFor="priority"
+              className="block text-sm font-medium text-gray-300 mb-1.5"
+            >
+              Priority
+            </label>
+            <div className="flex gap-2">
+              {([0, 1, 2, 3, 4] as PriorityLevel[]).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPriority(p)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                    priority === p
+                      ? `${PRIORITY_COLORS[p]} ring-1 ring-offset-1 ring-offset-gray-900`
+                      : "border-gray-700 text-gray-500 hover:text-gray-300 hover:border-gray-600"
+                  } ${p === 4 && priority !== 4 ? "opacity-50" : ""}`}
+                >
+                  {PRIORITY_LABELS[p]}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="flex items-center justify-between pt-2">

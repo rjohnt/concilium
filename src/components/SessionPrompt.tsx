@@ -92,9 +92,8 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
 
   // Determine platform for keyboard shortcut hint
   const isMac = typeof navigator !== "undefined" &&
-    (navigator as any).userAgentData?.platform === "macOS" ||
-    (typeof navigator !== "undefined" &&
-      /Mac/.test(navigator.userAgent));
+    ((navigator as any).userAgentData?.platform === "macOS" ||
+    /Mac/.test(navigator.userAgent));
 
   // Sort feedback chronologically
   const sortedFeedback = [...feedbackEntries].sort(

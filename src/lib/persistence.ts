@@ -78,8 +78,14 @@ export function loadTickets(): StoreState {
     // Per-element validation: filter out malformed tickets
     const validTickets: Ticket[] = parsed.tickets.filter(isValidTicket);
 
+    // Migration: default missing priority fields to Medium (2)
+    const migratedTickets = validTickets.map((t: Ticket) => ({
+      ...t,
+      priority: t.priority ?? 2,
+    }));
+
     return {
-      tickets: validTickets,
+      tickets: migratedTickets,
       nextTicketId:
         typeof parsed.nextTicketId === "number" ? parsed.nextTicketId : 1,
       nextFeedbackId:
