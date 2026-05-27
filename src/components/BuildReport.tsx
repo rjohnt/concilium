@@ -8,9 +8,9 @@ interface BuildReportProps {
 }
 
 const statusConfig: Record<string, { icon: typeof CheckCircle2; color: string; label: string }> = {
-  building: { icon: Clock, color: "text-yellow-400 bg-yellow-900/30", label: "Building" },
-  completed: { icon: CheckCircle2, color: "text-emerald-400 bg-emerald-900/30", label: "Completed" },
-  failed: { icon: XCircle, color: "text-red-400 bg-red-900/30", label: "Failed" },
+  building: { icon: Clock, color: "text-blue-steel bg-blue-steel/10 border border-blue-steel/30", label: "Building" },
+  completed: { icon: CheckCircle2, color: "text-olive bg-olive/10 border border-olive/30", label: "Completed" },
+  failed: { icon: XCircle, color: "text-cardinal bg-cardinal/10 border border-cardinal/30", label: "Failed" },
 };
 
 export function BuildReport({ report }: BuildReportProps) {
@@ -23,33 +23,33 @@ export function BuildReport({ report }: BuildReportProps) {
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <span className="text-sm font-mono text-gray-500">{report.id}</span>
+            <span className="text-sm font-mono text-ink-muted">{report.id}</span>
             <span className={`badge ${status.color}`}>
               <StatusIcon size={12} />
               {status.label}
             </span>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-ink-muted">
               Ticket {report.ticketId}
             </span>
           </div>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-ink-muted">
             Generated {new Date(report.createdAt).toLocaleString()}
           </p>
         </div>
       </div>
 
       {/* Consensus Summary */}
-      <div className="bg-gray-900/60 border border-gray-800 rounded-lg p-4">
+      <div className="bg-elevated/40 border border-border-subtle rounded-lg p-4">
         <div className="flex items-center gap-2 mb-2">
-          <FileText size={16} className="text-gray-400" />
-          <h3 className="text-sm font-semibold text-gray-300">Consensus Summary</h3>
+          <FileText size={16} className="text-ink-muted" />
+          <h3 className="text-sm font-semibold text-ink-primary">Consensus Summary</h3>
         </div>
-        <p className="text-sm text-gray-400">{report.consensusSummary}</p>
+        <p className="text-sm text-ink-secondary">{report.consensusSummary}</p>
       </div>
 
       {/* Requirements */}
       <ReportSection
-        icon={<Wrench size={16} className="text-blue-400" />}
+        icon={<Wrench size={16} className="text-blue-steel" />}
         title="Technical Requirements"
         items={report.requirements}
         emptyText="No technical requirements extracted."
@@ -72,12 +72,12 @@ export function BuildReport({ report }: BuildReportProps) {
       />
 
       {/* Implementation Plan */}
-      <div className="bg-gray-900/60 border border-gray-800 rounded-lg p-4">
+      <div className="bg-elevated/40 border border-border-subtle rounded-lg p-4">
         <div className="flex items-center gap-2 mb-3">
-          <FileText size={16} className="text-emerald-400" />
-          <h3 className="text-sm font-semibold text-gray-300">Implementation Plan</h3>
+          <FileText size={16} className="text-olive" />
+          <h3 className="text-sm font-semibold text-ink-primary">Implementation Plan</h3>
         </div>
-        <div className="text-sm text-gray-400 whitespace-pre-wrap">
+        <div className="text-sm text-ink-secondary whitespace-pre-wrap">
           {report.implementationPlan}
         </div>
       </div>
@@ -97,22 +97,22 @@ function ReportSection({
   emptyText: string;
 }) {
   return (
-    <div className="bg-gray-900/60 border border-gray-800 rounded-lg p-4">
+    <div className="bg-elevated/40 border border-border-subtle rounded-lg p-4">
       <div className="flex items-center gap-2 mb-3">
         {icon}
-        <h3 className="text-sm font-semibold text-gray-300">{title}</h3>
+        <h3 className="text-sm font-semibold text-ink-primary">{title}</h3>
       </div>
       {items.length > 0 ? (
         <ul className="space-y-2">
           {items.map((item, idx) => (
-            <li key={idx} className="flex items-start gap-2 text-sm text-gray-400">
-              <span className="text-brand-400 mt-0.5">•</span>
+            <li key={idx} className="flex items-start gap-2 text-sm text-ink-secondary">
+              <span className="text-gold mt-0.5">•</span>
               <span>{item}</span>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-gray-600 italic">{emptyText}</p>
+        <p className="text-sm text-ink-ghost italic">{emptyText}</p>
       )}
     </div>
   );

@@ -82,14 +82,11 @@ export default function PromptSessionPage() {
 
   return (
     <div className="h-screen flex flex-col bg-deep">
-      {/* Join Session Modal */}
+      {/* Join Session Modal — single instance with mode prop */}
       <JoinSessionModal
-        isOpen={showJoinModal && !sessionPersona}
+        isOpen={showJoinModal}
         onJoin={handleJoinSession}
-      />
-      <JoinSessionModal
-        isOpen={showJoinModal && !!sessionPersona}
-        onJoin={handleJoinSession}
+        mode={sessionPersona ? "switch" : "initial"}
       />
 
       {/* Top bar */}
