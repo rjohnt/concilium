@@ -78,7 +78,7 @@ export function TicketCard({ ticket }: { ticket: Ticket }) {
               <MessageSquare size={12} />
               {ticket.feedback.length}
             </span>
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1" title={formatAbsoluteDate(ticket.updatedAt)}>
               <Clock size={12} />
               {formatRelativeTime(ticket.updatedAt)}
             </span>
