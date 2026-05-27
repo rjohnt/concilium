@@ -37,11 +37,7 @@ export default function TicketDetailPage() {
   }, [params.id]);
 
   useEffect(() => {
-    // Brief delay to show skeleton loading state
-    const timer = setTimeout(() => {
-      loadTicket();
-    }, 1500);
-    return () => clearTimeout(timer);
+    loadTicket();
   }, [loadTicket]);
 
   // After ticket loads, show the join modal if no session is active

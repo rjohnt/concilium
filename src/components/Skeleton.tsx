@@ -89,7 +89,10 @@ export function SkeletonAvatar({
  */
 export function SkeletonCard() {
   return (
-    <div className="card" aria-hidden="true">
+    <div className="card relative" aria-hidden="true">
+      {/* CopyButton skeleton area (abs-positioned to match TicketCard) */}
+      <div className="absolute top-3 right-3 h-6 w-6 bg-elevated rounded animate-pulse" />
+
       {/* Top row: ID + status badge */}
       <div className="flex items-center gap-2 mb-1">
         <div className="h-4 w-16 bg-elevated rounded animate-pulse" />
@@ -146,7 +149,7 @@ export function DashboardSkeleton({ count = 4 }: { count?: number }) {
       </div>
 
       {/* Stats cards skeleton */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         {Array.from({ length: 3 }).map((_, i) => (
           <div key={i} className="card flex items-center gap-4">
             <div className="w-10 h-10 rounded-lg bg-elevated animate-pulse" />

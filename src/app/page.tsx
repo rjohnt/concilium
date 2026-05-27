@@ -14,12 +14,8 @@ export default function DashboardPage() {
 
   useEffect(() => {
     seedData();
-    // Brief delay to show skeleton loading state
-    const timer = setTimeout(() => {
-      setTickets(getTickets());
-      setLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
+    setTickets(getTickets());
+    setLoading(false);
   }, []);
 
   const draftCount = tickets.filter((t) => t.status === "draft").length;

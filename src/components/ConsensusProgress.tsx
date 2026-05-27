@@ -200,7 +200,7 @@ export function ConsensusProgress({
           <p className="text-xs text-amber-400/80 flex items-center gap-1.5">
             <Clock size={12} />
             Waiting for:{" "}
-            {remaining.map((p) => allPersonas.find((pp) => pp.id === p.id)?.label).join(", ")}
+            {remaining.map((p) => p.label).join(", ")}
           </p>
         </div>
       )}

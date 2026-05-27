@@ -35,11 +35,7 @@ export default function PromptSessionPage() {
   }, [params.id]);
 
   useEffect(() => {
-    // Brief delay to show skeleton loading state
-    const timer = setTimeout(() => {
-      loadTicket();
-    }, 1500);
-    return () => clearTimeout(timer);
+    loadTicket();
   }, [loadTicket]);
 
   // Auto-show join modal if no persona selected
