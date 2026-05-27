@@ -39,6 +39,7 @@ function makeTicket(overrides: Partial<Ticket> = {}): Ticket {
     updatedAt: new Date().toISOString(),
     feedback: [],
     approvals: [],
+    tags: [],
     ...overrides,
   };
 }

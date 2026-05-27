@@ -82,6 +82,7 @@ export function loadTickets(): StoreState {
     const migratedTickets = validTickets.map((t: Ticket) => ({
       ...t,
       priority: t.priority ?? 2,
+      tags: t.tags ?? [],
     }));
 
     return {

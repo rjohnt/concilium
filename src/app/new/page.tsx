@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createTicket } from "@/lib/store";
-import { PRIORITY_LABELS, PRIORITY_COLORS, PriorityLevel } from "@/lib/types";
+import { PRIORITY_LABELS, PRIORITY_COLORS, PriorityLevel, PREDEFINED_TAGS, Tag } from "@/lib/types";
+import { TagChip } from "@/components/TagChip";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
@@ -14,17 +15,20 @@ export default function NewTicketPage() {
   const [priority, setPriority] = useState<PriorityLevel>(2);
   const [dueDate, setDueDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !description.trim()) return;
 
     setSubmitting(true);
+    const tags: Tag[] = PREDEFINED_TAGS.filter((t) => selectedTagIds.includes(t.id));
     const ticket = createTicket(
       title.trim(),
       description.trim(),
       priority,
-      dueDate || undefined
+      dueDate || undefined,
+      tags
     );
 
     // Navigate to the new ticket
@@ -132,6 +136,29 @@ export default function NewTicketPage() {
                   Clear
                 </button>
               )}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1.5">
+              Tags <span className="text-gray-600">(optional)</span>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {PREDEFINED_TAGS.map((tag) => (
+                <TagChip
+                  key={tag.id}
+                  tag={tag}
+                  mode="toggle"
+                  selected={selectedTagIds.includes(tag.id)}
+                  onToggle={(id) =>
+                    setSelectedTagIds((prev) =>
+                      prev.includes(id)
+                        ? prev.filter((t) => t !== id)
+                        : [...prev, id]
+                    )
+                  }
+                />
+              ))}
             </div>
           </div>
 
