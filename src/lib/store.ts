@@ -25,16 +25,6 @@ let nextTicketId = initial.nextTicketId;
 let nextFeedbackId = initial.nextFeedbackId;
 let nextBuildReportId = initial.nextBuildReportId;
 
-const STORAGE_KEY = "concilium-tickets";
-
-function persistState(): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tickets));
-  } catch {
-    // localStorage may be unavailable (SSR, storage full, etc.)
-  }
-}
-
 export function loadPersistedState(): void {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);

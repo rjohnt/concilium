@@ -4,19 +4,26 @@ import { useEffect, useState } from "react";
 import { Ticket } from "@/lib/types";
 import { seedData, getTickets } from "@/lib/store";
 import { TicketCard } from "@/components/TicketCard";
+import { DashboardSkeleton } from "@/components/Skeleton";
 import { PlusCircle, Users } from "lucide-react";
 import Link from "next/link";
 
 export default function DashboardPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     seedData();
     setTickets(getTickets());
+    setLoading(false);
   }, []);
 
   const draftCount = tickets.filter((t) => t.status === "draft").length;
   const inReviewCount = tickets.filter((t) => t.status === "in-review").length;
+
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <div className="max-w-5xl mx-auto">
