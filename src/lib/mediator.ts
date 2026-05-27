@@ -167,45 +167,7 @@ Rules:
     )
     .join("\n");
 
-  let userPrompt: string;
-  let jsonInstruction: string;
-
-  if (isContinuation && previousResponse) {
-    userPrompt = `## Previous Mediation Round
-The previous response from you (${persona.label}) was:
-\`\`\`
-Refined Feedback: ${previousResponse.refinedFeedback}
-Concerns: ${previousResponse.concerns.join("; ")}
-Recommendations: ${previousResponse.recommendations.join("; ")}
-\`\`\`
-
-## User Follow-up
-The user is responding to your previous analysis. Their new message:
-"""
-${userMessage}
-"""
-
-${jsonInstruction}`;
-  } else {
-    userPrompt = `## Ticket Context
-${buildTicketOverview(ticket)}
-
-## Existing Feedback from Other Personas
-${existingFeedback}
-
-## Persona Status
-${personaStatus}
-
-## User Input
-The user is submitting their perspective as the ${persona.label} persona:
-"""
-${userMessage}
-"""
-
-${jsonInstruction}`;
-  }
-
-  // Construct the JSON schema instruction
+  // Build the prompt — ticket context (fresh) or continuation
   const jsonSchema = `Respond with a JSON object in this exact structure (no markdown, no code fences):
 {
   "refinedFeedback": "A detailed feedback statement that reframes the user's input through the ${persona.label} lens. Use first-person persona voice. Include your assessment, analysis, and specific observations. 2-4 paragraphs.",
@@ -216,30 +178,8 @@ ${jsonInstruction}`;
   "approvalReasoning": "Brief explanation of why you do or don't recommend approval from the ${persona.label}'s perspective"
 }`;
 
-  // Add the schema to the user prompt
-  userPrompt = userPrompt.replace("${jsonInstruction}", jsonSchema);
+  let userPrompt: string;
 
-  // Actually, let me just build the prompt properly
-  userPrompt = [
-    `## Ticket Context`,
-    buildTicketOverview(ticket),
-    ``,
-    `## Existing Feedback from Other Personas`,
-    existingFeedback,
-    ``,
-    `## Persona Status`,
-    personaStatus,
-    ``,
-    `## User Input`,
-    `The user is submitting their perspective as the ${persona.label} persona:`,
-    `"""`,
-    userMessage,
-    `"""`,
-    ``,
-    jsonSchema,
-  ].join("\n");
-
-  // If continuation, prepend previous context
   if (isContinuation && previousResponse) {
     userPrompt = [
       `## Previous Mediation Round`,
@@ -256,6 +196,26 @@ ${jsonInstruction}`;
       ``,
       `## Persona Status`,
       personaStatus,
+      ``,
+      jsonSchema,
+    ].join("\n");
+  } else {
+    // Fresh mediation — full ticket context
+    userPrompt = [
+      `## Ticket Context`,
+      buildTicketOverview(ticket),
+      ``,
+      `## Existing Feedback from Other Personas`,
+      existingFeedback,
+      ``,
+      `## Persona Status`,
+      personaStatus,
+      ``,
+      `## User Input`,
+      `The user is submitting their perspective as the ${persona.label} persona:`,
+      `"""`,
+      userMessage,
+      `"""`,
       ``,
       jsonSchema,
     ].join("\n");
