@@ -13,7 +13,9 @@ import {
   Hammer,
   CheckCheck,
   AlertTriangle,
+  Activity,
 } from "lucide-react";
+import { EmptyState } from "./EmptyState";
 
 // ---------------------------------------------------------------------------
 // Activity item type – derived from ticket data, no backend needed
@@ -320,9 +322,12 @@ export function ActivityFeed({ ticket }: ActivityFeedProps) {
         <h3 className="text-sm font-semibold text-ink-primary uppercase tracking-wider mb-4">
           Activity
         </h3>
-        <p className="text-sm text-ink-muted text-center py-8">
-          No activity recorded.
-        </p>
+        <EmptyState
+          icon={Activity}
+          title="No Activity"
+          description="No activity recorded."
+          className="bg-transparent border-0 !p-0 !py-8"
+        />
       </div>
     );
   }

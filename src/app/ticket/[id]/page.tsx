@@ -17,7 +17,8 @@ import { DetailSkeleton } from "@/components/Skeleton";
 import { DeleteTicketDialog } from "@/components/DeleteTicketDialog";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { EditableField } from "@/components/EditableField";
-import { ArrowLeft, Clock, GitBranch, RefreshCw, Sparkles, ExternalLink, Trash2, Calendar } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
+import { ArrowLeft, Clock, GitBranch, RefreshCw, Sparkles, ExternalLink, Trash2, FileQuestion, Calendar } from "lucide-react";
 import Link from "next/link";
 
 export default function TicketDetailPage() {
@@ -94,14 +95,13 @@ export default function TicketDetailPage() {
 
   if (!ticket) {
     return (
-      <div className="max-w-4xl mx-auto text-center py-16">
-        <h3 className="text-lg font-medium text-ink-secondary mb-2">
-          Ticket not found
-        </h3>
-        <Link href="/" className="btn-secondary inline-flex mt-4">
-          <ArrowLeft size={16} />
-          Back to Dashboard
-        </Link>
+      <div className="max-w-4xl mx-auto py-16">
+        <EmptyState
+          icon={FileQuestion}
+          title="Ticket not found"
+          description="This ticket may have been deleted or the link is invalid."
+          action={{ label: "Back to Dashboard", href: "/" }}
+        />
       </div>
     );
   }
@@ -319,11 +319,12 @@ export default function TicketDetailPage() {
           onSwitchPersona={handleSwitchPersona}
         />
       ) : (
-        <div className="card text-center py-12 opacity-60">
-          <p className="text-ink-muted text-sm">
-            Choose a persona to join the session and provide feedback.
-          </p>
-        </div>
+        <EmptyState
+          icon={FileQuestion}
+          title="No Persona Selected"
+          description="Choose a persona to join the session and provide feedback."
+          className="opacity-60"
+        />
       )}
 
       {/* Build Trigger — show when there's feedback or consensus status */}

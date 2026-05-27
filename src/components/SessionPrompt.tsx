@@ -7,6 +7,7 @@ import { addFeedback } from "@/lib/store";
 import { calculateConsensus } from "@/lib/consensus-engine";
 import { formatRelativeTime, formatAbsoluteDate } from "@/lib/timeAgo";
 import { PersonaBadge } from "./PersonaBadge";
+import { EmptyState } from "./EmptyState";
 import { MarkdownPreview } from "./MarkdownPreview";
 import {
   Send,
@@ -144,15 +145,12 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
       {/* Chat-like feedback timeline */}
       <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
         {sortedFeedback.length === 0 && (
-          <div className="text-center py-8">
-            <MessageSquare
-              size={32}
-              className="mx-auto text-ink-ghost mb-2"
-            />
-            <p className="text-sm text-ink-ghost">
-              No feedback yet. Be the first to weigh in!
-            </p>
-          </div>
+          <EmptyState
+            icon={MessageSquare}
+            title="No Feedback"
+            description="No feedback yet. Be the first to weigh in!"
+            className="bg-transparent border-0 py-8"
+          />
         )}
 
         {sortedFeedback.map((entry) => {

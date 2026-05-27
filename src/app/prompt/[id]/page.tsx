@@ -10,6 +10,7 @@ import { SessionPrompt } from "@/components/SessionPrompt";
 import { ConsensusProgress } from "@/components/ConsensusProgress";
 import { JoinSessionModal } from "@/components/JoinSessionModal";
 import { PromptSessionSkeleton } from "@/components/Skeleton";
+import { EmptyState } from "@/components/EmptyState";
 import {
   ArrowLeft,
   Clock,
@@ -17,6 +18,7 @@ import {
   RefreshCw,
   Sparkles,
   MessageSquare,
+  FileQuestion,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -66,15 +68,12 @@ export default function PromptSessionPage() {
   if (!ticket) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h3 className="text-lg font-medium text-ink-secondary mb-2">
-            Ticket not found
-          </h3>
-          <Link href="/" className="btn-secondary inline-flex mt-4">
-            <ArrowLeft size={16} />
-            Back to Dashboard
-          </Link>
-        </div>
+        <EmptyState
+          icon={FileQuestion}
+          title="Ticket not found"
+          description="This ticket may have been deleted or the link is invalid."
+          action={{ label: "Back to Dashboard", href: "/" }}
+        />
       </div>
     );
   }
@@ -228,17 +227,11 @@ export default function PromptSessionPage() {
             </div>
           ) : (
             <div className="flex-1 flex items-center justify-center">
-              <div className="text-center max-w-sm">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-elevated flex items-center justify-center">
-                  <Sparkles size={28} className="text-ink-ghost" />
-                </div>
-                <h3 className="text-lg font-semibold text-ink-secondary mb-2">
-                  Ready to Start
-                </h3>
-                <p className="text-sm text-ink-muted mb-6">
-                  Join this session as a persona to provide AI-mediated
-                  feedback. Your perspective will help shape this feature.
-                </p>
+              <EmptyState
+                icon={Sparkles}
+                title="Ready to Start"
+                description="Join this session as a persona to provide AI-mediated feedback. Your perspective will help shape this feature."
+              >
                 <button
                   onClick={() => setShowJoinModal(true)}
                   className="btn-primary"
@@ -246,7 +239,7 @@ export default function PromptSessionPage() {
                   <Sparkles size={16} />
                   Join Session
                 </button>
-              </div>
+              </EmptyState>
             </div>
           )}
         </div>

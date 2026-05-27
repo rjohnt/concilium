@@ -6,7 +6,8 @@ import { Ticket } from "@/lib/types";
 import { seedData, getTicket, completeBuild } from "@/lib/store";
 import { getBuildReadiness, generateBuildSummary } from "@/lib/consensus-threshold";
 import { BuildReport as BuildReportComponent } from "@/components/BuildReport";
-import { ArrowLeft, Clock, CheckCircle2, RefreshCw, Rocket, FileText } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
+import { ArrowLeft, Clock, CheckCircle2, RefreshCw, Rocket, FileText, FileQuestion } from "lucide-react";
 import Link from "next/link";
 
 export default function BuildPage() {
@@ -62,14 +63,13 @@ export default function BuildPage() {
 
   if (!ticket) {
     return (
-      <div className="max-w-4xl mx-auto text-center py-16">
-        <h3 className="text-lg font-medium text-gray-400 mb-2">
-          Ticket not found
-        </h3>
-        <Link href="/" className="btn-secondary inline-flex mt-4">
-          <ArrowLeft size={16} />
-          Back to Dashboard
-        </Link>
+      <div className="max-w-4xl mx-auto py-16">
+        <EmptyState
+          icon={FileQuestion}
+          title="Ticket not found"
+          description="This ticket may have been deleted or the link is invalid."
+          action={{ label: "Back to Dashboard", href: "/" }}
+        />
       </div>
     );
   }
@@ -142,13 +142,12 @@ export default function BuildPage() {
         {report ? (
           <BuildReportComponent report={report} />
         ) : (
-          <div className="text-center py-8">
-            <Rocket size={32} className="text-gray-600 mx-auto mb-3" />
-            <p className="text-gray-500">No build report generated yet.</p>
-            <p className="text-sm text-gray-600 mt-1">
-              Trigger a build from the ticket page when consensus is reached.
-            </p>
-          </div>
+          <EmptyState
+            icon={Rocket}
+            title="No build report generated yet"
+            description="Trigger a build from the ticket page when consensus is reached."
+            className="bg-transparent border-0 py-8"
+          />
         )}
       </div>
 

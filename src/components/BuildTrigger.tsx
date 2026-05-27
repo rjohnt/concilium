@@ -230,7 +230,7 @@ export function BuildTrigger({ ticket, onBuildTriggered }: BuildTriggerProps) {
                         ))}
                       </ul>
                     ) : (
-                      <p className="text-xs text-gray-600 italic">No feedback provided</p>
+                      <p className="text-xs text-ink-muted italic">No feedback provided</p>
                     )}
                   </div>
                 );
