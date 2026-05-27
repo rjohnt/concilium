@@ -34,8 +34,8 @@ vi.mock("next/link", () => ({
 // Mock the store module
 const mockStore = {
   seedData: vi.fn(),
-  getTickets: vi.fn(() => []),
-  getTicket: vi.fn(() => undefined),
+  getTickets: vi.fn(() => [] as Ticket[]),
+  getTicket: vi.fn(() => undefined as Ticket | undefined),
   createTicket: vi.fn(),
   updateTicketTags: vi.fn(),
   clearStorage: vi.fn(),
@@ -48,18 +48,18 @@ const mockStore = {
 };
 
 vi.mock("@/lib/store", () => ({
-  seedData: (...args: unknown[]) => mockStore.seedData(...args),
-  getTickets: (...args: unknown[]) => mockStore.getTickets(...args),
-  getTicket: (...args: unknown[]) => mockStore.getTicket(...args),
-  createTicket: (...args: unknown[]) => mockStore.createTicket(...args),
-  updateTicketTags: (...args: unknown[]) => mockStore.updateTicketTags(...args),
-  clearStorage: (...args: unknown[]) => mockStore.clearStorage(...args),
-  deleteTicket: (...args: unknown[]) => mockStore.deleteTicket(...args),
-  updateTicket: (...args: unknown[]) => mockStore.updateTicket(...args),
-  updateTicketPriority: (...args: unknown[]) => mockStore.updateTicketPriority(...args),
-  addFeedback: (...args: unknown[]) => mockStore.addFeedback(...args),
-  getFeedbackHistory: (...args: unknown[]) => mockStore.getFeedbackHistory(...args),
-  getConsensusProgress: (...args: unknown[]) => mockStore.getConsensusProgress(...args),
+  seedData: (...args: any[]) => mockStore.seedData(...args),
+  getTickets: (...args: any[]) => (mockStore.getTickets as any)(...args),
+  getTicket: (...args: any[]) => (mockStore.getTicket as any)(...args),
+  createTicket: (...args: any[]) => mockStore.createTicket(...args),
+  updateTicketTags: (...args: any[]) => mockStore.updateTicketTags(...args),
+  clearStorage: (...args: any[]) => mockStore.clearStorage(...args),
+  deleteTicket: (...args: any[]) => mockStore.deleteTicket(...args),
+  updateTicket: (...args: any[]) => mockStore.updateTicket(...args),
+  updateTicketPriority: (...args: any[]) => mockStore.updateTicketPriority(...args),
+  addFeedback: (...args: any[]) => mockStore.addFeedback(...args),
+  getFeedbackHistory: (...args: any[]) => (mockStore.getFeedbackHistory as any)(...args),
+  getConsensusProgress: (...args: any[]) => (mockStore.getConsensusProgress as any)(...args),
 }));
 
 // Mock auth-context
@@ -729,14 +729,14 @@ describe("DEV-53 Acceptance: Ticket tag/label system with dashboard filtering", 
   describe("AC 10: Tests for TagChip and store tag functions", () => {
     it("TagChip.test.tsx test file exists and is importable", async () => {
       // Dynamic import verifies the file exists and has no syntax errors
-      const mod = await import("@/components/__tests__/TagChip.test.tsx");
+      const mod = await import("@/components/__tests__/TagChip.test");
       expect(mod).toBeDefined();
       // Vitest test files define describe/it/expect; verify the module loaded
       expect(typeof mod).toBe("object");
     });
 
     it("store test module has updateTicketTags and createTicket tag tests", async () => {
-      const mod = await import("@/lib/__tests__/store.test.ts");
+      const mod = await import("@/lib/__tests__/store.test");
       expect(mod).toBeDefined();
     });
 
@@ -751,7 +751,7 @@ describe("DEV-53 Acceptance: Ticket tag/label system with dashboard filtering", 
       // The TagChip test fixture itself verifies the component behavior.
       // This acceptance test confirms the test file loads — the CI runner
       // separately confirms all 7 TagChip tests + 2 store tag tests pass.
-      const mod = await import("@/components/__tests__/TagChip.test.tsx");
+      const mod = await import("@/components/__tests__/TagChip.test");
       expect(mod).toBeTruthy();
     });
   });
