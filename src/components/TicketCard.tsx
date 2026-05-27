@@ -2,21 +2,9 @@ import { Ticket, PRIORITY_LABELS, PRIORITY_COLORS } from "@/lib/types";
 import { getAllPersonas } from "@/lib/personas";
 import { PersonaBadge } from "./PersonaBadge";
 import { CopyButton } from "@/components/CopyButton";
+import { formatRelativeTime, formatAbsoluteDate } from "@/lib/timeAgo";
 import { Clock, MessageSquare } from "lucide-react";
 import Link from "next/link";
-
-function timeAgo(isoString: string): string {
-  const seconds = Math.floor(
-    (Date.now() - new Date(isoString).getTime()) / 1000
-  );
-  if (seconds < 60) return "just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-}
 
 export function TicketCard({ ticket }: { ticket: Ticket }) {
   const allPersonas = getAllPersonas();
@@ -92,7 +80,7 @@ export function TicketCard({ ticket }: { ticket: Ticket }) {
             </span>
             <span className="flex items-center gap-1">
               <Clock size={12} />
-              {timeAgo(ticket.updatedAt)}
+              {formatRelativeTime(ticket.updatedAt)}
             </span>
           </div>
         </div>

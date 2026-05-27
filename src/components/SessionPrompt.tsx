@@ -5,6 +5,7 @@ import { PersonaId, Ticket, FeedbackEntry } from "@/lib/types";
 import { getPersona, getAllPersonas } from "@/lib/personas";
 import { addFeedback } from "@/lib/store";
 import { calculateConsensus } from "@/lib/consensus-engine";
+import { formatRelativeTime, formatAbsoluteDate } from "@/lib/timeAgo";
 import { PersonaBadge } from "./PersonaBadge";
 import {
   Send,
@@ -187,11 +188,8 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
                     <span className="text-xs font-medium text-ink-primary">
                       {entryPersona?.label}
                     </span>
-                    <span className="text-xs text-ink-muted">
-                      {new Date(entry.createdAt).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                    <span className="text-xs text-ink-muted" title={formatAbsoluteDate(entry.createdAt)}>
+                      {formatRelativeTime(entry.createdAt)}
                     </span>
                     {entry.approved && (
                       <ThumbsUp size={12} className="text-emerald-400" />

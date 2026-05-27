@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { PersonaId, Ticket } from "@/lib/types";
 import { getPersona, getAllPersonas } from "@/lib/personas";
 import { getFeedbackHistory } from "@/lib/store";
+import { formatRelativeTime, formatAbsoluteDate } from "@/lib/timeAgo";
 import { PersonaBadge } from "./PersonaBadge";
 import { MessageSquare, CheckCircle, ThumbsUp, RefreshCw } from "lucide-react";
 
@@ -222,8 +223,8 @@ export function FeedbackPanel({
                         <span className="text-xs font-medium text-gray-300">
                           {entryPersona.label}
                         </span>
-                        <span className="text-xs text-gray-500">
-                          {new Date(entry.createdAt).toLocaleString()}
+                        <span className="text-xs text-gray-500" title={formatAbsoluteDate(entry.createdAt)}>
+                          {formatRelativeTime(entry.createdAt)}
                         </span>
                       </div>
                       {entry.approved && (

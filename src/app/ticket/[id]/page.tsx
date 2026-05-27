@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Ticket, PersonaId, PRIORITY_LABELS, PRIORITY_COLORS, PriorityLevel } from "@/lib/types";
 import { seedData, getTicket, deleteTicket, updateTicket, updateTicketPriority } from "@/lib/store";
 import { getPersona } from "@/lib/personas";
+import { formatRelativeTime, formatAbsoluteDate } from "@/lib/timeAgo";
 import { FeedbackPanel } from "@/components/FeedbackPanel";
 import { BuildTrigger } from "@/components/BuildTrigger";
 import { PersonaBadge } from "@/components/PersonaBadge";
@@ -191,13 +192,13 @@ export default function TicketDetailPage() {
               className="text-ink-secondary leading-relaxed whitespace-pre-wrap"
             />
             <div className="flex items-center gap-4 mt-4 text-xs text-ink-muted">
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1" title={formatAbsoluteDate(ticket.createdAt)}>
                 <Clock size={12} />
-                Created {new Date(ticket.createdAt).toLocaleDateString()}
+                Created {formatRelativeTime(ticket.createdAt)}
               </span>
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1" title={formatAbsoluteDate(ticket.updatedAt)}>
                 <GitBranch size={12} />
-                Updated {new Date(ticket.updatedAt).toLocaleDateString()}
+                Updated {formatRelativeTime(ticket.updatedAt)}
               </span>
             </div>
             {/* Priority editor */}
