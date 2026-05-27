@@ -1,17 +1,72 @@
 import { Ticket, FeedbackEntry, PersonaId, TicketStatus, BuildReport } from "./types";
 import { getAllPersonas } from "./personas";
 import { checkConsensusThreshold, getBuildReadiness, buildBuildReport } from "./consensus-threshold";
+import {
+  saveTickets,
+  loadTickets,
+  clearStorage as clearPersistedStorage,
+  STORAGE_KEY,
+} from "./persistence";
 
-// === In-memory store ===
-// Will be replaced with a database in a future run.
+// === In-memory store with localStorage persistence ===
 
-let tickets: Ticket[] = [];
-let nextTicketId = 1;
-let nextFeedbackId = 1;
-let nextBuildReportId = 1;
+const initial =
+  typeof window !== "undefined"
+    ? loadTickets()
+    : {
+        tickets: [] as Ticket[],
+        nextTicketId: 1,
+        nextFeedbackId: 1,
+        nextBuildReportId: 1,
+      };
+
+let tickets: Ticket[] = initial.tickets;
+let nextTicketId = initial.nextTicketId;
+let nextFeedbackId = initial.nextFeedbackId;
+let nextBuildReportId = initial.nextBuildReportId;
 
 function generateId(prefix: string, counter: number): string {
   return `${prefix}-${String(counter).padStart(3, "0")}`;
+}
+
+// --- Debounced persistence ---
+
+let persistTimer: ReturnType<typeof setTimeout> | null = null;
+
+function persistState(): void {
+  if (persistTimer !== null) {
+    clearTimeout(persistTimer);
+  }
+  persistTimer = setTimeout(() => {
+    saveTickets(tickets, nextTicketId, nextFeedbackId, nextBuildReportId);
+    persistTimer = null;
+  }, 50);
+}
+
+function cancelPendingPersist(): void {
+  if (persistTimer !== null) {
+    clearTimeout(persistTimer);
+    persistTimer = null;
+  }
+}
+
+function reloadFromStorage(): void {
+  const state = loadTickets();
+  tickets = state.tickets;
+  nextTicketId = state.nextTicketId;
+  nextFeedbackId = state.nextFeedbackId;
+  nextBuildReportId = state.nextBuildReportId;
+}
+
+// --- Cross-tab sync via storage event ---
+
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (event) => {
+    if (event.key === STORAGE_KEY) {
+      cancelPendingPersist();
+      reloadFromStorage();
+    }
+  });
 }
 
 // --- Ticket CRUD ---
@@ -43,6 +98,7 @@ export function createTicket(
     approvals: [],
   };
   tickets.push(ticket);
+  persistState();
   return ticket;
 }
 
@@ -55,6 +111,7 @@ export function updateTicketStatus(
   if (!ticket) return null;
   ticket.status = status;
   ticket.updatedAt = new Date().toISOString();
+  persistState();
   return ticket;
 }
 
@@ -104,6 +161,7 @@ export function addFeedback(
     autoTransitionToBuilding(ticket.id);
   }
 
+  persistState();
   return entry;
 }
 
@@ -206,6 +264,7 @@ export function setBuildReport(
   if (!ticket) return null;
   ticket.buildReport = report;
   ticket.updatedAt = new Date().toISOString();
+  persistState();
   return report;
 }
 
@@ -227,6 +286,7 @@ export function triggerBuild(ticketId: string): BuildReport | null {
   ticket.status = "building";
   ticket.updatedAt = new Date().toISOString();
 
+  persistState();
   return report;
 }
 
@@ -244,6 +304,7 @@ export function completeBuild(ticketId: string): Ticket | null {
     ticket.buildReport.status = "completed";
     ticket.buildReport.completedAt = new Date().toISOString();
   }
+  persistState();
   return ticket;
 }
 
@@ -301,4 +362,16 @@ export function seedData(): void {
     "API rate limiting by tenant",
     "Implement per-tenant rate limiting on the public API to prevent abuse and ensure fair usage across customers. Configurable limits per tier (free, pro, enterprise)."
   );
+}
+
+/**
+ * Clear all in-memory data and localStorage persistence.
+ */
+export function clearStorage(): void {
+  tickets = [];
+  nextTicketId = 1;
+  nextFeedbackId = 1;
+  nextBuildReportId = 1;
+  cancelPendingPersist();
+  clearPersistedStorage();
 }
