@@ -17,7 +17,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className="min-h-screen bg-gray-950">
+      <body className="min-h-screen bg-[#1a1714]">
         <AuthProvider>
           <AuthGuard>
             <div className="flex min-h-screen">

@@ -25,10 +25,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   // Show loading spinner while checking auth
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+      <div className="min-h-screen bg-[#1a1714] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 size={32} className="animate-spin text-brand-400" />
-          <p className="text-sm text-gray-400">Loading...</p>
+          <Loader2 size={32} className="animate-spin text-gold" />
+          <p className="text-sm text-ink-muted">Loading...</p>
         </div>
       </div>
     );
