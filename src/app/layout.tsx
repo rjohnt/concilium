@@ -3,6 +3,8 @@ import "./globals.css";
 import { Sidebar } from "@/components/Sidebar";
 import { AuthProvider } from "@/lib/auth-context";
 import { AuthGuard } from "@/components/AuthGuard";
+import { ToastProvider } from "@/lib/toast-context";
+import { ToastContainer } from "@/components/ToastContainer";
 
 export const metadata: Metadata = {
   title: "Concilium — Multiplayer AI-Assisted Tickets",
@@ -19,12 +21,15 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className="min-h-screen bg-[#1a1714]">
         <AuthProvider>
-          <AuthGuard>
-            <div className="flex min-h-screen">
-              <Sidebar />
-              <main className="flex-1 ml-64 p-8">{children}</main>
-            </div>
-          </AuthGuard>
+          <ToastProvider>
+            <AuthGuard>
+              <div className="flex min-h-screen">
+                <Sidebar />
+                <main className="flex-1 ml-64 p-8">{children}</main>
+              </div>
+            </AuthGuard>
+            <ToastContainer />
+          </ToastProvider>
         </AuthProvider>
       </body>
     </html>

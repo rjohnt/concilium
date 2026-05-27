@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import { createTicket } from "@/lib/store";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { useToast } from "@/lib/toast-context";
 
 export default function NewTicketPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -18,6 +20,8 @@ export default function NewTicketPage() {
 
     setSubmitting(true);
     const ticket = createTicket(title.trim(), description.trim());
+
+    toast("Ticket created successfully!", "success");
 
     // Navigate to the new ticket
     router.push(`/ticket/${ticket.id}`);
