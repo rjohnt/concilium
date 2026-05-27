@@ -2,14 +2,13 @@ import { Persona, PersonaId, Ticket, FeedbackEntry } from "./types";
 import { getPersona, getAllPersonas } from "./personas";
 import { getTicket, getFeedbackHistory } from "./store";
 import { checkConsensusThreshold } from "./consensus-threshold";
+import { callDeepSeek } from "./llm";
 
-// === Mediator Engine ===
+// === Mediator Engine v2 — LLM-Powered ===
 //
 // The mediator is the AI "brain" that sits between the user and the ticket.
 // It takes user input, re-frames it through the lens of the selected persona,
-// and generates structured, persona-aware feedback.
-//
-// Currently rules-based — designed to be swapped for a real LLM via the same interface.
+// and generates structured, persona-aware feedback via DeepSeek V4 Flash.
 
 export interface MediatorContext {
   ticketId: string;
@@ -37,9 +36,11 @@ export interface MediatorResponse {
   suggestedNextPersona: PersonaId | null;
   /** Metadata about the mediation */
   meta: {
-    mediationType: "rules-based" | "ai";
+    mediationType: "ai";
     processedAt: string;
     inputLength: number;
+    model: string;
+    tokensUsed: number;
   };
 }
 
@@ -61,21 +62,20 @@ function buildContext(ticketId: string, personaId: PersonaId): MediatorContext |
 }
 
 /**
- * Mediate a user message through the selected persona lens.
- * This is the main entry point — call this from the API route.
+ * Mediate a user message through the selected persona lens via DeepSeek V4 Flash.
  */
-export function mediate(
+export async function mediate(
   ticketId: string,
   personaId: PersonaId,
   userMessage: string
-): { response: MediatorResponse; context: MediatorContext } | null {
+): Promise<{ response: MediatorResponse; context: MediatorContext } | null> {
   const context = buildContext(ticketId, personaId);
   if (!context) return null;
 
   const ticket = getTicket(ticketId)!;
   const persona = getPersona(personaId);
 
-  const response = generateResponse(ticket, persona, userMessage, context);
+  const response = await generateLLMResponse(ticket, persona, userMessage, context, false);
 
   return { response, context };
 }
@@ -84,338 +84,237 @@ export function mediate(
  * Continue an existing mediation session — takes the last AI response
  * and the user's follow-up, generates the next round.
  */
-export function continueMediation(
+export async function continueMediation(
   ticketId: string,
   personaId: PersonaId,
   userMessage: string,
   previousResponse: MediatorResponse
-): { response: MediatorResponse; context: MediatorContext } | null {
+): Promise<{ response: MediatorResponse; context: MediatorContext } | null> {
   const context = buildContext(ticketId, personaId);
   if (!context) return null;
 
   const ticket = getTicket(ticketId)!;
   const persona = getPersona(personaId);
 
-  // For continued conversation, deepen the analysis
-  const response = generateDeepenedResponse(
-    ticket,
-    persona,
-    userMessage,
-    previousResponse,
-    context
-  );
+  const response = await generateLLMResponse(ticket, persona, userMessage, context, true, previousResponse);
 
   return { response, context };
 }
 
-// === Response Generation ===
+// === LLM Prompt Building ===
 
-function generateResponse(
+function buildPersonaOverview(persona: Persona): string {
+  return [
+    `Persona: ${persona.label} ${persona.emoji}`,
+    `Expertise: ${persona.expertise}`,
+    `Focus areas: ${persona.promptTemplate.replace("Provide your assessment:", "").trim()}`,
+  ].join("\n");
+}
+
+function buildTicketOverview(ticket: Ticket): string {
+  const lines = [
+    `Ticket: ${ticket.id}`,
+    `Title: ${ticket.title}`,
+    `Description: ${ticket.description}`,
+    `Priority: ${ticket.priority === 0 ? "Urgent" : ticket.priority === 1 ? "High" : ticket.priority === 2 ? "Medium" : "Low"}`,
+  ];
+  return lines.join("\n");
+}
+
+function buildFeedbackHistory(history: FeedbackEntry[], excludePersona: PersonaId): string {
+  if (history.length === 0) return "No previous feedback.";
+  return history
+    .filter((f) => f.personaId !== excludePersona)
+    .map(
+      (f, i) =>
+        `[#${i + 1}] ${f.personaId} (${f.approved ? "approved ✓" : "pending"}): ${f.content.slice(0, 300)}`
+    )
+    .join("\n\n");
+}
+
+async function generateLLMResponse(
   ticket: Ticket,
   persona: Persona,
   userMessage: string,
-  context: MediatorContext
-): MediatorResponse {
-  const concerns = extractConcerns(persona, userMessage, ticket);
-  const recommendations = generateRecommendations(persona, userMessage, ticket);
-  const followUps = generateFollowUps(persona, context);
-  const { suggestApproval, reasoning } = evaluateApproval(
-    persona,
-    userMessage,
-    context
-  );
+  context: MediatorContext,
+  isContinuation: boolean,
+  previousResponse?: MediatorResponse
+): Promise<MediatorResponse> {
+  const systemPrompt = `You are the ${persona.label} (${persona.emoji}) persona in a collaborative ticket-building session called "Concilium".
 
-  // Build refined feedback by combining the user's message with persona framing
-  const refinedFeedback = buildRefinedFeedback(
-    persona,
+Your role: Weigh in on feature tickets from the perspective of your expertise area. You are not a generic assistant — you are a specific stakeholder with strong opinions and deep knowledge in your domain.
+
+Persona context:
+${buildPersonaOverview(persona)}
+
+Rules:
+1. Respond strictly as this persona — use their voice, concerns, and perspective.
+2. Be constructive but honest. If something concerns you, flag it. If it looks good, say so.
+3. Provide a refined feedback statement that frames the user's input through your persona lens.
+4. Surface concrete concerns specific to your domain.
+5. Give actionable recommendations.
+6. Ask follow-up questions that probe deeper into your area of expertise.
+7. Evaluate whether the proposal deserves approval from your perspective.
+8. Suggest which persona should weigh in next based on who hasn't contributed yet.
+9. Return ONLY valid JSON matching the specified schema — no markdown, no explanation.`;
+
+  const existingFeedback = buildFeedbackHistory(context.sessionHistory, persona.id);
+  const allPersonas = getAllPersonas();
+  const personaStatus = allPersonas
+    .map(
+      (p) =>
+        `${p.emoji} ${p.label}: ${context.sessionHistory.some((f) => f.personaId === p.id) ? "provided feedback" : "not yet"}${ticket.approvals.includes(p.id) ? " ✓ approved" : ""}`
+    )
+    .join("\n");
+
+  let userPrompt: string;
+  let jsonInstruction: string;
+
+  if (isContinuation && previousResponse) {
+    userPrompt = `## Previous Mediation Round
+The previous response from you (${persona.label}) was:
+\`\`\`
+Refined Feedback: ${previousResponse.refinedFeedback}
+Concerns: ${previousResponse.concerns.join("; ")}
+Recommendations: ${previousResponse.recommendations.join("; ")}
+\`\`\`
+
+## User Follow-up
+The user is responding to your previous analysis. Their new message:
+"""
+${userMessage}
+"""
+
+${jsonInstruction}`;
+  } else {
+    userPrompt = `## Ticket Context
+${buildTicketOverview(ticket)}
+
+## Existing Feedback from Other Personas
+${existingFeedback}
+
+## Persona Status
+${personaStatus}
+
+## User Input
+The user is submitting their perspective as the ${persona.label} persona:
+"""
+${userMessage}
+"""
+
+${jsonInstruction}`;
+  }
+
+  // Construct the JSON schema instruction
+  const jsonSchema = `Respond with a JSON object in this exact structure (no markdown, no code fences):
+{
+  "refinedFeedback": "A detailed feedback statement that reframes the user's input through the ${persona.label} lens. Use first-person persona voice. Include your assessment, analysis, and specific observations. 2-4 paragraphs.",
+  "concerns": ["Concern 1 specific to ${persona.label}'s domain", "Concern 2", "Concern 3 (max 4)"],
+  "recommendations": ["Recommendation 1", "Recommendation 2", "Recommendation 3 (max 4)"],
+  "followUpQuestions": ["A probing question to deepen the conversation", "Another question (max 3)"],
+  "suggestApproval": boolean,
+  "approvalReasoning": "Brief explanation of why you do or don't recommend approval from the ${persona.label}'s perspective"
+}`;
+
+  // Add the schema to the user prompt
+  userPrompt = userPrompt.replace("${jsonInstruction}", jsonSchema);
+
+  // Actually, let me just build the prompt properly
+  userPrompt = [
+    `## Ticket Context`,
+    buildTicketOverview(ticket),
+    ``,
+    `## Existing Feedback from Other Personas`,
+    existingFeedback,
+    ``,
+    `## Persona Status`,
+    personaStatus,
+    ``,
+    `## User Input`,
+    `The user is submitting their perspective as the ${persona.label} persona:`,
+    `"""`,
     userMessage,
-    concerns,
-    recommendations
-  );
+    `"""`,
+    ``,
+    jsonSchema,
+  ].join("\n");
+
+  // If continuation, prepend previous context
+  if (isContinuation && previousResponse) {
+    userPrompt = [
+      `## Previous Mediation Round`,
+      `Your previous response as ${persona.label}:`,
+      `Refined Feedback: ${previousResponse.refinedFeedback}`,
+      `Concerns: ${previousResponse.concerns.join("; ")}`,
+      `Recommendations: ${previousResponse.recommendations.join("; ")}`,
+      ``,
+      `## User Follow-up`,
+      `The user is responding to your previous analysis:`,
+      `"""`,
+      userMessage,
+      `"""`,
+      ``,
+      `## Persona Status`,
+      personaStatus,
+      ``,
+      jsonSchema,
+    ].join("\n");
+  }
+
+  const llmResponse = await callDeepSeek({
+    systemPrompt,
+    userPrompt,
+    expectJson: true,
+  });
+
+  // Parse the JSON response
+  let parsed: Record<string, unknown> = {};
+  try {
+    parsed = JSON.parse(llmResponse.content);
+  } catch (e) {
+    // If JSON parsing fails, try to extract from markdown code fences
+    const jsonMatch = llmResponse.content.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (jsonMatch) {
+      parsed = JSON.parse(jsonMatch[1].trim());
+    } else {
+      // Fallback: extract whatever we can
+      parsed = {
+        refinedFeedback: llmResponse.content.slice(0, 1000),
+        concerns: ["Could not parse structured response — see feedback for details."],
+        recommendations: [],
+        followUpQuestions: [],
+        suggestApproval: false,
+        approvalReasoning: "Response parsing error occurred.",
+      };
+    }
+  }
+
+  // Find next persona
+  const suggestedNextPersona = findNextPersona(context);
 
   return {
-    refinedFeedback,
-    concerns,
-    recommendations,
-    followUpQuestions: followUps,
-    suggestApproval,
-    approvalReasoning: reasoning,
-    suggestedNextPersona: findNextPersona(context),
+    refinedFeedback: String(parsed.refinedFeedback ?? "No feedback generated.").trim(),
+    concerns: safeArray(parsed.concerns),
+    recommendations: safeArray(parsed.recommendations),
+    followUpQuestions: safeArray(parsed.followUpQuestions),
+    suggestApproval: Boolean(parsed.suggestApproval),
+    approvalReasoning: String(parsed.approvalReasoning ?? "").trim(),
+    suggestedNextPersona,
     meta: {
-      mediationType: "rules-based",
+      mediationType: "ai",
       processedAt: new Date().toISOString(),
       inputLength: userMessage.length,
+      model: "deepseek-v4-flash",
+      tokensUsed: llmResponse.usage.totalTokens,
     },
   };
 }
 
-function generateDeepenedResponse(
-  ticket: Ticket,
-  persona: Persona,
-  userMessage: string,
-  prev: MediatorResponse,
-  context: MediatorContext
-): MediatorResponse {
-  // Build on the previous response — acknowledge earlier points, go deeper
-  const concerns = [
-    ...extractConcerns(persona, userMessage, ticket),
-    ...prev.concerns.filter((c) => !userMessage.includes(c.slice(0, 20))),
-  ].slice(0, 5);
-
-  const recommendations = [
-    ...generateRecommendations(persona, userMessage, ticket),
-    ...prev.recommendations,
-  ].slice(0, 5);
-
-  // Generate new follow-ups based on the continued conversation
-  const deepenedFollowUps = generateDeepenedFollowUps(persona, prev, context);
-
-  const { suggestApproval, reasoning } = evaluateApproval(
-    persona,
-    userMessage,
-    context
-  );
-
-  const refinedFeedback = buildRefinedFeedback(
-    persona,
-    userMessage,
-    concerns,
-    recommendations
-  );
-
-  return {
-    refinedFeedback,
-    concerns,
-    recommendations,
-    followUpQuestions: deepenedFollowUps,
-    suggestApproval,
-    approvalReasoning: reasoning,
-    suggestedNextPersona: findNextPersona(context),
-    meta: {
-      mediationType: "rules-based",
-      processedAt: new Date().toISOString(),
-      inputLength: userMessage.length,
-    },
-  };
-}
-
-// === Analysis Functions ===
-
-function extractConcerns(
-  persona: Persona,
-  message: string,
-  ticket: Ticket
-): string[] {
-  const concerns: string[] = [];
-  const lower = message.toLowerCase();
-
-  switch (persona.id) {
-    case "engineer":
-      if (lower.includes("complex") || lower.includes("hard") || lower.includes("difficult"))
-        concerns.push("Implementation complexity needs to be scoped carefully — consider a phased rollout.");
-      if (lower.includes("dependency") || lower.includes("depend"))
-        concerns.push("Dependency management could introduce blocking risks — verify all prerequisites are available.");
-      if (lower.includes("performance") || lower.includes("slow"))
-        concerns.push("Performance implications should be benchmarked before committing to an approach.");
-      if (lower.includes("test") || lower.includes("coverage"))
-        concerns.push("Testing strategy needs definition — consider unit, integration, and e2e coverage targets.");
-      if (!concerns.length)
-        concerns.push("Technical feasibility should be validated with a spike before full implementation.");
-      break;
-
-    case "designer":
-      if (lower.includes("mobile") || lower.includes("responsive"))
-        concerns.push("Responsive behavior needs explicit breakpoint definitions — don't assume desktop patterns translate.");
-      if (lower.includes("accessibility") || lower.includes("a11y"))
-        concerns.push("Accessibility must meet WCAG 2.1 AA minimum — keyboard nav, screen readers, color contrast.");
-      if (lower.includes("animation") || lower.includes("transition"))
-        concerns.push("Animations should respect prefers-reduced-motion and not block interaction.");
-      if (!concerns.length)
-        concerns.push("User flow and interaction states (loading, empty, error, edge cases) need deliberate design.");
-      break;
-
-    case "product-owner":
-      if (lower.includes("scope") || lower.includes("creep"))
-        concerns.push("Scope creep is a risk — define MVP vs. nice-to-have clearly before building.");
-      if (lower.includes("stakeholder") || lower.includes("feedback"))
-        concerns.push("Stakeholder alignment should be confirmed before development starts.");
-      if (lower.includes("timeline") || lower.includes("deadline"))
-        concerns.push("Timeline pressure shouldn't compromise quality — scope can be adjusted if needed.");
-      if (!concerns.length)
-        concerns.push("Business value should be quantifiable — define success metrics before building.");
-      break;
-
-    case "qa":
-      if (lower.includes("edge") || lower.includes("corner"))
-        concerns.push("Edge cases need explicit enumeration — don't rely on developer intuition.");
-      if (lower.includes("regression"))
-        concerns.push("Regression risk should be assessed — identify which existing features could be impacted.");
-      if (lower.includes("state") || lower.includes("race"))
-        concerns.push("State management and race conditions are common failure points — plan test scenarios.");
-      if (!concerns.length)
-        concerns.push("Acceptance criteria should be defined as testable, verifiable statements.");
-      break;
+function safeArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.map((v) => String(v).trim());
   }
-
-  return concerns;
-}
-
-function generateRecommendations(
-  persona: Persona,
-  message: string,
-  ticket: Ticket
-): string[] {
-  const recs: string[] = [];
-
-  switch (persona.id) {
-    case "engineer":
-      recs.push("Start with a technical design doc covering architecture decisions and trade-offs.");
-      recs.push("Create a proof-of-concept branch for risky components before committing to a design.");
-      if (ticket.priority <= 1)
-        recs.push("Given the high priority, consider parallelizing independent workstreams.");
-      break;
-
-    case "designer":
-      recs.push("Create low-fidelity wireframes first — validate flow before visual polish.");
-      recs.push("Document interaction states: loading, empty, error, success, and edge cases.");
-      recs.push("Run a quick design review with at least one other team member before implementation.");
-      break;
-
-    case "product-owner":
-      recs.push("Write user stories that capture the 'why' — not just the 'what'.");
-      recs.push("Define success criteria that are measurable (e.g., 'reduces time to X by Y%').");
-      recs.push("Consider phased delivery: what's the smallest version that delivers value?");
-      break;
-
-    case "qa":
-      recs.push("Create a test matrix covering browsers, devices, and user roles.");
-      recs.push("Write automated tests for critical paths; manual testing for exploratory edge cases.");
-      recs.push("Define rollback criteria — what constitutes a failed deployment?");
-      break;
-  }
-
-  return recs;
-}
-
-function generateFollowUps(
-  persona: Persona,
-  context: MediatorContext
-): string[] {
-  const followUps: string[] = [];
-  const ticket = getTicket(context.ticketId)!;
-
-  // Persona-specific probing questions
-  switch (persona.id) {
-    case "engineer":
-      followUps.push("What's your estimated level of effort for this? Is there a simpler approach?");
-      followUps.push("Are there any technical unknowns that need research spikes?");
-      if (context.sessionHistory.length > 0)
-        followUps.push("How does the existing feedback from other personas affect your technical approach?");
-      break;
-    case "designer":
-      followUps.push("What user research or data supports this design direction?");
-      followUps.push("How does this fit into the broader product experience?");
-      if (context.sessionHistory.length > 0)
-        followUps.push("Have you reviewed the other personas' input — any design constraints they've surfaced?");
-      break;
-    case "product-owner":
-      followUps.push("What's the expected impact on key metrics or user satisfaction?");
-      followUps.push("Are there dependencies on other teams or features that should be flagged?");
-      break;
-    case "qa":
-      followUps.push("What are the highest-risk areas that need the most thorough testing?");
-      followUps.push("What's the minimum test coverage you'd consider acceptable for release?");
-      break;
-  }
-
-  // Always ask about consensus if not yet reached
-  if (!context.consensusReached) {
-    followUps.push(
-      `Only ${context.approvedCount}/${context.totalPersonas} personas have approved. Would you like to address any concerns before final approval?`
-    );
-  }
-
-  return followUps.slice(0, 4);
-}
-
-function generateDeepenedFollowUps(
-  persona: Persona,
-  prev: MediatorResponse,
-  context: MediatorContext
-): string[] {
-  const followUps: string[] = [];
-
-  // Reference previous concerns
-  if (prev.concerns.length > 0) {
-    followUps.push(
-      `You mentioned concerns about "${prev.concerns[0].slice(0, 60)}..." — can you elaborate on specific mitigation strategies?`
-    );
-  }
-
-  // Ask about the bigger picture
-  switch (persona.id) {
-    case "engineer":
-      followUps.push("If you were to implement this, what's the riskiest piece? What would you spike first?");
-      break;
-    case "designer":
-      followUps.push("What would the ideal user experience look like if there were no constraints?");
-      break;
-    case "product-owner":
-      followUps.push("How would you prioritize this against the current backlog?");
-      break;
-    case "qa":
-      followUps.push("If you had to test this in 50% of the normal time, what would you focus on?");
-      break;
-  }
-
-  return followUps.slice(0, 3);
-}
-
-function evaluateApproval(
-  persona: Persona,
-  message: string,
-  context: MediatorContext
-): { suggestApproval: boolean; reasoning: string } {
-  const lower = message.toLowerCase();
-  const positiveWords = [
-    "approve", "looks good", "good to go", "ship it", "ready",
-    "agree", "makes sense", "lgtm", "fine", "solid",
-  ];
-  const negativeWords = [
-    "block", "blocker", "can't approve", "disagree", "concern",
-    "issue", "problem", "rework", "not ready", "needs work",
-  ];
-
-  const hasPositive = positiveWords.some((w) => lower.includes(w));
-  const hasNegative = negativeWords.some((w) => lower.includes(w));
-  const substantial = message.length > 80;
-
-  if (hasNegative) {
-    return {
-      suggestApproval: false,
-      reasoning: `Input indicates concerns that should be addressed before ${persona.label} approves.`,
-    };
-  }
-
-  if (hasPositive && substantial) {
-    return {
-      suggestApproval: true,
-      reasoning: `${persona.label}'s feedback is comprehensive and indicates readiness for approval.`,
-    };
-  }
-
-  if (hasPositive && !substantial) {
-    return {
-      suggestApproval: false,
-      reasoning: `Positive sentiment noted, but ${persona.label} should provide more detailed feedback before approving.`,
-    };
-  }
-
-  // Default: neutral
-  return {
-    suggestApproval: false,
-    reasoning: `Review the refined feedback and confirm ${persona.label}'s assessment before approving.`,
-  };
+  return [];
 }
 
 function findNextPersona(context: MediatorContext): PersonaId | null {
@@ -442,35 +341,4 @@ function findNextPersona(context: MediatorContext): PersonaId | null {
   }
 
   return null; // Everyone has provided feedback and approved
-}
-
-function buildRefinedFeedback(
-  persona: Persona,
-  userMessage: string,
-  concerns: string[],
-  recommendations: string[]
-): string {
-  // Frame the user's message in the persona's voice, adding structured sections
-  const sections: string[] = [];
-
-  // Opening: persona-framed restatement
-  sections.push(
-    `**${persona.emoji} ${persona.label} Assessment:**\n\n${userMessage.trim()}`
-  );
-
-  // Concerns section
-  if (concerns.length > 0) {
-    sections.push(
-      `\n**⚠️ Concerns Identified:**\n${concerns.map((c) => `- ${c}`).join("\n")}`
-    );
-  }
-
-  // Recommendations section
-  if (recommendations.length > 0) {
-    sections.push(
-      `\n**💡 Recommendations:**\n${recommendations.map((r) => `- ${r}`).join("\n")}`
-    );
-  }
-
-  return sections.join("\n");
 }

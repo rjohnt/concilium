@@ -59,12 +59,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Route to mediator
+    // Route to mediator (LLM-powered via DeepSeek V4 Flash)
     let result;
 
     if (body.previousResponse) {
       // Continuation of an existing mediation session
-      result = continueMediation(
+      result = await continueMediation(
         body.ticketId,
         body.personaId,
         body.message,
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
       );
     } else {
       // Fresh mediation
-      result = mediate(body.ticketId, body.personaId, body.message);
+      result = await mediate(body.ticketId, body.personaId, body.message);
     }
 
     if (!result) {
