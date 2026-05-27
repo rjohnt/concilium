@@ -145,7 +145,7 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
         {sortedFeedback.length === 0 && (
           <EmptyState
             icon={MessageSquare}
-            title="No feedback yet"
+            title="No Feedback"
             description="No feedback yet. Be the first to weigh in!"
             className="bg-transparent border-0 py-8"
           />

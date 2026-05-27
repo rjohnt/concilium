@@ -6,6 +6,7 @@ import { type LucideIcon } from "lucide-react";
 export interface EmptyStateAction {
   label: string;
   href: string;
+  onClick?: () => void;
 }
 
 export interface EmptyStateProps {
@@ -21,6 +22,8 @@ export interface EmptyStateProps {
   className?: string;
   /** Optional children rendered below the description/action (e.g. custom buttons) */
   children?: React.ReactNode;
+  /** Custom icon size in pixels (default: 48) */
+  iconSize?: number;
 }
 
 /**
@@ -35,11 +38,12 @@ export function EmptyState({
   action,
   className = "",
   children,
+  iconSize = 48,
 }: EmptyStateProps) {
   return (
     <div className={`card text-center py-16 ${className}`}>
       <Icon
-        size={48}
+        size={iconSize}
         className="text-ink-ghost mx-auto mb-4"
         aria-hidden="true"
       />
@@ -47,9 +51,15 @@ export function EmptyState({
       <p className="text-sm text-ink-muted max-w-md mx-auto">{description}</p>
 
       {action && (
-        <Link href={action.href} className="btn-primary inline-flex mt-4">
-          {action.label}
-        </Link>
+        action.onClick && !action.href ? (
+          <button onClick={action.onClick} className="btn-primary inline-flex mt-4">
+            {action.label}
+          </button>
+        ) : (
+          <Link href={action.href} className="btn-primary inline-flex mt-4">
+            {action.label}
+          </Link>
+        )
       )}
 
       {children && <div className="mt-4">{children}</div>}

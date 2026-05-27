@@ -245,7 +245,7 @@ export function FeedbackPanel({
               icon={MessageSquare}
               title="No feedback yet"
               description="No feedback from this persona yet."
-              className="bg-transparent border-0"
+              className="bg-transparent border-0 !p-0 !py-4"
             />
           )}
         </div>

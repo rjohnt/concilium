@@ -142,9 +142,7 @@ export default function DashboardPage() {
         {filteredTickets.length === 0 ? (
           <EmptyState
             icon={
-              priorityFilter !== null
-                ? SearchX
-                : activeFilter === "all"
+              activeFilter === "all" && priorityFilter === null
                 ? HelpCircle
                 : SearchX
             }
