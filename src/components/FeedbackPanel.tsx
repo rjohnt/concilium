@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { PersonaId, Ticket, FeedbackEntry } from "@/lib/types";
-import { getPersona } from "@/lib/personas";
+import { getPersona, getAllPersonas } from "@/lib/personas";
+import { getFeedbackHistory } from "@/lib/store";
 import { PersonaBadge } from "./PersonaBadge";
 import { MessageSquare, CheckCircle, ThumbsUp, RefreshCw } from "lucide-react";
 
@@ -33,6 +34,7 @@ export function FeedbackPanel({
   const [content, setContent] = useState("");
   const [approved, setApproved] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [historyFilter, setHistoryFilter] = useState<PersonaId | "all">("all");
 
   const persona = activePersona ? getPersona(activePersona) : null;
 
@@ -40,6 +42,17 @@ export function FeedbackPanel({
   const personaFeedback = activePersona
     ? ticket.feedback.filter((f) => f.personaId === activePersona)
     : [];
+
+  // Filtered feedback history based on selected persona filter
+  const filteredHistory = useMemo(
+    () =>
+      historyFilter === "all"
+        ? getFeedbackHistory(ticket.id)
+        : getFeedbackHistory(ticket.id, historyFilter),
+    [ticket.id, historyFilter]
+  );
+
+  const allPersonas = useMemo(() => getAllPersonas(), []);
 
   const handleSubmit = async () => {
     if (!activePersona || !content.trim()) return;
@@ -154,32 +167,86 @@ export function FeedbackPanel({
         </div>
       )}
 
-      {/* Feedback history for active persona */}
-      {personaFeedback.length > 0 && (
-        <div className="border-t border-gray-800 pt-4 space-y-3">
-          <p className="text-xs text-gray-500 uppercase tracking-wider">
-            History — {persona?.label}
+      {/* Persona filter bar for feedback history */}
+      {ticket.feedback.length > 0 && (
+        <div className="border-t border-border-subtle pt-4 space-y-3">
+          <p className="text-xs text-ink-muted uppercase tracking-wider">
+            Feedback History
           </p>
-          {personaFeedback.map((entry) => (
-            <div
-              key={entry.id}
-              className="bg-gray-800/50 rounded-lg p-3 border border-gray-800"
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              onClick={() => setHistoryFilter("all")}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                historyFilter === "all"
+                  ? "text-gold border-b-2 border-gold bg-gold/10"
+                  : "text-ink-muted hover:text-ink-primary"
+              }`}
             >
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs text-gray-500">
-                  {new Date(entry.createdAt).toLocaleString()}
-                </span>
-                {entry.approved && (
-                  <span className="badge bg-emerald-900/50 text-emerald-400">
-                    <CheckCircle size={10} /> Approved
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-gray-300 whitespace-pre-wrap">
-                {entry.content}
-              </p>
+              All ({ticket.feedback.length})
+            </button>
+            {allPersonas.map((p) => {
+              const count = ticket.feedback.filter(
+                (f) => f.personaId === p.id
+              ).length;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => setHistoryFilter(p.id)}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                    historyFilter === p.id
+                      ? "text-gold border-b-2 border-gold bg-gold/10"
+                      : "text-ink-muted hover:text-ink-primary"
+                  }`}
+                >
+                  {p.emoji} {p.label}
+                  {count > 0 && (
+                    <span className="ml-1 text-ink-ghost">({count})</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Filtered feedback entries */}
+          {filteredHistory.length > 0 ? (
+            <div className="space-y-3">
+              {filteredHistory.map((entry) => {
+                const entryPersona = getPersona(entry.personaId);
+                return (
+                  <div
+                    key={entry.id}
+                    className="bg-elevated/50 rounded-lg p-3 border border-border-subtle"
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs">
+                          {entryPersona.emoji}
+                        </span>
+                        <span className="text-xs font-medium text-ink-primary">
+                          {entryPersona.label}
+                        </span>
+                        <span className="text-xs text-ink-muted">
+                          {new Date(entry.createdAt).toLocaleString()}
+                        </span>
+                      </div>
+                      {entry.approved && (
+                        <span className="badge bg-emerald-900/50 text-emerald-400">
+                          <CheckCircle size={10} /> Approved
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-ink-secondary whitespace-pre-wrap mt-1">
+                      {entry.content}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
-          ))}
+          ) : (
+            <p className="text-sm text-ink-ghost py-4 text-center">
+              No feedback from this persona yet.
+            </p>
+          )}
         </div>
       )}
     </div>
