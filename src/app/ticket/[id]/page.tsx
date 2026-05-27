@@ -12,6 +12,7 @@ import { JoinSessionModal } from "@/components/JoinSessionModal";
 import { CopyButton } from "@/components/CopyButton";
 import { ConsensusProgress } from "@/components/ConsensusProgress";
 import { DeleteTicketDialog } from "@/components/DeleteTicketDialog";
+import { ActivityFeed } from "@/components/ActivityFeed";
 import { ArrowLeft, Clock, GitBranch, RefreshCw, Sparkles, ExternalLink, Trash2 } from "lucide-react";
 import Link from "next/link";
 
@@ -215,6 +216,11 @@ export default function TicketDetailPage() {
           ticketId={ticket.id}
           approvals={ticket.approvals}
         />
+      </div>
+
+      {/* Activity feed */}
+      <div className="mb-6">
+        <ActivityFeed ticket={ticket} />
       </div>
 
       {/* Feedback panel — show after joining, or show hint before joining */}

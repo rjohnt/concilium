@@ -5,7 +5,6 @@ import {
   saveTickets,
   loadTickets,
   clearStorage as clearPersistedStorage,
-  STORAGE_KEY,
 } from "./persistence";
 
 // === In-memory store with localStorage persistence ===
@@ -26,14 +25,6 @@ let nextFeedbackId = initial.nextFeedbackId;
 let nextBuildReportId = initial.nextBuildReportId;
 
 const STORAGE_KEY = "concilium-tickets";
-
-function persistState(): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tickets));
-  } catch {
-    // localStorage may be unavailable (SSR, storage full, etc.)
-  }
-}
 
 export function loadPersistedState(): void {
   try {
