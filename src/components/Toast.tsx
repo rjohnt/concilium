@@ -53,7 +53,7 @@ export function Toast({ id, message, type = "info", onClose }: ToastProps) {
         bg-raised border border-border-visible rounded-xl p-4
         border-l-4 ${borderColorMap[type]}
         flex items-start gap-3 shadow-lg
-        min-w-[320px] max-w-[420px]
+        min-w-80 max-w-96
         transition-all duration-300 ease-out
         ${entering ? "translate-x-full opacity-0" : ""}
         ${exiting ? "translate-x-full opacity-0" : ""}

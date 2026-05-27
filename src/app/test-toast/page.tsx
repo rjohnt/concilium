@@ -1,8 +1,11 @@
 "use client";
 
 import { useToast } from "@/lib/toast-context";
+import { notFound } from "next/navigation";
 
 export default function ToastDemoPage() {
+  if (process.env.NODE_ENV !== "development") notFound();
+
   const { toast } = useToast();
 
   return (
