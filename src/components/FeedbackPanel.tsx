@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { PersonaId, Ticket } from "@/lib/types";
 import { getPersona, getAllPersonas } from "@/lib/personas";
 import { getFeedbackHistory } from "@/lib/store";
@@ -9,6 +9,9 @@ import { PersonaBadge } from "./PersonaBadge";
 import { EmptyState } from "./EmptyState";
 import { MarkdownPreview } from "./MarkdownPreview";
 import { MessageSquare, CheckCircle, ThumbsUp, RefreshCw } from "lucide-react";
+
+const IS_MAC = typeof navigator !== "undefined" && navigator.platform.includes("Mac");
+const MOD_KEY = IS_MAC ? "Cmd" : "Ctrl";
 
 export function FeedbackPanel({
   ticket,
@@ -52,7 +55,7 @@ export function FeedbackPanel({
 
   const allPersonas = useMemo(() => getAllPersonas(), []);
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (!activePersona || !content.trim()) return;
     setSubmitting(true);
 
@@ -65,7 +68,19 @@ export function FeedbackPanel({
     setApproved(false);
     setSubmitting(false);
     onFeedbackAdded();
-  };
+  }, [activePersona, content, approved, ticket.id, onFeedbackAdded]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        e.preventDefault();
+        if (content.trim() && activePersona && !submitting) {
+          handleSubmit();
+        }
+      }
+    },
+    [content, activePersona, submitting, handleSubmit]
+  );
 
   return (
     <div className="card space-y-4">
@@ -135,6 +150,7 @@ export function FeedbackPanel({
           <MarkdownPreview
             value={content}
             onChange={(e) => setContent(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder={persona.promptTemplate}
             rows={4}
             textareaClassName="bg-gray-800 border border-gray-700 text-gray-200 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
@@ -142,18 +158,23 @@ export function FeedbackPanel({
           />
 
           <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={approved}
-                onChange={(e) => setApproved(e.target.checked)}
-                className="rounded bg-gray-700 border-gray-600 text-brand-500 focus:ring-brand-500"
-              />
-              <span>Approve ticket ({persona.label} sign-off)</span>
-              {approved && (
-                <ThumbsUp size={16} className="text-emerald-400" />
-              )}
-            </label>
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={approved}
+                  onChange={(e) => setApproved(e.target.checked)}
+                  className="rounded bg-gray-700 border-gray-600 text-brand-500 focus:ring-brand-500"
+                />
+                <span>Approve ticket ({persona.label} sign-off)</span>
+                {approved && (
+                  <ThumbsUp size={16} className="text-emerald-400" />
+                )}
+              </label>
+              <span className="text-[11px] text-ink-muted/60 hidden sm:inline select-none">
+                {MOD_KEY}+Enter to submit
+              </span>
+            </div>
 
             <button
               onClick={handleSubmit}
