@@ -10,8 +10,17 @@ import { EmptyState } from "./EmptyState";
 import { MarkdownPreview } from "./MarkdownPreview";
 import { MessageSquare, CheckCircle, ThumbsUp, RefreshCw } from "lucide-react";
 
-const IS_MAC = typeof navigator !== "undefined" && navigator.platform.includes("Mac");
-const MOD_KEY = IS_MAC ? "Cmd" : "Ctrl";
+function useModKey(): string {
+  const [modKey, setModKey] = useState("Ctrl");
+  useEffect(() => {
+    setModKey(
+      typeof navigator !== "undefined" && navigator.platform.includes("Mac")
+        ? "Cmd"
+        : "Ctrl"
+    );
+  }, []);
+  return modKey;
+}
 
 export function FeedbackPanel({
   ticket,
@@ -41,6 +50,7 @@ export function FeedbackPanel({
   const [approved, setApproved] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [historyFilter, setHistoryFilter] = useState<PersonaId | "all">("all");
+  const MOD_KEY = useModKey();
 
   const persona = activePersona ? getPersona(activePersona) : null;
 
