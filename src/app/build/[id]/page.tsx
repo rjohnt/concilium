@@ -30,6 +30,20 @@ export default function BuildPage() {
     loadTicket();
   }, [loadTicket]);
 
+  // Poll every 1s while building to reflect auto-transitions and build progress
+  useEffect(() => {
+    if (!ticket || ticket.status !== "building") return;
+    const interval = setInterval(() => {
+      seedData();
+      const t = getTicket(params.id as string);
+      if (t && t.status !== ticket.status) {
+        setTicket(t);
+        setSummary(generateBuildSummary(t));
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [ticket, params.id]);
+
   const handleCompleteBuild = () => {
     if (!ticket) return;
     completeBuild(ticket.id);

@@ -1,6 +1,6 @@
 import { Ticket, FeedbackEntry, PersonaId, TicketStatus, BuildReport } from "./types";
 import { getAllPersonas } from "./personas";
-import { checkConsensusThreshold, buildBuildReport } from "./consensus-threshold";
+import { checkConsensusThreshold, getBuildReadiness, buildBuildReport } from "./consensus-threshold";
 
 // === In-memory store ===
 // Will be replaced with a database in a future run.
@@ -46,6 +46,7 @@ export function createTicket(
   return ticket;
 }
 
+// Future scaffolding – exposed for API routes and external state management.
 export function updateTicketStatus(
   ticketId: string,
   status: TicketStatus
@@ -94,10 +95,14 @@ export function addFeedback(
   }
 
   // Auto-transition to consensus when threshold met
-  autoTransitionToConsensus(ticket.id);
+  const justReachedConsensus = autoTransitionToConsensus(ticket.id);
 
-  // Auto-transition to building if threshold met and in consensus
-  autoTransitionToBuilding(ticket.id);
+  // Auto-transition to building if threshold met and in consensus,
+  // but skip if consensus was just reached this tick — let the UI
+  // show the "consensus" status before auto-advancing to building.
+  if (!justReachedConsensus) {
+    autoTransitionToBuilding(ticket.id);
+  }
 
   return entry;
 }
@@ -185,6 +190,7 @@ function autoTransitionToBuilding(ticketId: string): boolean {
 
 // --- Build Reports ---
 
+// Future use – exposed for API routes and external report consumers.
 export function getBuildReport(
   ticketId: string
 ): BuildReport | undefined {
@@ -211,8 +217,8 @@ export function triggerBuild(ticketId: string): BuildReport | null {
   const ticket = tickets.find((t) => t.id === ticketId);
   if (!ticket) return null;
 
-  const readiness = checkConsensusThreshold(ticket);
-  if (!readiness.reached) return null;
+  const readiness = getBuildReadiness(ticket);
+  if (!readiness.ready) return null;
 
   const buildId = generateId("BLD", nextBuildReportId++);
   const report = buildBuildReport(ticket, buildId);
@@ -236,7 +242,7 @@ export function completeBuild(ticketId: string): Ticket | null {
   ticket.updatedAt = new Date().toISOString();
   if (ticket.buildReport) {
     ticket.buildReport.status = "completed";
-    ticket.buildReport.createdAt = new Date().toISOString();
+    ticket.buildReport.completedAt = new Date().toISOString();
   }
   return ticket;
 }

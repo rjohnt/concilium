@@ -26,6 +26,7 @@ export interface BuildReport {
   id: string;
   ticketId: string;
   createdAt: string;
+  completedAt?: string;
   status: "building" | "completed" | "failed";
   requirements: string[];
   designDecisions: string[];

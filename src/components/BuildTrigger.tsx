@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Ticket } from "@/lib/types";
 import { getBuildReadiness, generateBuildSummary, DEFAULT_THRESHOLD } from "@/lib/consensus-threshold";
 import { triggerBuild } from "@/lib/store";
+import { getAllPersonas } from "@/lib/personas";
 import { AlertTriangle, CheckCircle2, Clock, Play, Rocket, X, FileText, Wrench, Palette, FlaskConical } from "lucide-react";
 
 interface BuildTriggerProps {
@@ -14,7 +15,6 @@ interface BuildTriggerProps {
 export function BuildTrigger({ ticket, onBuildTriggered }: BuildTriggerProps) {
   const [showModal, setShowModal] = useState(false);
   const [summary, setSummary] = useState("");
-  const [triggering, setTriggering] = useState(false);
 
   const readiness = getBuildReadiness(ticket);
   const scoreColor =
@@ -31,12 +31,10 @@ export function BuildTrigger({ ticket, onBuildTriggered }: BuildTriggerProps) {
   };
 
   const handleTriggerBuild = () => {
-    setTriggering(true);
     const report = triggerBuild(ticket.id);
     if (report) {
       onBuildTriggered();
     }
-    setTriggering(false);
     setShowModal(false);
   };
 
@@ -192,23 +190,12 @@ export function BuildTrigger({ ticket, onBuildTriggered }: BuildTriggerProps) {
             {/* Modal Body */}
             <div className="p-6 space-y-4">
               {/* Summary sections by persona */}
-              {(["engineer", "designer", "qa", "product-owner"] as const).map((personaId) => {
+              {getAllPersonas().map((persona) => {
+                const personaId = persona.id;
                 const personaFeedback = ticket.feedback.filter(
                   (f) => f.personaId === personaId
                 );
                 const approved = ticket.approvals.includes(personaId);
-                const icons: Record<string, string> = {
-                  engineer: "⚙️",
-                  designer: "🎨",
-                  qa: "🧪",
-                  "product-owner": "📋",
-                };
-                const titles: Record<string, string> = {
-                  engineer: "Engineering Assessment",
-                  designer: "Design Decisions",
-                  qa: "QA Criteria",
-                  "product-owner": "Product Context",
-                };
                 const sectionIcons: Record<string, React.ReactNode> = {
                   engineer: <Wrench size={14} className="text-blue-400" />,
                   designer: <Palette size={14} className="text-purple-400" />,
@@ -224,7 +211,7 @@ export function BuildTrigger({ ticket, onBuildTriggered }: BuildTriggerProps) {
                     <div className="flex items-center gap-2 mb-2">
                       {sectionIcons[personaId]}
                       <h4 className="text-sm font-medium text-gray-200">
-                        {titles[personaId]}
+                        {persona.label}
                       </h4>
                       <span
                         className={`text-xs ml-auto ${
@@ -254,7 +241,7 @@ export function BuildTrigger({ ticket, onBuildTriggered }: BuildTriggerProps) {
                 <div className="flex items-center gap-2 text-sm text-brand-300">
                   <CheckCircle2 size={14} />
                   <span className="font-medium">
-                    {ticket.approvals.length} of {4} personas approved
+                    {ticket.approvals.length} of {getAllPersonas().length} personas approved
                   </span>
                 </div>
               </div>
@@ -270,20 +257,13 @@ export function BuildTrigger({ ticket, onBuildTriggered }: BuildTriggerProps) {
               </button>
               <button
                 onClick={handleTriggerBuild}
-                disabled={!readiness.ready || triggering}
+                disabled={!readiness.ready}
                 className="btn-primary flex-1 justify-center"
               >
-                {triggering ? (
-                  <>
-                    <Clock size={16} className="animate-spin" />
-                    Triggering...
-                  </>
-                ) : (
-                  <>
-                    <Play size={16} />
-                    Trigger Build
-                  </>
-                )}
+                <>
+                  <Play size={16} />
+                  Trigger Build
+                </>
               </button>
             </div>
           </div>
