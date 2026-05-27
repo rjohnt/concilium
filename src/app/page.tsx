@@ -1,22 +1,39 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Ticket } from "@/lib/types";
+import { useEffect, useState, useMemo } from "react";
+import { Ticket, TicketStatus } from "@/lib/types";
 import { seedData, getTickets } from "@/lib/store";
 import { TicketCard } from "@/components/TicketCard";
+import { FilterBar } from "@/components/FilterBar";
 import { PlusCircle, Users } from "lucide-react";
 import Link from "next/link";
 
+type FilterKey = "all" | TicketStatus;
+
 export default function DashboardPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
 
   useEffect(() => {
     seedData();
     setTickets(getTickets());
   }, []);
 
-  const draftCount = tickets.filter((t) => t.status === "draft").length;
-  const inReviewCount = tickets.filter((t) => t.status === "in-review").length;
+  const filteredTickets = useMemo(() => {
+    if (activeFilter === "all") return tickets;
+    return tickets.filter((t) => t.status === activeFilter);
+  }, [tickets, activeFilter]);
+
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const t of tickets) {
+      counts[t.status] = (counts[t.status] ?? 0) + 1;
+    }
+    return counts;
+  }, [tickets]);
+
+  const draftCount = statusCounts["draft"] ?? 0;
+  const inReviewCount = statusCounts["in-review"] ?? 0;
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -69,24 +86,36 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Filter bar */}
+      <FilterBar
+        activeFilter={activeFilter}
+        onFilterChange={setActiveFilter}
+        counts={statusCounts}
+      />
+
       {/* Ticket list */}
       <div className="space-y-4">
-        {tickets.length === 0 ? (
+        {filteredTickets.length === 0 ? (
           <div className="card text-center py-16">
             <h3 className="text-lg font-medium text-gray-400 mb-2">
-              No tickets yet
+              {activeFilter === "all"
+                ? "No tickets yet"
+                : `No ${activeFilter} tickets`}
             </h3>
             <p className="text-sm text-gray-500 mb-4">
-              Create your first ticket to start the multiplayer collaboration
-              flow.
+              {activeFilter === "all"
+                ? "Create your first ticket to start the multiplayer collaboration flow."
+                : "No tickets match this filter."}
             </p>
-            <Link href="/new" className="btn-primary inline-flex">
-              <PlusCircle size={18} />
-              Create First Ticket
-            </Link>
+            {activeFilter === "all" && (
+              <Link href="/new" className="btn-primary inline-flex">
+                <PlusCircle size={18} />
+                Create First Ticket
+              </Link>
+            )}
           </div>
         ) : (
-          tickets.map((ticket) => (
+          filteredTickets.map((ticket) => (
             <TicketCard key={ticket.id} ticket={ticket} />
           ))
         )}

@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Loader2 } from "lucide-react";
 
 const PUBLIC_PATHS = ["/login", "/signup", "/auth/callback"];
+const PUBLIC_EXACT_PATHS = ["/"];
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -13,7 +14,11 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   // Allow public paths without auth
-  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
+  const isPublic =
+    PUBLIC_PATHS.some((p) => pathname.startsWith(p)) ||
+    PUBLIC_EXACT_PATHS.includes(pathname);
+
+  if (isPublic) {
     // If already logged in and on auth page, redirect to home
     if (!loading && user && (pathname === "/login" || pathname === "/signup")) {
       router.replace("/");
