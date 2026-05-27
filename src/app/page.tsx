@@ -40,8 +40,8 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-white">Tickets</h2>
-          <p className="text-sm text-gray-400 mt-1">
+          <h2 className="text-2xl font-bold text-ink-primary">Tickets</h2>
+          <p className="text-sm text-ink-muted mt-1">
             Multiplayer stakeholder collaboration
           </p>
         </div>
@@ -54,12 +54,12 @@ export default function DashboardPage() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-8">
         <div className="card flex items-center gap-4">
-          <div className="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center">
-            <Users size={20} className="text-gray-400" />
+          <div className="w-10 h-10 rounded-lg bg-elevated flex items-center justify-center">
+            <Users size={20} className="text-ink-muted" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-white">{tickets.length}</p>
-            <p className="text-xs text-gray-500">Total Tickets</p>
+            <p className="text-2xl font-bold text-ink-primary">{tickets.length}</p>
+            <p className="text-xs text-ink-secondary">Total Tickets</p>
           </div>
         </div>
         <div className="card flex items-center gap-4">
@@ -69,19 +69,19 @@ export default function DashboardPage() {
             </span>
           </div>
           <div>
-            <p className="text-2xl font-bold text-white">{inReviewCount}</p>
-            <p className="text-xs text-gray-500">In Review</p>
+            <p className="text-2xl font-bold text-ink-primary">{inReviewCount}</p>
+            <p className="text-xs text-ink-secondary">In Review</p>
           </div>
         </div>
         <div className="card flex items-center gap-4">
-          <div className="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center">
-            <span className="text-gray-400 font-bold text-lg">
+          <div className="w-10 h-10 rounded-lg bg-elevated flex items-center justify-center">
+            <span className="text-ink-muted font-bold text-lg">
               {draftCount}
             </span>
           </div>
           <div>
-            <p className="text-2xl font-bold text-white">{draftCount}</p>
-            <p className="text-xs text-gray-500">Drafts</p>
+            <p className="text-2xl font-bold text-ink-primary">{draftCount}</p>
+            <p className="text-xs text-ink-secondary">Drafts</p>
           </div>
         </div>
       </div>
@@ -97,12 +97,12 @@ export default function DashboardPage() {
       <div className="space-y-4">
         {filteredTickets.length === 0 ? (
           <div className="card text-center py-16">
-            <h3 className="text-lg font-medium text-gray-400 mb-2">
+            <h3 className="text-lg font-medium text-ink-muted mb-2">
               {activeFilter === "all"
                 ? "No tickets yet"
                 : `No ${activeFilter} tickets`}
             </h3>
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-sm text-ink-secondary mb-4">
               {activeFilter === "all"
                 ? "Create your first ticket to start the multiplayer collaboration flow."
                 : "No tickets match this filter."}
