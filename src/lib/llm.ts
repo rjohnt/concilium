@@ -5,12 +5,15 @@
 
 const DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1";
 const DEEPSEEK_MODEL = "deepseek-v4-flash";
+export const DEEPSEEK_PRO_MODEL = "deepseek-v4-pro";
 
-interface LLMRequest {
+export interface LLMRequest {
   systemPrompt: string;
   userPrompt: string;
   /** Expect JSON response from the model */
   expectJson: boolean;
+  /** Optional model override (defaults to DEEPSEEK_MODEL) */
+  model?: string;
 }
 
 export interface LLMResponse {
@@ -49,7 +52,7 @@ export async function callDeepSeek(request: LLMRequest): Promise<LLMResponse> {
   ];
 
   const body: Record<string, unknown> = {
-    model: DEEPSEEK_MODEL,
+    model: request.model ?? DEEPSEEK_MODEL,
     messages,
     max_tokens: 2048,
     temperature: 0.7,

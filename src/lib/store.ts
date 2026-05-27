@@ -277,9 +277,11 @@ function autoTransitionToConsensus(ticketId: string): boolean {
 }
 
 /**
- * Auto-transition from consensus/in-review to building when threshold is met
+ * Auto-transition from consensus/in-review to building when threshold is met.
+ * Sets status + building stub immediately, fires background API call
+ * to generate the full LLM-powered build report.
  */
-function autoTransitionToBuilding(ticketId: string): boolean {
+async function autoTransitionToBuilding(ticketId: string): Promise<boolean> {
   const ticket = tickets.find((t) => t.id === ticketId);
   if (!ticket) return false;
 
@@ -295,13 +297,32 @@ function autoTransitionToBuilding(ticketId: string): boolean {
   const hasDisapprovals = ticket.feedback.some((f) => !f.approved);
   if (hasDisapprovals) return false;
 
-  // Transition and generate build report
+  // Set status + building stub immediately
   ticket.status = "building";
   ticket.updatedAt = new Date().toISOString();
 
-  // Auto-generate a build report
   const buildId = generateId("BLD", nextBuildReportId++);
-  ticket.buildReport = buildBuildReport(ticket, buildId);
+  ticket.buildReport = {
+    id: buildId,
+    ticketId,
+    createdAt: new Date().toISOString(),
+    status: "building",
+    requirements: ["Generating build report from persona feedback..."],
+    designDecisions: [],
+    qaCriteria: [],
+    implementationPlan: "## Building...\n\nThe build report is being generated from persona consensus feedback.",
+    consensusSummary: `Generating... (${ticket.approvals.length}/${getAllPersonas().length} approved)`,
+  };
+  persistState();
+
+  // Fire background API call to generate the real LLM-powered report
+  fetchBuildFromAPI(ticketId).then((report) => {
+    if (report) {
+      setBuildReport(ticketId, report);
+    }
+  }).catch((err) => {
+    console.error("Background build API call failed:", err);
+  });
 
   return true;
 }
@@ -329,25 +350,72 @@ export function setBuildReport(
 }
 
 /**
- * Manually trigger a build for a ticket.
- * Generates a new build report and transitions to building.
+ * Internal helper: call the POST /api/build endpoint and return the generated BuildReport.
  */
-export function triggerBuild(ticketId: string): BuildReport | null {
+async function fetchBuildFromAPI(ticketId: string): Promise<BuildReport | null> {
+  try {
+    const baseUrl = typeof window !== "undefined"
+      ? window.location.origin
+      : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+    const response = await fetch(`${baseUrl}/api/build`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ticketId }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ error: "request failed" }));
+      console.error(`fetchBuildFromAPI failed (${response.status}):`, err);
+      return null;
+    }
+
+    const data = await response.json();
+    return data.buildReport ?? null;
+  } catch (err) {
+    console.error("fetchBuildFromAPI error:", err);
+    return null;
+  }
+}
+
+/**
+ * Manually trigger a build for a ticket.
+ * Calls the LLM-powered build API and returns the generated report.
+ */
+export async function triggerBuild(ticketId: string): Promise<BuildReport | null> {
   const ticket = tickets.find((t) => t.id === ticketId);
   if (!ticket) return null;
 
   const readiness = getBuildReadiness(ticket);
   if (!readiness.ready) return null;
 
-  const buildId = generateId("BLD", nextBuildReportId++);
-  const report = buildBuildReport(ticket, buildId);
-
-  ticket.buildReport = report;
+  // Transition to building immediately with a stub
   ticket.status = "building";
   ticket.updatedAt = new Date().toISOString();
 
+  const buildId = generateId("BLD", nextBuildReportId++);
+  ticket.buildReport = {
+    id: buildId,
+    ticketId,
+    createdAt: new Date().toISOString(),
+    status: "building",
+    requirements: ["Generating build report..."],
+    designDecisions: [],
+    qaCriteria: [],
+    implementationPlan: "## Building...\n\nRequesting build report from API.",
+    consensusSummary: `Pending... (${ticket.approvals.length}/${getAllPersonas().length} approved)`,
+  };
   persistState();
-  return report;
+
+  // Call the API and await the full report
+  const report = await fetchBuildFromAPI(ticketId);
+  if (report) {
+    setBuildReport(ticketId, report);
+    return report;
+  }
+
+  // Fallback: if API call fails, keep the stub
+  return ticket.buildReport;
 }
 
 /**

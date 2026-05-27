@@ -9,6 +9,7 @@ import { getPersona } from "@/lib/personas";
 import { formatRelativeTime, formatAbsoluteDate } from "@/lib/timeAgo";
 import { FeedbackPanel } from "@/components/FeedbackPanel";
 import { BuildTrigger } from "@/components/BuildTrigger";
+import { BuildReportInline } from "@/components/BuildReportInline";
 import { PersonaBadge } from "@/components/PersonaBadge";
 import { JoinSessionModal } from "@/components/JoinSessionModal";
 import { CopyButton } from "@/components/CopyButton";
@@ -360,6 +361,13 @@ export default function TicketDetailPage() {
       {(ticket.status === "in-review" || ticket.status === "consensus" || ticket.status === "building" || ticket.status === "done") && (
         <div className="mt-6">
           <BuildTrigger ticket={ticket} onBuildTriggered={() => loadTicket()} />
+        </div>
+      )}
+
+      {/* Build Report Inline — show when a build report exists */}
+      {ticket.buildReport && (
+        <div className="mt-6">
+          <BuildReportInline ticket={ticket} onBuildUpdated={() => loadTicket()} />
         </div>
       )}
 
