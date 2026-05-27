@@ -24,14 +24,6 @@ interface VinResult {
   ErrorText: string;
 }
 
-const EMPTY_RESULT: VinResult = {
-  Make: "", Model: "", ModelYear: "", VehicleType: "", BodyClass: "",
-  FuelTypePrimary: "", EngineCylinders: "", EngineDisplacementL: "",
-  TransmissionStyle: "", DriveType: "", PlantCity: "", PlantState: "",
-  PlantCountry: "", ManufacturerName: "", Trim: "", Series: "",
-  ErrorCode: "", ErrorText: "",
-};
-
 interface RecentLookup {
   vin: string;
   timestamp: number;
@@ -100,9 +92,8 @@ export default function VinDecoderPage() {
     }
   }
 
-  async function handleDecode(e: React.FormEvent) {
-    e.preventDefault();
-    const cleanVin = vin.trim().toUpperCase();
+  async function decodeVin(vinToDecode: string) {
+    const cleanVin = vinToDecode.trim().toUpperCase();
 
     if (!cleanVin) {
       setError("Please enter a VIN.");
@@ -119,9 +110,15 @@ export default function VinDecoderPage() {
     setResult(null);
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
       const response = await fetch(
-        `https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValues/${encodeURIComponent(cleanVin)}?format=json`
+        `https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValues/${encodeURIComponent(cleanVin)}?format=json`,
+        { signal: controller.signal }
       );
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`API returned status ${response.status}`);
@@ -141,16 +138,26 @@ export default function VinDecoderPage() {
       setResult(decoded);
       addRecentLookup(cleanVin, decoded);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to decode VIN.");
+      if (err instanceof DOMException && err.name === "AbortError") {
+        setError("Request timed out. Please try again.");
+      } else {
+        setError(err instanceof Error ? err.message : "Failed to decode VIN.");
+      }
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleDecode(e: React.FormEvent) {
+    e.preventDefault();
+    await decodeVin(vin);
   }
 
   function handleRecentClick(recentVin: string) {
     setVin(recentVin);
     setResult(null);
     setError(null);
+    decodeVin(recentVin);
   }
 
   function clearResults() {
@@ -166,12 +173,12 @@ export default function VinDecoderPage() {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 rounded-lg bg-brand-600/20 flex items-center justify-center">
-            <Car size={22} className="text-brand-400" />
+          <div className="w-10 h-10 rounded-lg bg-gold/20 flex items-center justify-center">
+            <Car size={22} className="text-gold" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-white">VIN Decoder</h2>
-            <p className="text-sm text-gray-400 mt-0.5">
+            <h2 className="text-2xl font-bold text-ink-primary">VIN Decoder</h2>
+            <p className="text-sm text-ink-secondary mt-0.5">
               Decode any 17-character Vehicle Identification Number using the NHTSA database
             </p>
           </div>
@@ -191,7 +198,7 @@ export default function VinDecoderPage() {
             placeholder="Enter VIN (e.g., 1HGCM82633A004352)"
             maxLength={17}
             autoComplete="off"
-            className="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 font-mono text-lg tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
+            className="flex-1 px-4 py-3 bg-elevated border border-border-visible rounded-lg text-ink-primary placeholder:text-ink-ghost font-mono text-lg tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent transition-all"
           />
           <button
             type="submit"
@@ -212,7 +219,7 @@ export default function VinDecoderPage() {
           </button>
         </form>
         {error && (
-          <div className="mt-4 flex items-start gap-2 p-3 rounded-lg bg-red-900/20 border border-red-800 text-red-400 text-sm">
+          <div className="mt-4 flex items-start gap-2 p-3 rounded-lg bg-cardinal-900/20 border border-cardinal-800 text-cardinal-400 text-sm">
             <AlertCircle size={16} className="mt-0.5 shrink-0" />
             <span>{error}</span>
           </div>
@@ -225,8 +232,8 @@ export default function VinDecoderPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {[...Array(9)].map((_, i) => (
               <div key={i}>
-                <div className="h-3 bg-gray-800 rounded w-20 mb-2" />
-                <div className="h-5 bg-gray-800 rounded w-28" />
+                <div className="h-3 bg-elevated rounded w-20 mb-2" />
+                <div className="h-5 bg-elevated rounded w-28" />
               </div>
             ))}
           </div>
@@ -238,11 +245,11 @@ export default function VinDecoderPage() {
         <div className="card mb-8">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-xl font-bold text-white">
+              <h3 className="text-xl font-bold text-ink-primary">
                 {result.ModelYear} {result.Make} {result.Model}
               </h3>
               {result.Trim && (
-                <p className="text-sm text-gray-400 mt-1">{result.Trim}</p>
+                <p className="text-sm text-ink-secondary mt-1">{result.Trim}</p>
               )}
             </div>
             <button onClick={clearResults} className="btn-ghost text-sm">
@@ -250,16 +257,19 @@ export default function VinDecoderPage() {
             </button>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-4">
-            {DISPLAY_FIELDS.map(({ key, label }) => {
-              const value = result[key];
-              if (!value || value === "Not Applicable") return null;
-              return (
-                <div key={key}>
-                  <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">{label}</p>
-                  <p className="text-sm font-medium text-gray-200">{value}</p>
-                </div>
-              );
-            })}
+            {(() => {
+              const r = result!;
+              return DISPLAY_FIELDS.map(({ key, label }) => {
+                const value = r[key];
+                if (!value || value === "Not Applicable") return null;
+                return (
+                  <div key={key}>
+                    <p className="text-xs text-ink-muted uppercase tracking-wider mb-1">{label}</p>
+                    <p className="text-sm font-medium text-ink-secondary">{value}</p>
+                  </div>
+                );
+              });
+            })()}
           </div>
         </div>
       )}
@@ -267,9 +277,9 @@ export default function VinDecoderPage() {
       {/* Empty result state (decoded but no make/model) */}
       {!loading && result && !hasResult && !error && (
         <div className="card text-center py-12">
-          <AlertCircle size={40} className="text-gray-600 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-400 mb-2">No Results</h3>
-          <p className="text-sm text-gray-500">
+          <AlertCircle size={40} className="text-ink-ghost mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-ink-secondary mb-2">No Results</h3>
+          <p className="text-sm text-ink-muted">
             The VIN was not found in the NHTSA database. It may be invalid or from an unsupported manufacturer.
           </p>
         </div>
@@ -279,8 +289,8 @@ export default function VinDecoderPage() {
       {recentLookups.length > 0 && (
         <div className="card">
           <div className="flex items-center gap-2 mb-4">
-            <Clock size={16} className="text-gray-500" />
-            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
+            <Clock size={16} className="text-ink-muted" />
+            <h3 className="text-sm font-semibold text-ink-secondary uppercase tracking-wider">
               Recent Lookups
             </h3>
           </div>
@@ -289,15 +299,15 @@ export default function VinDecoderPage() {
               <button
                 key={`${entry.vin}-${i}`}
                 onClick={() => handleRecentClick(entry.vin)}
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-gray-800 transition-colors text-left group"
+                className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-raised transition-colors text-left group"
               >
                 <div className="flex items-center gap-3">
-                  <span className="font-mono text-sm text-brand-400 group-hover:text-brand-300">
+                  <span className="font-mono text-sm text-gold group-hover:text-gold-300">
                     {entry.vin}
                   </span>
-                  <ArrowRight size={14} className="text-gray-600 group-hover:text-gray-400" />
+                  <ArrowRight size={14} className="text-ink-ghost group-hover:text-ink-secondary" />
                 </div>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-ink-muted">
                   {entry.year} {entry.make} {entry.model}
                 </span>
               </button>
@@ -309,11 +319,11 @@ export default function VinDecoderPage() {
       {/* Empty state: no results and no recent lookups */}
       {!loading && !hasResult && !error && recentLookups.length === 0 && (
         <div className="card text-center py-16">
-          <Car size={48} className="text-gray-700 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-400 mb-2">
+          <Car size={48} className="text-ink-ghost mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-ink-secondary mb-2">
             Enter a VIN to decode
           </h3>
-          <p className="text-sm text-gray-500 max-w-md mx-auto">
+          <p className="text-sm text-ink-muted max-w-md mx-auto">
             Enter any 17-character Vehicle Identification Number above to retrieve
             detailed vehicle information from the NHTSA database.
           </p>
