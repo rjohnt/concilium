@@ -1,7 +1,12 @@
 import { Ticket, FeedbackEntry, PersonaId, TicketStatus, BuildReport } from "./types";
 import { getAllPersonas } from "./personas";
 import { checkConsensusThreshold, getBuildReadiness, buildBuildReport } from "./consensus-threshold";
-import { saveTickets, loadTickets, clearStorage as clearPersistedStorage } from "./persistence";
+import {
+  saveTickets,
+  loadTickets,
+  clearStorage as clearPersistedStorage,
+  STORAGE_KEY,
+} from "./persistence";
 
 // === In-memory store with localStorage persistence ===
 
@@ -24,8 +29,44 @@ function generateId(prefix: string, counter: number): string {
   return `${prefix}-${String(counter).padStart(3, "0")}`;
 }
 
+// --- Debounced persistence ---
+
+let persistTimer: ReturnType<typeof setTimeout> | null = null;
+
 function persistState(): void {
-  saveTickets(tickets, nextTicketId, nextFeedbackId, nextBuildReportId);
+  if (persistTimer !== null) {
+    clearTimeout(persistTimer);
+  }
+  persistTimer = setTimeout(() => {
+    saveTickets(tickets, nextTicketId, nextFeedbackId, nextBuildReportId);
+    persistTimer = null;
+  }, 50);
+}
+
+function cancelPendingPersist(): void {
+  if (persistTimer !== null) {
+    clearTimeout(persistTimer);
+    persistTimer = null;
+  }
+}
+
+function reloadFromStorage(): void {
+  const state = loadTickets();
+  tickets = state.tickets;
+  nextTicketId = state.nextTicketId;
+  nextFeedbackId = state.nextFeedbackId;
+  nextBuildReportId = state.nextBuildReportId;
+}
+
+// --- Cross-tab sync via storage event ---
+
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (event) => {
+    if (event.key === STORAGE_KEY) {
+      cancelPendingPersist();
+      reloadFromStorage();
+    }
+  });
 }
 
 // --- Ticket CRUD ---
@@ -331,5 +372,6 @@ export function clearStorage(): void {
   nextTicketId = 1;
   nextFeedbackId = 1;
   nextBuildReportId = 1;
+  cancelPendingPersist();
   clearPersistedStorage();
 }
