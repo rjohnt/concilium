@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, PlusCircle, GitBranch, LogOut, User, Car, Menu, X } from "lucide-react";
@@ -62,23 +62,34 @@ export function Sidebar() {
 
   const [ticketCounts, setTicketCounts] = useState({ total: 0, active: 0 });
 
-  // Refresh ticket counts on mount, navigation, and window focus
+  const prefersReducedMotion =
+    typeof window !== "undefined"
+      ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      : false;
+
+  // Refresh ticket counts on mount, navigation, window focus, storage changes,
+  // and when tickets change in the same tab via the tickets-changed event.
   useEffect(() => {
     const refresh = () => {
       const allTickets = getTickets();
       setTicketCounts({
         total: allTickets.length,
         active: allTickets.filter(
-          (t) => t.status === "draft" || t.status === "in-review"
+          (t) =>
+            t.status === "draft" ||
+            t.status === "in-review" ||
+            t.status === "consensus"
         ).length,
       });
     };
     refresh();
     window.addEventListener("focus", refresh);
     window.addEventListener("storage", refresh);
+    window.addEventListener("tickets-changed", refresh);
     return () => {
       window.removeEventListener("focus", refresh);
       window.removeEventListener("storage", refresh);
+      window.removeEventListener("tickets-changed", refresh);
     };
   }, [pathname]);
 
@@ -174,7 +185,11 @@ export function Sidebar() {
                     {ticketCounts.active > 0 && (
                       <motion.span
                         className="relative flex h-2.5 w-2.5"
-                        animate={{ opacity: [1, 0.3, 1] }}
+                        animate={
+                          prefersReducedMotion
+                            ? { opacity: 1 }
+                            : { opacity: [1, 0.3, 1] }
+                        }
                         transition={{
                           duration: 1.8,
                           repeat: Infinity,
@@ -184,13 +199,17 @@ export function Sidebar() {
                         <span className="absolute inline-flex h-full w-full rounded-full bg-gold opacity-75" />
                         <motion.span
                           className="absolute inline-flex h-full w-full rounded-full bg-gold"
-                          animate={{ scale: [1, 1.8, 1] }}
+                          animate={
+                            prefersReducedMotion
+                              ? { scale: 1 }
+                              : { scale: [1, 1.8, 1] }
+                          }
                           transition={{
                             duration: 1.8,
                             repeat: Infinity,
                             ease: "easeInOut",
                           }}
-                          style={{ originX: 0.5, originY: 0.5 }}
+                          style={{ transformOrigin: "50% 50%" }}
                         />
                       </motion.span>
                     )}
