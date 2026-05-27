@@ -9,7 +9,7 @@ import React, {
   useMemo,
 } from "react";
 import { Session, User } from "@supabase/supabase-js";
-import { createClient } from "@/lib/supabase";
+import { createClient, isSupabaseConfigured } from "@/lib/supabase";
 
 type AuthContextType = {
   user: User | null;
@@ -35,6 +35,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Restore session on mount
     const restoreSession = async () => {
       try {
+        if (!isSupabaseConfigured()) {
+          setLoading(false);
+          return;
+        }
         const {
           data: { session },
         } = await supabase.auth.getSession();
@@ -52,7 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth state changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
