@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, PlusCircle, GitBranch, MessageSquare } from "lucide-react";
+import { LayoutDashboard, PlusCircle, GitBranch, MessageSquare, Car } from "lucide-react";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -10,6 +10,7 @@ export function Sidebar() {
   const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/new", label: "New Ticket", icon: PlusCircle },
+    { href: "/vin", label: "VIN Decoder", icon: Car },
   ];
 
   return (
