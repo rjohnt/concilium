@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { HelpCircle, X } from "lucide-react";
+import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
 
 // ── Shortcut data grouped by category ──────────────────────────────────
 
@@ -23,20 +24,20 @@ const shortcutGroups: ShortcutGroup[] = [
       { keys: ["⌘", "K"], description: "Open command palette" },
       { keys: ["⌘", "N"], description: "New ticket" },
       { keys: ["⌘", "V"], description: "VIN decoder" },
-      { keys: ["←", "→", "↑", "↓"], description: "Navigate lists and options" },
-      { keys: ["Tab"], description: "Next focusable element" },
     ],
   },
   {
-    category: "Actions",
+    category: "Session Prompt",
     shortcuts: [
       { keys: ["⌘", "↵"], description: "Submit feedback" },
-      { keys: ["↵"], description: "Confirm / select" },
     ],
   },
   {
-    category: "Modals",
+    category: "General",
     shortcuts: [
+      { keys: ["←", "→", "↑", "↓"], description: "Navigate lists and options" },
+      { keys: ["Tab"], description: "Next focusable element" },
+      { keys: ["↵"], description: "Confirm / select" },
       { keys: ["Esc"], description: "Close modals and panels" },
       { keys: ["?"], description: "Toggle this cheat sheet" },
     ],
@@ -50,9 +51,22 @@ function isTypingTarget(): boolean {
   const el = document.activeElement as HTMLElement | null;
   if (!el) return false;
   const tag = el.tagName.toLowerCase();
-  if (tag === "input" || tag === "textarea" || tag === "select") return true;
+  if (tag === "textarea" || tag === "select") return true;
+  if (tag === "input") {
+    const type = (el as HTMLInputElement).type;
+    // Only text-like inputs — exclude radio, checkbox, button, range, etc.
+    const textTypes = new Set([
+      "text",
+      "email",
+      "password",
+      "search",
+      "url",
+      "number",
+      "tel",
+    ]);
+    return textTypes.has(type);
+  }
   if (el.isContentEditable) return true;
-  // Also check for input-like roles (e.g., contenteditable divs used as editors)
   const role = el.getAttribute("role");
   if (role === "textbox" || role === "searchbox" || role === "combobox") return true;
   return false;
@@ -76,18 +90,16 @@ export function KeyboardShortcutsSheet() {
   const toggle = useCallback(() => setIsOpen((prev) => !prev), []);
   const close = useCallback(() => setIsOpen(false), []);
 
-  // ── Global '?' listener (ignores when typing in inputs) ────────────
-  useEffect(() => {
-    const handler = (event: KeyboardEvent) => {
-      if (event.key !== "?") return;
-      if (isTypingTarget()) return; // don't fire when the user is typing
-      event.preventDefault();
+  // ── Global '?' via useKeyboardShortcut hook (ignores when typing) ──
+  useKeyboardShortcut(
+    "?",
+    () => {
+      if (isTypingTarget()) return;
       toggle();
-    };
-
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [toggle]);
+    },
+    undefined,
+    false,
+  );
 
   // ── Close on Escape when the sheet is open ─────────────────────────
   useEffect(() => {
@@ -106,12 +118,14 @@ export function KeyboardShortcutsSheet() {
 
   return (
     <>
-      {/* ── Floating toggle button (always visible, bottom-right) ──── */}
+      {/* ── Floating toggle button (hidden when sheet is open) ──────── */}
       <button
         onClick={toggle}
         aria-label="Keyboard shortcuts"
         title="Keyboard shortcuts (?)"
-        className="fixed bottom-6 right-6 z-40 flex h-9 w-9 items-center justify-center rounded-full bg-elevated border border-border-visible text-ink-muted hover:text-gold hover:border-gold/40 shadow-lg transition-all duration-150"
+        className={`fixed bottom-6 right-6 z-40 flex h-9 w-9 items-center justify-center rounded-full bg-elevated border border-border-visible text-ink-muted hover:text-gold hover:border-gold/40 shadow-lg transition-all duration-150 ${
+          isOpen ? "pointer-events-none opacity-0" : ""
+        }`}
       >
         <HelpCircle size={16} />
       </button>
@@ -132,6 +146,7 @@ export function KeyboardShortcutsSheet() {
               role="dialog"
               aria-modal="true"
               aria-label="Keyboard shortcuts"
+              aria-describedby="shortcuts-sheet-footer"
               className="relative w-full max-w-lg mx-4 mb-4 sm:mb-0 bg-raised border border-border-visible rounded-xl shadow-2xl overflow-hidden"
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
@@ -169,10 +184,8 @@ export function KeyboardShortcutsSheet() {
                           <span className="text-sm text-ink-secondary">
                             {entry.description}
                           </span>
-                          <span className="flex items-center gap-1 shrink-0">
-                            {entry.keys.map((key, i) => (
-                              <Kbd key={i}>{key}</Kbd>
-                            ))}
+                          <span className="shrink-0">
+                            <Kbd>{entry.keys.join("")}</Kbd>
                           </span>
                         </div>
                       ))}
@@ -182,7 +195,10 @@ export function KeyboardShortcutsSheet() {
               </div>
 
               {/* Footer hint */}
-              <div className="flex items-center justify-center gap-2 px-5 py-3 border-t border-border-subtle text-[11px] text-ink-muted">
+              <div
+                id="shortcuts-sheet-footer"
+                className="flex items-center justify-center gap-2 px-5 py-3 border-t border-border-subtle text-[11px] text-ink-muted"
+              >
                 <span>Press</span>
                 <Kbd>?</Kbd>
                 <span>anytime to toggle this sheet</span>
