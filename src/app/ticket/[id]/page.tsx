@@ -15,7 +15,7 @@ import { DetailSkeleton } from "@/components/Skeleton";
 import { DeleteTicketDialog } from "@/components/DeleteTicketDialog";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { EditableField } from "@/components/EditableField";
-import { ArrowLeft, Clock, GitBranch, RefreshCw, Sparkles, ExternalLink, Trash2 } from "lucide-react";
+import { ArrowLeft, Clock, GitBranch, RefreshCw, Sparkles, ExternalLink, Trash2, Calendar } from "lucide-react";
 import Link from "next/link";
 
 export default function TicketDetailPage() {
@@ -77,6 +77,12 @@ export default function TicketDetailPage() {
   const handleUpdateDescription = (newDescription: string) => {
     if (!ticket) return;
     const updated = updateTicket(ticket.id, { description: newDescription });
+    if (updated) setTicket({ ...updated });
+  };
+
+  const handleUpdateDueDate = (newDueDate: string | null) => {
+    if (!ticket) return;
+    const updated = updateTicket(ticket.id, { dueDate: newDueDate });
     if (updated) setTicket({ ...updated });
   };
 
@@ -222,6 +228,54 @@ export default function TicketDetailPage() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Due date editor */}
+            <div className="mt-4 pt-4 border-t border-border-subtle">
+              <p className="text-xs font-medium text-ink-muted mb-2">Due Date</p>
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={ticket.dueDate || ""}
+                  onChange={(e) => handleUpdateDueDate(e.target.value || null)}
+                  className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent [color-scheme:dark]"
+                />
+                {ticket.dueDate && (
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateDueDate(null)}
+                    className="px-3 py-2 text-sm text-gray-500 hover:text-gray-300 transition-colors"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              {ticket.dueDate && (() => {
+                const now = Date.now();
+                const due = new Date(ticket.dueDate).getTime();
+                const diffMs = due - now;
+                const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                const diffHours = Math.ceil(diffMs / (1000 * 60 * 60));
+                let label: string;
+                let labelClass: string;
+                if (diffMs < 0) {
+                  const overdueDays = Math.abs(Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+                  label = overdueDays === 0 ? "Overdue today" : `Overdue by ${overdueDays}d`;
+                  labelClass = "text-red-400";
+                } else if (diffHours <= 24) {
+                  label = `Due in ${diffHours}h`;
+                  labelClass = "text-yellow-400";
+                } else {
+                  label = `Due in ${diffDays}d`;
+                  labelClass = "text-gray-400";
+                }
+                return (
+                  <span className={`inline-flex items-center gap-1.5 mt-1.5 text-xs ${labelClass}`}>
+                    <Calendar size={12} />
+                    {label}
+                  </span>
+                );
+              })()}
             </div>
           </div>
 

@@ -2,7 +2,7 @@ import { Ticket, PRIORITY_LABELS, PRIORITY_COLORS } from "@/lib/types";
 import { getAllPersonas } from "@/lib/personas";
 import { PersonaBadge } from "./PersonaBadge";
 import { CopyButton } from "@/components/CopyButton";
-import { Clock, MessageSquare } from "lucide-react";
+import { Clock, MessageSquare, Calendar } from "lucide-react";
 import Link from "next/link";
 
 function timeAgo(isoString: string): string {
@@ -16,6 +16,29 @@ function timeAgo(isoString: string): string {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
   return `${days}d ago`;
+}
+
+function dueDateLabel(dueDate: string): { label: string; className: string } {
+  const now = Date.now();
+  const due = new Date(dueDate).getTime();
+  const diffMs = due - now;
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  const diffHours = Math.ceil(diffMs / (1000 * 60 * 60));
+
+  if (diffMs < 0) {
+    // Overdue
+    const overdueDays = Math.abs(Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+    if (overdueDays === 0) {
+      return { label: "Overdue today", className: "text-red-400" };
+    }
+    return { label: `Overdue by ${overdueDays}d`, className: "text-red-400" };
+  }
+
+  if (diffHours <= 24) {
+    return { label: `Due in ${diffHours}h`, className: "text-yellow-400" };
+  }
+
+  return { label: `Due in ${diffDays}d`, className: "text-gray-400" };
 }
 
 export function TicketCard({ ticket }: { ticket: Ticket }) {
@@ -72,6 +95,26 @@ export function TicketCard({ ticket }: { ticket: Ticket }) {
             />
           </div>
         </div>
+
+        {/* Due date */}
+        {ticket.dueDate && (
+          <div className="mt-3">
+            {(() => {
+              const dl = dueDateLabel(ticket.dueDate);
+              const isOverdue = dl.className.includes("red");
+              return (
+                <span
+                  className={`inline-flex items-center gap-1.5 text-xs ${
+                    dl.className
+                  } ${isOverdue ? "bg-red-950/30 border border-red-900/50 rounded px-2 py-0.5" : ""}`}
+                >
+                  <Calendar size={12} />
+                  {dl.label}
+                </span>
+              );
+            })()}
+          </div>
+        )}
 
         {/* Personas row */}
         <div className="flex items-center justify-between mt-3">
