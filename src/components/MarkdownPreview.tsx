@@ -16,7 +16,7 @@ interface MarkdownPreviewProps {
   onKeyDown?: (e: React.KeyboardEvent) => void;
 }
 
-function parseMarkdown(markdown: string): string {
+export function parseMarkdown(markdown: string): string {
   if (!markdown.trim()) return "";
 
   const lines = markdown.split("\n");
@@ -74,10 +74,13 @@ function parseMarkdown(markdown: string): string {
       '<em class="italic text-ink-secondary">$1</em>'
     );
 
-    // Links [text](url)
+    // Links [text](url) — protocol whitelist to prevent XSS via javascript: URLs
     processed = processed.replace(
       /\[([^\]]+)\]\(([^)]+)\)/g,
-      '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-gold hover:text-gold-light underline decoration-gold/40 hover:decoration-gold">$1</a>'
+      (_match: string, text: string, url: string) => {
+        const safeUrl = /^(https?:|mailto:|\/|#)/i.test(url) ? url : "#";
+        return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="text-gold hover:text-gold-light underline decoration-gold/40 hover:decoration-gold">${text}</a>`;
+      }
     );
 
     // Headings
@@ -147,7 +150,9 @@ function escapeHtml(text: string): string {
   return text
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 export function MarkdownPreview({
