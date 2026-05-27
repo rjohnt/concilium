@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { Ticket, FeedbackEntry, PersonaId } from "@/lib/types";
 import { getPersona } from "@/lib/personas";
+import { checkConsensusThreshold } from "@/lib/consensus-threshold";
 import {
   PlusCircle,
   MessageSquare,
@@ -92,6 +93,7 @@ function deriveActivity(ticket: Ticket): ActivityItem[] {
 
   for (const fb of ticket.feedback) {
     const persona = getPersona(fb.personaId);
+    const label = persona ? `${persona.emoji} ${persona.label}` : fb.personaId;
 
     // Feedback submitted
     items.push({
@@ -99,7 +101,7 @@ function deriveActivity(ticket: Ticket): ActivityItem[] {
       timestamp: fb.createdAt,
       type: "feedback",
       actor: fb.personaId,
-      description: `${persona.emoji} ${persona.label} submitted feedback`,
+      description: `${label} submitted feedback`,
       feedbackEntry: fb,
     });
 
@@ -113,7 +115,7 @@ function deriveActivity(ticket: Ticket): ActivityItem[] {
           timestamp: fb.createdAt,
           type: "approval",
           actor: fb.personaId,
-          description: `${persona.emoji} ${persona.label} approved the ticket`,
+          description: `${label} approved the ticket`,
           feedbackEntry: fb,
         });
       }
@@ -126,7 +128,7 @@ function deriveActivity(ticket: Ticket): ActivityItem[] {
           timestamp: fb.createdAt,
           type: "approval-withdrawn",
           actor: fb.personaId,
-          description: `${persona.emoji} ${persona.label} withdrew approval`,
+          description: `${label} withdrew approval`,
           feedbackEntry: fb,
         });
       }
@@ -146,7 +148,7 @@ function deriveActivity(ticket: Ticket): ActivityItem[] {
     (ticket.status === "consensus" ||
       ticket.status === "building" ||
       ticket.status === "done") &&
-    ticket.approvals.length >= 3
+    checkConsensusThreshold(ticket).reached
   ) {
     transitions.push({ from: "in-review", to: "consensus" });
   }
