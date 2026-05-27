@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, PlusCircle, GitBranch, LogOut, User, Car, Menu, X } from "lucide-react";
@@ -11,6 +11,52 @@ export function Sidebar() {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const hamburgerRef = useRef<HTMLButtonElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  const openSidebar = useCallback(() => {
+    setIsMobileOpen(true);
+  }, []);
+
+  const closeSidebar = useCallback(() => {
+    setIsMobileOpen(false);
+  }, []);
+
+  // Focus management: focus close button when sidebar opens, hamburger when it closes
+  useEffect(() => {
+    if (isMobileOpen) {
+      // Small delay to allow the close button to render
+      requestAnimationFrame(() => {
+        closeButtonRef.current?.focus();
+      });
+    } else {
+      hamburgerRef.current?.focus();
+    }
+  }, [isMobileOpen]);
+
+  // Escape key handler
+  useEffect(() => {
+    if (!isMobileOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        closeSidebar();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isMobileOpen, closeSidebar]);
+
+  // Body scroll lock when sidebar is open on mobile
+  useEffect(() => {
+    if (isMobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobileOpen]);
 
   const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -27,32 +73,37 @@ export function Sidebar() {
     <>
       {/* Hamburger button — only visible on mobile */}
       <button
-        onClick={() => setIsMobileOpen(true)}
+        ref={hamburgerRef}
+        onClick={openSidebar}
         className="fixed top-4 left-4 z-50 p-2 rounded-lg bg-base border border-border-subtle text-ink-primary hover:bg-raised transition-colors md:hidden"
         aria-label="Open sidebar"
+        aria-expanded={isMobileOpen}
+        aria-controls="sidebar-navigation"
       >
         <Menu size={20} />
       </button>
 
       {/* Backdrop overlay — only visible on mobile when sidebar is open */}
       {isMobileOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
-          onClick={() => setIsMobileOpen(false)}
-          aria-hidden="true"
+        <button
+          className="fixed inset-0 bg-deep/50 z-40 md:hidden"
+          onClick={closeSidebar}
+          aria-label="Close sidebar"
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 h-full w-64 bg-base border-r border-border-subtle flex flex-col z-50 transition-transform duration-300 ease-in-out
+        id="sidebar-navigation"
+        className={`fixed left-0 top-0 h-full w-64 bg-base border-r border-border-subtle flex flex-col z-50 transition-transform duration-300 ease-in-out overscroll-contain
           ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
           md:translate-x-0
         `}
       >
         {/* Close button — only visible on mobile */}
         <button
-          onClick={() => setIsMobileOpen(false)}
+          ref={closeButtonRef}
+          onClick={closeSidebar}
           className="absolute top-4 right-4 p-1 rounded-lg text-ink-secondary hover:text-ink-primary hover:bg-raised transition-colors md:hidden"
           aria-label="Close sidebar"
         >
@@ -61,9 +112,9 @@ export function Sidebar() {
 
         {/* Logo */}
         <div className="p-6 border-b border-border-subtle">
-          <Link href="/" className="flex items-center gap-3" onClick={() => setIsMobileOpen(false)}>
+          <Link href="/" className="flex items-center gap-3" onClick={closeSidebar}>
             <div className="w-8 h-8 rounded-lg bg-gold flex items-center justify-center">
-              <GitBranch size={18} className="text-[#1a1714]" />
+              <GitBranch size={18} className="text-deep" />
             </div>
             <div>
               <h1 className="text-lg font-bold text-ink-primary tracking-tight">
@@ -84,7 +135,7 @@ export function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                onClick={() => setIsMobileOpen(false)}
+                onClick={closeSidebar}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   isActive
                     ? "bg-gold/10 text-gold"
@@ -112,7 +163,7 @@ export function Sidebar() {
                   />
                 ) : (
                   <div className="w-8 h-8 rounded-full bg-gold flex items-center justify-center">
-                    <User size={16} className="text-[#1a1714]" />
+                    <User size={16} className="text-deep" />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
