@@ -280,11 +280,12 @@ export default function TicketDetailPage() {
           onSwitchPersona={handleSwitchPersona}
         />
       ) : (
-        <div className="card text-center py-12 opacity-60">
-          <p className="text-ink-muted text-sm">
-            Choose a persona to join the session and provide feedback.
-          </p>
-        </div>
+        <EmptyState
+          icon={FileQuestion}
+          title="No Persona Selected"
+          description="Choose a persona to join the session and provide feedback."
+          className="opacity-60"
+        />
       )}
 
       {/* Build Trigger — show when there's feedback or consensus status */}
