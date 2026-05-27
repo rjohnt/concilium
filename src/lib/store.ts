@@ -25,13 +25,12 @@ let nextTicketId = initial.nextTicketId;
 let nextFeedbackId = initial.nextFeedbackId;
 let nextBuildReportId = initial.nextBuildReportId;
 
-function generateId(prefix: string, counter: number): string {
-  return `${prefix}-${String(counter).padStart(3, "0")}`;
-}
-
 // --- Debounced persistence ---
 
 let persistTimer: ReturnType<typeof setTimeout> | null = null;
+function generateId(prefix: string, counter: number): string {
+  return `${prefix}-${String(counter).padStart(3, "0")}`;
+}
 
 function persistState(): void {
   if (persistTimer !== null) {
