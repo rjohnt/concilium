@@ -5,35 +5,99 @@ import { PersonaBadge } from "./PersonaBadge";
 import { TagChip } from "./TagChip";
 import { CopyButton } from "@/components/CopyButton";
 import { formatRelativeTime, formatAbsoluteDate } from "@/lib/timeAgo";
+import { updateTicket } from "@/lib/store";
 import { Clock, MessageSquare, Calendar } from "lucide-react";
 import Link from "next/link";
+import { useState, useRef, useEffect, useCallback } from "react";
 
 export function TicketCard({ ticket }: { ticket: Ticket }) {
   const allPersonas = getAllPersonas();
   const progress = ticket.approvals.length / allPersonas.length;
 
+  // --- Inline title editing state ---
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(ticket.title);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-focus and select input when editing starts
+  useEffect(() => {
+    if (editing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [editing]);
+
+  const startEditing = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
+      setDraft(ticket.title);
+      setEditing(true);
+    },
+    [ticket.title],
+  );
+
+  const saveTitle = useCallback(() => {
+    const trimmed = draft.trim();
+    if (!trimmed) {
+      // Empty or whitespace-only: revert to original, no save
+      setDraft(ticket.title);
+      setEditing(false);
+      return;
+    }
+    if (trimmed !== ticket.title) {
+      updateTicket(ticket.id, { title: trimmed });
+    }
+    setEditing(false);
+  }, [draft, ticket.title, ticket.id]);
+
+  const cancelEditing = useCallback(() => {
+    setDraft(ticket.title);
+    setEditing(false);
+  }, [ticket.title]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        saveTitle();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        cancelEditing();
+      }
+    },
+    [saveTitle, cancelEditing],
+  );
+
   return (
     <div className="relative">
-      <Link href={`/ticket/${ticket.id}`} className="card block group cursor-pointer">
+      <Link
+        href={`/ticket/${ticket.id}`}
+        className="card block group cursor-pointer"
+      >
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs font-mono text-gray-500">{ticket.id}</span>
+              <span className="text-xs font-mono text-gray-500">
+                {ticket.id}
+              </span>
               <span
                 className={`badge ${
                   ticket.status === "draft"
                     ? "bg-gray-800 text-gray-400"
                     : ticket.status === "in-review"
-                    ? "bg-yellow-900/50 text-yellow-400"
-                    : ticket.status === "consensus"
-                    ? "bg-emerald-900/50 text-emerald-400"
-                    : "bg-blue-900/50 text-blue-400"
+                      ? "bg-yellow-900/50 text-yellow-400"
+                      : ticket.status === "consensus"
+                        ? "bg-emerald-900/50 text-emerald-400"
+                        : "bg-blue-900/50 text-blue-400"
                 }`}
               >
                 {ticket.status}
               </span>
               {ticket.priority !== 4 && (
-                <span className={`badge border ${PRIORITY_COLORS[ticket.priority]}`}>
+                <span
+                  className={`badge border ${PRIORITY_COLORS[ticket.priority]}`}
+                >
                   {PRIORITY_LABELS[ticket.priority]}
                 </span>
               )}
@@ -41,9 +105,37 @@ export function TicketCard({ ticket }: { ticket: Ticket }) {
                 <TagChip key={tag.id} tag={tag} mode="display" />
               ))}
             </div>
-            <h3 className="text-lg font-semibold text-gray-100 group-hover:text-brand-400 transition-colors truncate">
-              {ticket.title}
-            </h3>
+
+            {/* Inline-editable title */}
+            {editing ? (
+              <input
+                ref={inputRef}
+                type="text"
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={handleKeyDown}
+                onBlur={saveTitle}
+                className="bg-deep border border-gold/40 rounded px-2 py-0.5 text-lg font-bold text-ink-primary focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold/30 w-full"
+                aria-label="Edit ticket title"
+              />
+            ) : (
+              <h3
+                className="text-lg font-semibold text-ink-primary group-hover:text-brand-400 transition-colors truncate cursor-text focus:outline-none focus:ring-2 focus:ring-gold/50"
+                onClick={startEditing}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setDraft(ticket.title);
+                    setEditing(true);
+                  }
+                }}
+              >
+                {ticket.title}
+              </h3>
+            )}
+
             <p className="text-sm text-gray-400 mt-1 line-clamp-2">
               {ticket.description}
             </p>
@@ -102,7 +194,10 @@ export function TicketCard({ ticket }: { ticket: Ticket }) {
               <MessageSquare size={12} />
               {ticket.feedback.length}
             </span>
-            <span className="flex items-center gap-1" title={formatAbsoluteDate(ticket.updatedAt)}>
+            <span
+              className="flex items-center gap-1"
+              title={formatAbsoluteDate(ticket.updatedAt)}
+            >
               <Clock size={12} />
               {formatRelativeTime(ticket.updatedAt)}
             </span>

@@ -31,6 +31,13 @@ export default function DashboardPage() {
     setLoading(false);
   }, []);
 
+  // Listen for store-driven ticket changes (e.g. inline title edit dispatches "tickets-changed")
+  useEffect(() => {
+    const handler = () => setTickets(getTickets());
+    window.addEventListener("tickets-changed", handler);
+    return () => window.removeEventListener?.("tickets-changed", handler);
+  }, []);
+
   // Debounce search input by 300ms
   useEffect(() => {
     const timer = setTimeout(() => {
