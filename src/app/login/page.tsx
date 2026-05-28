@@ -53,12 +53,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#1a1714] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-deep flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gold mb-4">
-            <GitBranch size={28} className="text-[#1a1714]" />
+            <GitBranch size={28} className="text-on-gold" />
           </div>
           <h1 className="text-2xl font-bold text-ink-primary">Welcome back</h1>
           <p className="text-ink-muted mt-1">Sign in to Concilium</p>
@@ -174,7 +174,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gold hover:bg-gold-light text-[#1a1714] rounded-lg font-medium text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 focus:ring-offset-raised disabled:opacity-60"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gold hover:bg-gold-light text-on-gold rounded-lg font-medium text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 focus:ring-offset-raised disabled:opacity-60"
             >
               {loading ? (
                 <Loader2 size={18} className="animate-spin" />

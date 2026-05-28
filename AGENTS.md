@@ -66,12 +66,12 @@ src/
 
 ### Design System
 
-- **Dark parchment theme.** Background hierarchy: `#1a1714` (deep) → `#211e1a` (base) → `#29251f` (raised) → `#302b24` (elevated) → `#3a352d` (overlay)
+- **Light pastel theme.** Background hierarchy: `#f9f7f4` (deep) → `#f3f0eb` (base) → `#ffffff` (raised) → `#f5f2ed` (elevated) → `#eae6de` (overlay)
 - **Gold accent:** `#c9a84c` (primary CTA, badges, active states)
-- **Text hierarchy:** `#e8e4db` (primary), `#b8b2a6` (secondary), `#7a7468` (muted), `#4a4540` (ghost)
+- **Text hierarchy:** `#1a1714` (primary), `#4a4540` (secondary), `#7a7468` (muted), `#b8ae9e` (ghost)
 - **Semantic colors:** `cardinal` = `#b84545` (danger/overdue), `olive` = `#6b8f5e` (success), `blue-steel` = `#6b8fa8` (info)
-- **Border:** `#2e2a24` (subtle), `#3d3830` (visible)
-- **Fonts:** EB Garamond (headings), Inter (body), JetBrains Mono (code)
+- **Border:** `#e5e0d8` (subtle), `#d5cec2` (visible)
+- **Font:** Inter (body). JetBrains Mono (code).
 
 ### TypeScript
 

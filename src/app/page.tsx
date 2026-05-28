@@ -149,8 +149,8 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="card flex items-center gap-4">
-          <div className="w-10 h-10 rounded-lg bg-yellow-900/30 flex items-center justify-center">
-            <span className="text-yellow-400 font-bold text-lg">
+          <div className="w-10 h-10 rounded-lg bg-yellow-100 flex items-center justify-center">
+            <span className="text-yellow-700 font-bold text-lg">
               {inReviewCount}
             </span>
           </div>
@@ -309,7 +309,7 @@ export default function DashboardPage() {
                 }
                 className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
                   isActive
-                    ? `${persona.color} text-white border-transparent`
+                    ? `${persona.color} ${persona.textColor} border-transparent`
                     : "bg-elevated border border-border-visible/30 text-ink-muted"
                 }`}
               >

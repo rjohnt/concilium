@@ -181,12 +181,12 @@ export default function TicketDetailPage() {
               <span
                 className={`badge ${
                   ticket.status === "draft"
-                    ? "bg-elevated text-ink-secondary"
+                    ? "bg-overlay text-ink-muted border border-border-subtle"
                     : ticket.status === "in-review"
-                    ? "bg-yellow-900/50 text-yellow-400"
-                    : ticket.status === "consensus"
-                    ? "bg-emerald-900/50 text-emerald-400"
-                    : "bg-blue-900/50 text-blue-400"
+                      ? "bg-yellow-100 text-yellow-700 border border-yellow-200"
+                      : ticket.status === "consensus"
+                        ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
+                        : "bg-blue-100 text-blue-700 border border-blue-200"
                 }`}
               >
                 {ticket.status}
@@ -243,8 +243,8 @@ export default function TicketDetailPage() {
                     }}
                     className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
                       ticket.priority === p
-                        ? `${PRIORITY_COLORS[p]} ring-1 ring-offset-1 ring-offset-gray-950`
-                        : "border-gray-700 text-gray-500 hover:text-gray-300 hover:border-gray-600"
+                        ? `${PRIORITY_COLORS[p]} ring-1 ring-offset-1 ring-offset-raised`
+                        : "border-border-visible/30 text-ink-muted hover:text-ink-primary hover:border-border-visible"
                     } ${p === 4 && ticket.priority !== 4 ? "opacity-50" : ""}`}
                   >
                     {PRIORITY_LABELS[p]}
@@ -285,7 +285,7 @@ export default function TicketDetailPage() {
                   type="date"
                   value={ticket.dueDate || ""}
                   onChange={(e) => handleUpdateDueDate(e.target.value || null)}
-                  className="bg-elevated border border-border-visible rounded-lg px-3 py-2 text-sm text-ink-primary focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent [color-scheme:dark]"
+                  className="bg-elevated border border-border-visible rounded-lg px-3 py-2 text-sm text-ink-primary focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                 />
                 {ticket.dueDate && (
                   <button

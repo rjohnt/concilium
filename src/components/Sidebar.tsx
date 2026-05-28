@@ -150,7 +150,7 @@ export function Sidebar() {
         <div className="p-6 border-b border-border-subtle">
           <Link href="/" className="flex items-center gap-3" onClick={closeSidebar}>
             <div className="w-8 h-8 rounded-lg bg-gold flex items-center justify-center">
-              <GitBranch size={18} className="text-deep" />
+              <GitBranch size={18} className="text-on-gold" />
             </div>
             <div>
               <h1 className="text-lg font-bold text-ink-primary tracking-tight">
@@ -238,7 +238,7 @@ export function Sidebar() {
                   />
                 ) : (
                   <div className="w-8 h-8 rounded-full bg-gold flex items-center justify-center">
-                    <User size={16} className="text-deep" />
+                    <User size={16} className="text-on-gold" />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">

@@ -20,7 +20,9 @@ export function PersonaBadge({
   return (
     <span
       className={`inline-flex items-center rounded-full ${sizeClasses} ${
-        approved ? `${persona.color} text-white` : "bg-gray-800 text-gray-400"
+        approved
+          ? `${persona.color} ${persona.textColor}`
+          : "bg-overlay text-ink-muted"
       } transition-colors`}
       title={`${persona.label}: ${persona.expertise}`}
     >

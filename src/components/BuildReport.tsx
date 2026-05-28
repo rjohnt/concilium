@@ -1,6 +1,7 @@
 "use client";
 
 import { BuildReport as BuildReportType } from "@/lib/types";
+import { getPersona } from "@/lib/personas";
 import { CheckCircle2, Clock, XCircle, Wrench, Palette, FlaskConical, FileText } from "lucide-react";
 
 interface BuildReportProps {
@@ -16,6 +17,11 @@ const statusConfig: Record<string, { icon: typeof CheckCircle2; color: string; l
 export function BuildReport({ report }: BuildReportProps) {
   const status = statusConfig[report.status] || statusConfig.building;
   const StatusIcon = status.icon;
+
+  const engineerIconColor = getPersona("engineer").iconColor;
+  const designerIconColor = getPersona("designer").iconColor;
+  const qaIconColor = getPersona("qa").iconColor;
+  const poIconColor = getPersona("product-owner").iconColor;
 
   return (
     <div className="space-y-6">
@@ -49,7 +55,7 @@ export function BuildReport({ report }: BuildReportProps) {
 
       {/* Requirements */}
       <ReportSection
-        icon={<Wrench size={16} className="text-blue-steel" />}
+        icon={<Wrench size={16} className={engineerIconColor} />}
         title="Technical Requirements"
         items={report.requirements}
         emptyText="No technical requirements extracted."
@@ -57,7 +63,7 @@ export function BuildReport({ report }: BuildReportProps) {
 
       {/* Design Decisions */}
       <ReportSection
-        icon={<Palette size={16} className="text-purple-400" />}
+        icon={<Palette size={16} className={designerIconColor} />}
         title="Design Decisions"
         items={report.designDecisions}
         emptyText="No design decisions documented."
@@ -65,7 +71,7 @@ export function BuildReport({ report }: BuildReportProps) {
 
       {/* QA Criteria */}
       <ReportSection
-        icon={<FlaskConical size={16} className="text-amber-400" />}
+        icon={<FlaskConical size={16} className={qaIconColor} />}
         title="QA Criteria"
         items={report.qaCriteria}
         emptyText="No QA criteria specified."
@@ -74,7 +80,7 @@ export function BuildReport({ report }: BuildReportProps) {
       {/* Implementation Plan */}
       <div className="bg-elevated/40 border border-border-subtle rounded-lg p-4">
         <div className="flex items-center gap-2 mb-3">
-          <FileText size={16} className="text-olive" />
+          <FileText size={16} className={poIconColor} />
           <h3 className="text-sm font-semibold text-ink-primary">Implementation Plan</h3>
         </div>
         <div className="text-sm text-ink-secondary whitespace-pre-wrap">

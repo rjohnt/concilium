@@ -394,7 +394,7 @@ export function seedData(): void {
     "Users have been requesting dark mode for months. We need a toggle in the settings panel that switches between light and dark themes, persisting the preference in localStorage.",
     0, // Urgent
     undefined,
-    [{ id: "design", label: "Design", color: "bg-purple-900/50 text-purple-400 border-purple-700" }, { id: "feature", label: "Feature", color: "bg-gold/20 text-gold-light border-gold/40" }]
+    [{ id: "design", label: "Design", color: "bg-purple-100 text-purple-700 border-purple-200" }, { id: "feature", label: "Feature", color: "bg-amber-50 text-amber-700 border-amber-200" }]
   );
   addFeedback(
     t1.id,
@@ -420,7 +420,7 @@ export function seedData(): void {
     "When multiple users are on the whiteboard, show each user's cursor position in real-time with their name/color. This is critical for the remote design review workflow.",
     1, // High
     undefined,
-    [{ id: "feature", label: "Feature", color: "bg-gold/20 text-gold-light border-gold/40" }, { id: "performance", label: "Performance", color: "bg-orange-900/50 text-orange-400 border-orange-800" }]
+    [{ id: "feature", label: "Feature", color: "bg-amber-50 text-amber-700 border-amber-200" }, { id: "performance", label: "Performance", color: "bg-orange-100 text-orange-700 border-orange-200" }]
   );
   addFeedback(
     t2.id,
@@ -440,7 +440,7 @@ export function seedData(): void {
     "Product managers need to export the analytics dashboard as a branded PDF report for stakeholder presentations. Should include charts, KPIs, and a configurable date range.",
     2, // Medium
     undefined,
-    [{ id: "feature", label: "Feature", color: "bg-gold/20 text-gold-light border-gold/40" }, { id: "docs", label: "Docs", color: "bg-blue-steel/20 text-blue-steel border-blue-steel/40" }]
+    [{ id: "feature", label: "Feature", color: "bg-amber-50 text-amber-700 border-amber-200" }, { id: "docs", label: "Docs", color: "bg-blue-50 text-blue-700 border-blue-200" }]
   );
 
   const t4 = createTicket(
@@ -448,7 +448,7 @@ export function seedData(): void {
     "Implement per-tenant rate limiting on the public API to prevent abuse and ensure fair usage across customers. Configurable limits per tier (free, pro, enterprise).",
     3, // Low
     undefined,
-    [{ id: "security", label: "Security", color: "bg-red-950/60 text-red-400 border-red-900" }, { id: "performance", label: "Performance", color: "bg-orange-900/50 text-orange-400 border-orange-800" }]
+    [{ id: "security", label: "Security", color: "bg-red-50 text-red-600 border-red-200" }, { id: "performance", label: "Performance", color: "bg-orange-100 text-orange-700 border-orange-200" }]
   );
 
   // Notify listeners after seeding so sidebar badge updates on initial load

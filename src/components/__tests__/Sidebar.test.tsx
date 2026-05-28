@@ -338,11 +338,11 @@ describe("Sidebar", () => {
 
   // --- Design token test ---
 
-  it("uses text-deep instead of hardcoded color on GitBranch icon", () => {
+  it("uses text-on-gold instead of hardcoded color on GitBranch icon", () => {
     render(<Sidebar />);
     const aside = document.getElementById("sidebar-navigation");
-    // The GitBranch SVG should have text-deep class
-    const svgIcon = aside!.querySelector("svg.text-deep");
+    // The GitBranch SVG should have text-on-gold class
+    const svgIcon = aside!.querySelector("svg.text-on-gold");
     expect(svgIcon).toBeInTheDocument();
   });
 

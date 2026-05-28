@@ -2,44 +2,9 @@
 
 import { useState } from "react";
 import { Persona, PersonaId } from "@/lib/types";
-import { getAllPersonas } from "@/lib/personas";
+import { getAllPersonas, getPersona } from "@/lib/personas";
 import { X, Sparkles, ArrowRight } from "lucide-react";
 import { PersonaIcon } from "./PersonaIcon";
-
-const PERSONA_BORDER_COLORS: Record<PersonaId, string> = {
-  engineer: "border-blue-500/50 hover:border-blue-400 group-hover:shadow-blue-500/20",
-  designer: "border-purple-500/50 hover:border-purple-400 group-hover:shadow-purple-500/20",
-  "product-owner": "border-emerald-500/50 hover:border-emerald-400 group-hover:shadow-emerald-500/20",
-  qa: "border-amber-500/50 hover:border-amber-400 group-hover:shadow-amber-500/20",
-};
-
-const PERSONA_GLOW_COLORS: Record<PersonaId, string> = {
-  engineer: "shadow-blue-500/30",
-  designer: "shadow-purple-500/30",
-  "product-owner": "shadow-emerald-500/30",
-  qa: "shadow-amber-500/30",
-};
-
-const PERSONA_RING_COLORS: Record<PersonaId, string> = {
-  engineer: "ring-blue-500",
-  designer: "ring-purple-500",
-  "product-owner": "ring-emerald-500",
-  qa: "ring-amber-500",
-};
-
-const PERSONA_TEXT_COLORS: Record<PersonaId, string> = {
-  engineer: "text-blue-400",
-  designer: "text-purple-400",
-  "product-owner": "text-emerald-400",
-  qa: "text-amber-400",
-};
-
-const PERSONA_BG_GLOW: Record<PersonaId, string> = {
-  engineer: "bg-blue-500/5",
-  designer: "bg-purple-500/5",
-  "product-owner": "bg-emerald-500/5",
-  qa: "bg-amber-500/5",
-};
 
 export function JoinSessionModal({
   isOpen,
@@ -101,75 +66,78 @@ export function JoinSessionModal({
 
         {/* Persona cards grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-          {personas.map((persona, i) => (
-            <button
-              key={persona.id}
-              onClick={() => handleSelect(persona.id)}
-              disabled={joining}
-              className={`group relative text-left p-5 rounded-xl border transition-all duration-300 cursor-pointer
+          {personas.map((persona, i) => {
+            const p = getPersona(persona.id);
+            return (
+              <button
+                key={persona.id}
+                onClick={() => handleSelect(persona.id)}
+                disabled={joining}
+                className={`group relative text-left p-5 rounded-xl border transition-all duration-300 cursor-pointer
                 bg-elevated/80 hover:bg-elevated
                 ${
                   selectedId === persona.id
-                    ? `border-2 ${PERSONA_BORDER_COLORS[persona.id].split(" ")[0]} ring-2 ${PERSONA_RING_COLORS[persona.id]} ${PERSONA_GLOW_COLORS[persona.id]} shadow-xl scale-[1.02]`
+                    ? `border-2 ${p.borderColor} ring-2 ${p.ringColor} ${p.glowColor} shadow-xl scale-[1.02]`
                     : `border-border-visible hover:border-border-visible/60 hover:shadow-lg hover:scale-[1.01]`
                 }
                 animate-in fade-in slide-in-from-bottom-4
               `}
-              style={{
-                animationDelay: `${i * 100}ms`,
-                animationFillMode: "both",
-              }}
-            >
-              {/* Subtle background glow for selected */}
-              {selectedId === persona.id && (
-                <div
-                  className={`absolute inset-0 rounded-xl ${PERSONA_BG_GLOW[persona.id]} transition-opacity`}
-                />
-              )}
+                style={{
+                  animationDelay: `${i * 100}ms`,
+                  animationFillMode: "both",
+                }}
+              >
+                {/* Subtle background glow for selected */}
+                {selectedId === persona.id && (
+                  <div
+                    className={`absolute inset-0 rounded-xl ${p.bgGlow} transition-opacity`}
+                  />
+                )}
 
-              <div className="relative z-10">
-                {/* Icon + Label row */}
-                <div className="flex items-center gap-3 mb-3">
-                  <span className="text-3xl"><PersonaIcon personaId={persona.id} size={32} /></span>
-                  <div>
-                    <h3
-                      className={`text-lg font-semibold ${
-                        selectedId === persona.id
-                          ? "text-ink-primary"
-                          : "text-ink-secondary group-hover:text-ink-primary"
-                      } transition-colors`}
-                    >
-                      {persona.label}
-                    </h3>
-                    <p
-                      className={`text-xs ${
-                        selectedId === persona.id
-                          ? PERSONA_TEXT_COLORS[persona.id]
-                          : "text-ink-muted"
-                      } transition-colors`}
-                    >
-                      {persona.expertise}
+                <div className="relative z-10">
+                  {/* Icon + Label row */}
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="text-3xl"><PersonaIcon personaId={persona.id} size={32} /></span>
+                    <div>
+                      <h3
+                        className={`text-lg font-semibold ${
+                          selectedId === persona.id
+                            ? "text-ink-primary"
+                            : "text-ink-secondary group-hover:text-ink-primary"
+                        } transition-colors`}
+                      >
+                        {persona.label}
+                      </h3>
+                      <p
+                        className={`text-xs ${
+                          selectedId === persona.id
+                            ? p.textColor
+                            : "text-ink-muted"
+                        } transition-colors`}
+                      >
+                        {persona.expertise}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Prompt preview */}
+                  <div className="mt-3 p-3 rounded-lg bg-deep/80 border border-border-subtle/60">
+                    <p className="text-xs text-ink-muted leading-relaxed line-clamp-3 font-mono">
+                      {persona.promptTemplate}
                     </p>
                   </div>
-                </div>
 
-                {/* Prompt preview */}
-                <div className="mt-3 p-3 rounded-lg bg-deep/80 border border-border-subtle/60">
-                  <p className="text-xs text-ink-muted leading-relaxed line-clamp-3 font-mono">
-                    {persona.promptTemplate}
-                  </p>
+                  {/* Selected indicator */}
+                  {selectedId === persona.id && (
+                    <div className="mt-3 flex items-center gap-1.5 text-sm font-medium text-gold">
+                      <span className="w-2 h-2 rounded-full bg-gold animate-pulse" />
+                      Selected
+                    </div>
+                  )}
                 </div>
-
-                {/* Selected indicator */}
-                {selectedId === persona.id && (
-                  <div className="mt-3 flex items-center gap-1.5 text-sm font-medium text-gold">
-                    <span className="w-2 h-2 rounded-full bg-gold animate-pulse" />
-                    Selected
-                  </div>
-                )}
-              </div>
-            </button>
-          ))}
+              </button>
+            );
+          })}
         </div>
 
         {/* Action button */}

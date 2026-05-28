@@ -21,17 +21,17 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 const STORAGE_KEY = "concilium-theme";
 
 function getInitialMode(): ThemeMode {
-  if (typeof window === "undefined") return "dark";
+  if (typeof window === "undefined") return "light";
 
   // 1. Check localStorage for explicit user preference
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored === "dark" || stored === "light") return stored;
 
   // 2. Fall back to system preference
-  if (window.matchMedia("(prefers-color-scheme: light)").matches) return "light";
+  if (window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
 
-  // 3. Default to dark
-  return "dark";
+  // 3. Default to light
+  return "light";
 }
 
 function applyTheme(mode: ThemeMode) {
@@ -50,7 +50,7 @@ function applyTheme(mode: ThemeMode) {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }): React.ReactElement | null {
-  const [mode, setMode] = useState<ThemeMode>("dark");
+  const [mode, setMode] = useState<ThemeMode>("light");
   const [mounted, setMounted] = useState(false);
 
   // On mount, read initial preference

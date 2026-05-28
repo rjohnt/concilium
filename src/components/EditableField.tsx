@@ -91,7 +91,7 @@ export function EditableField({
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             rows={4}
-            className="w-full bg-[#1a1714] border border-gold/40 rounded-lg px-3 py-2 text-ink-primary placeholder:text-ink-muted/50 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold/30 resize-y text-sm leading-relaxed"
+            className="w-full bg-deep border border-gold/40 rounded-lg px-3 py-2 text-ink-primary placeholder:text-ink-muted/50 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold/30 resize-y text-sm leading-relaxed"
             aria-label={label}
           />
         ) : (
@@ -105,14 +105,14 @@ export function EditableField({
             }}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            className="w-full bg-[#1a1714] border border-gold/40 rounded-lg px-3 py-2 text-ink-primary placeholder:text-ink-muted/50 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold/30 text-2xl font-bold"
+            className="w-full bg-deep border border-gold/40 rounded-lg px-3 py-2 text-ink-primary placeholder:text-ink-muted/50 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold/30 text-2xl font-bold"
             aria-label={label}
           />
         )}
         <div className="flex items-center gap-2 mt-2">
           <button
             onClick={handleSave}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gold hover:bg-gold-light text-[#1a1714] transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gold hover:bg-gold-light text-on-gold transition-colors"
             aria-label={`Save ${label}`}
           >
             <Check size={14} />

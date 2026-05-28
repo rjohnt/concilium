@@ -45,7 +45,7 @@ export function TagChip(props: TagChipProps) {
       aria-pressed={selected}
       className={`badge border cursor-pointer transition-all duration-150 select-none ${
         selected
-          ? `${tag.color} ring-1 ring-offset-1 ring-offset-[#1a1714]`
+          ? `${tag.color} ring-1 ring-offset-1 ring-offset-deep`
           : "border-border-subtle text-ink-muted hover:text-ink-primary hover:border-border-default"
       }`}
     >

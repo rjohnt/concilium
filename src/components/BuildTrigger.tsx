@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Ticket } from "@/lib/types";
 import { getBuildReadiness, generateBuildSummary, DEFAULT_THRESHOLD } from "@/lib/consensus-threshold";
 import { triggerBuild } from "@/lib/store";
-import { getAllPersonas } from "@/lib/personas";
+import { getAllPersonas, getPersona } from "@/lib/personas";
 import { AlertTriangle, CheckCircle2, Clock, Play, Rocket, X, FileText, Wrench, Palette, FlaskConical, CheckCircle, ArrowRight } from "lucide-react";
 
 interface BuildTriggerProps {
@@ -197,10 +197,10 @@ export function BuildTrigger({ ticket, onBuildTriggered }: BuildTriggerProps) {
                 );
                 const approved = ticket.approvals.includes(personaId);
                 const sectionIcons: Record<string, React.ReactNode> = {
-                  engineer: <Wrench size={14} className="text-blue-400" />,
-                  designer: <Palette size={14} className="text-purple-400" />,
-                  qa: <FlaskConical size={14} className="text-amber-400" />,
-                  "product-owner": <FileText size={14} className="text-emerald-400" />,
+                  engineer: <Wrench size={14} className={getPersona("engineer").iconColor} />,
+                  designer: <Palette size={14} className={getPersona("designer").iconColor} />,
+                  qa: <FlaskConical size={14} className={getPersona("qa").iconColor} />,
+                  "product-owner": <FileText size={14} className={getPersona("product-owner").iconColor} />,
                 };
 
                 return (

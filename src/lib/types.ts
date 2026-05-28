@@ -17,11 +17,11 @@ export const PRIORITY_LABELS: Record<PriorityLevel, string> = {
 };
 
 export const PRIORITY_COLORS: Record<PriorityLevel, string> = {
-  0: "bg-red-900/50 text-red-400 border-red-800",
-  1: "bg-orange-900/50 text-orange-400 border-orange-800",
-  2: "bg-yellow-900/50 text-yellow-400 border-yellow-800",
-  3: "bg-gray-800 text-gray-400 border-gray-700",
-  4: "bg-gray-900/30 text-gray-600 border-gray-800", // None priority — subtle styling
+  0: "bg-red-100 text-red-700 border-red-200",
+  1: "bg-orange-100 text-orange-700 border-orange-200",
+  2: "bg-yellow-100 text-yellow-700 border-yellow-200",
+  3: "bg-gray-100 text-gray-600 border-gray-200",
+  4: "bg-gray-50/50 text-gray-400 border-gray-100", // None priority — subtle styling
 };
 
 export interface Tag {
@@ -31,12 +31,12 @@ export interface Tag {
 }
 
 export const PREDEFINED_TAGS: Tag[] = [
-  { id: "bug",         label: "Bug",         color: "bg-cardinal/20 text-cardinal border-cardinal/40" },
-  { id: "feature",     label: "Feature",     color: "bg-gold/20 text-gold-light border-gold/40" },
-  { id: "docs",        label: "Docs",        color: "bg-blue-steel/20 text-blue-steel border-blue-steel/40" },
-  { id: "design",      label: "Design",      color: "bg-purple-900/50 text-purple-400 border-purple-700" },
-  { id: "performance", label: "Performance", color: "bg-orange-900/50 text-orange-400 border-orange-800" },
-  { id: "security",    label: "Security",    color: "bg-red-950/60 text-red-400 border-red-900" },
+  { id: "bug",         label: "Bug",         color: "bg-red-100 text-red-700 border-red-200" },
+  { id: "feature",     label: "Feature",     color: "bg-amber-50 text-amber-700 border-amber-200" },
+  { id: "docs",        label: "Docs",        color: "bg-blue-50 text-blue-700 border-blue-200" },
+  { id: "design",      label: "Design",      color: "bg-purple-100 text-purple-700 border-purple-200" },
+  { id: "performance", label: "Performance", color: "bg-orange-100 text-orange-700 border-orange-200" },
+  { id: "security",    label: "Security",    color: "bg-red-50 text-red-600 border-red-200" },
 ];
 
 export const TAG_COLORS: Record<string, string> = Object.fromEntries(
@@ -48,6 +48,12 @@ export interface Persona {
   label: string;
   emoji: string;
   color: string; // tailwind bg color class
+  textColor: string; // Tailwind text class for labels
+  iconColor: string; // Tailwind text class for icons (darker)
+  borderColor: string; // Tailwind border class
+  ringColor: string; // Tailwind ring class
+  glowColor: string; // Tailwind shadow class
+  bgGlow: string; // Tailwind bg class for subtle glow
   expertise: string;
   promptTemplate: string; // used for AI-mediated sessions
 }

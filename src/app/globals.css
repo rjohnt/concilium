@@ -4,23 +4,24 @@
 
 @layer base {
   :root {
-    --color-deep: #1a1714;
-    --color-base: #211e1a;
-    --color-raised: #29251f;
-    --color-elevated: #302b24;
-    --color-overlay: #3a352d;
-    --color-ink-primary: #e8e4db;
-    --color-ink-secondary: #b8b2a6;
+    --color-deep: #f9f7f4;
+    --color-base: #f3f0eb;
+    --color-raised: #ffffff;
+    --color-elevated: #f5f2ed;
+    --color-overlay: #eae6de;
+    --color-ink-primary: #1a1714;
+    --color-ink-secondary: #4a4540;
     --color-ink-muted: #7a7468;
-    --color-ink-ghost: #4a4540;
+    --color-ink-ghost: #b8ae9e;
     --color-gold: #c9a84c;
     --color-gold-light: #e0c86a;
     --color-gold-dim: #8a7030;
+    --color-on-gold: #1a1714;
     --color-cardinal: #b84545;
     --color-olive: #6b8f5e;
     --color-blue-steel: #6b8fa8;
-    --color-border-subtle: #2e2a24;
-    --color-border-visible: #3d3830;
+    --color-border-subtle: #e5e0d8;
+    --color-border-visible: #d5cec2;
     --color-brand-50: #fdf8ed;
     --color-brand-100: #f9edc5;
     --color-brand-200: #f2db8a;
@@ -33,24 +34,25 @@
     --color-brand-900: #4a3b18;
   }
 
-  [data-theme="light"] {
-    --color-deep: #f9f6f0;
-    --color-base: #f0ebe3;
-    --color-raised: #e8e2d7;
-    --color-elevated: #e0d8cc;
-    --color-overlay: #d5cec2;
-    --color-ink-primary: #2c2418;
-    --color-ink-secondary: #5c5245;
-    --color-ink-muted: #8c8275;
-    --color-ink-ghost: #b8ae9e;
+  [data-theme="dark"] {
+    --color-deep: #1a1714;
+    --color-base: #211e1a;
+    --color-raised: #29251f;
+    --color-elevated: #302b24;
+    --color-overlay: #3a352d;
+    --color-ink-primary: #e8e4db;
+    --color-ink-secondary: #b8b2a6;
+    --color-ink-muted: #7a7468;
+    --color-ink-ghost: #4a4540;
     --color-gold: #c9a84c;
-    --color-gold-light: #d4b75a;
+    --color-gold-light: #e0c86a;
     --color-gold-dim: #8a7030;
+    --color-on-gold: #1a1714;
     --color-cardinal: #b84545;
     --color-olive: #6b8f5e;
     --color-blue-steel: #6b8fa8;
-    --color-border-subtle: #d5cec2;
-    --color-border-visible: #c4bba8;
+    --color-border-subtle: #2e2a24;
+    --color-border-visible: #3d3830;
     --color-brand-50: #fdf8ed;
     --color-brand-100: #f9edc5;
     --color-brand-200: #f2db8a;
@@ -79,7 +81,7 @@
     @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-raised;
   }
   .btn-primary {
-    @apply btn bg-gold hover:bg-gold-light text-[#1a1714] focus:ring-gold;
+    @apply btn bg-gold hover:bg-gold-light text-ink-primary focus:ring-gold;
   }
   .btn-secondary {
     @apply btn bg-elevated hover:bg-overlay text-ink-primary focus:ring-ink-muted border border-border-visible;

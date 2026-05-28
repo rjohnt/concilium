@@ -39,15 +39,15 @@ export default function NewTicketPage() {
     <div className="max-w-2xl mx-auto">
       <Link
         href="/"
-        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-300 mb-6 transition-colors"
+        className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-ink-primary mb-6 transition-colors"
       >
         <ArrowLeft size={14} />
         Back to Dashboard
       </Link>
 
       <div className="card">
-        <h2 className="text-xl font-bold text-white mb-1">New Ticket</h2>
-        <p className="text-sm text-gray-400 mb-6">
+        <h2 className="text-xl font-bold text-ink-primary mb-1">New Ticket</h2>
+        <p className="text-sm text-ink-secondary mb-6">
           Create a ticket for the multiplayer stakeholder review flow.
         </p>
 
@@ -55,7 +55,7 @@ export default function NewTicketPage() {
           <div>
             <label
               htmlFor="title"
-              className="block text-sm font-medium text-gray-300 mb-1.5"
+              className="block text-sm font-medium text-ink-secondary mb-1.5"
             >
               Title
             </label>
@@ -65,7 +65,7 @@ export default function NewTicketPage() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="What needs to be built?"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+              className="w-full bg-elevated border border-border-visible rounded-lg px-4 py-3 text-sm text-ink-primary placeholder-ink-muted focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
               autoFocus
             />
           </div>
@@ -73,7 +73,7 @@ export default function NewTicketPage() {
           <div>
             <label
               htmlFor="description"
-              className="block text-sm font-medium text-gray-300 mb-1.5"
+              className="block text-sm font-medium text-ink-secondary mb-1.5"
             >
               Description
             </label>
@@ -83,14 +83,14 @@ export default function NewTicketPage() {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe the feature, bug, or task in detail..."
               rows={6}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
+              className="w-full bg-elevated border border-border-visible rounded-lg px-4 py-3 text-sm text-ink-primary placeholder-ink-muted focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
             />
           </div>
 
           <div>
             <label
               htmlFor="priority"
-              className="block text-sm font-medium text-gray-300 mb-1.5"
+              className="block text-sm font-medium text-ink-secondary mb-1.5"
             >
               Priority
             </label>
@@ -102,8 +102,8 @@ export default function NewTicketPage() {
                   onClick={() => setPriority(p)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                     priority === p
-                      ? `${PRIORITY_COLORS[p]} ring-1 ring-offset-1 ring-offset-gray-900`
-                      : "border-gray-700 text-gray-500 hover:text-gray-300 hover:border-gray-600"
+                      ? `${PRIORITY_COLORS[p]} ring-1 ring-offset-1 ring-offset-raised`
+                      : "border-border-visible/30 text-ink-muted hover:text-ink-primary hover:border-border-visible"
                   } ${p === 4 && priority !== 4 ? "opacity-50" : ""}`}
                 >
                   {PRIORITY_LABELS[p]}
@@ -115,9 +115,9 @@ export default function NewTicketPage() {
           <div>
             <label
               htmlFor="dueDate"
-              className="block text-sm font-medium text-gray-300 mb-1.5"
+              className="block text-sm font-medium text-ink-secondary mb-1.5"
             >
-              Due Date <span className="text-gray-600">(optional)</span>
+              Due Date <span className="text-ink-muted">(optional)</span>
             </label>
             <div className="flex items-center gap-2">
               <input
@@ -125,13 +125,13 @@ export default function NewTicketPage() {
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent [color-scheme:dark]"
+                className="w-full bg-elevated border border-border-visible rounded-lg px-4 py-3 text-sm text-ink-primary placeholder-ink-muted focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
               />
               {dueDate && (
                 <button
                   type="button"
                   onClick={() => setDueDate("")}
-                  className="px-3 py-3 text-sm text-gray-500 hover:text-gray-300 transition-colors"
+                  className="px-3 py-3 text-sm text-ink-muted hover:text-ink-primary transition-colors"
                 >
                   Clear
                 </button>
@@ -140,8 +140,8 @@ export default function NewTicketPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5">
-              Tags <span className="text-gray-600">(optional)</span>
+            <label className="block text-sm font-medium text-ink-secondary mb-1.5">
+              Tags <span className="text-ink-muted">(optional)</span>
             </label>
             <div className="flex flex-wrap gap-2">
               {PREDEFINED_TAGS.map((tag) => (
@@ -163,7 +163,7 @@ export default function NewTicketPage() {
           </div>
 
           <div className="flex items-center justify-between pt-2">
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-ink-muted">
               After creation, stakeholders (Engineer, Designer, PO, QA) will
               weigh in.
             </p>

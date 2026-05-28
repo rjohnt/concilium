@@ -353,7 +353,7 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
             <p className="text-xs text-ink-muted">{persona?.expertise}</p>
           </div>
           {hasApproved && (
-            <span className="ml-auto badge bg-emerald-900/50 text-emerald-400">
+            <span className="ml-auto badge bg-emerald-100 text-emerald-700 border border-emerald-200">
               <CheckCircle size={12} />
               Approved
             </span>
@@ -528,10 +528,10 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
 
             {/* Concerns */}
             {currentMediatorResponse.concerns.length > 0 && (
-              <div className="p-3 rounded-lg bg-red-900/10 border border-red-500/20">
+              <div className="p-3 rounded-lg bg-red-50 border border-red-200">
                 <div className="flex items-center gap-1.5 mb-2">
-                  <AlertTriangle size={14} className="text-red-400" />
-                  <span className="text-xs font-medium text-red-400">
+                  <AlertTriangle size={14} className="text-red-600" />
+                  <span className="text-xs font-medium text-red-600">
                     Concerns
                   </span>
                 </div>
@@ -539,7 +539,7 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
                   {currentMediatorResponse.concerns.map((c, i) => (
                     <li
                       key={i}
-                      className="text-xs text-red-300/80 flex items-start gap-1.5"
+                      className="text-xs text-red-600/80 flex items-start gap-1.5"
                     >
                       <span className="mt-0.5">•</span>
                       {c}
@@ -551,10 +551,10 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
 
             {/* Recommendations */}
             {currentMediatorResponse.recommendations.length > 0 && (
-              <div className="p-3 rounded-lg bg-emerald-900/10 border border-emerald-500/20">
+              <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200">
                 <div className="flex items-center gap-1.5 mb-2">
-                  <Lightbulb size={14} className="text-emerald-400" />
-                  <span className="text-xs font-medium text-emerald-400">
+                  <Lightbulb size={14} className="text-emerald-600" />
+                  <span className="text-xs font-medium text-emerald-600">
                     Recommendations
                   </span>
                 </div>
@@ -562,7 +562,7 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
                   {currentMediatorResponse.recommendations.map((r, i) => (
                     <li
                       key={i}
-                      className="text-xs text-emerald-300/80 flex items-start gap-1.5"
+                      className="text-xs text-emerald-600/80 flex items-start gap-1.5"
                     >
                       <span className="mt-0.5">•</span>
                       {r}
@@ -576,15 +576,15 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
             <div
               className={`p-3 rounded-lg border ${
                 currentMediatorResponse.suggestApproval
-                  ? "bg-emerald-900/20 border-emerald-500/30"
-                  : "bg-yellow-900/10 border-yellow-500/20"
+                  ? "bg-emerald-50 border border-emerald-200"
+                  : "bg-yellow-50 border border-yellow-200"
               }`}
             >
               <div className="flex items-center gap-2">
                 {currentMediatorResponse.suggestApproval ? (
-                  <ThumbsUp size={14} className="text-emerald-400" />
+                  <ThumbsUp size={14} className="text-emerald-600" />
                 ) : (
-                  <Clock size={14} className="text-yellow-400" />
+                  <Clock size={14} className="text-yellow-600" />
                 )}
                 <p className="text-xs text-ink-secondary">
                   {currentMediatorResponse.approvalReasoning}
@@ -698,12 +698,12 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
 
       {/* Consensus reached banner */}
       {consensusReached && (
-        <div className="p-3 rounded-lg bg-emerald-900/30 border border-emerald-500/30 text-center animate-in fade-in slide-in-from-bottom-2 duration-500">
-          <p className="text-sm font-semibold text-emerald-300 flex items-center justify-center gap-2">
+        <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-center animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <p className="text-sm font-semibold text-emerald-700 flex items-center justify-center gap-2">
             <PartyPopper size={16} />
             Consensus reached! All required personas have approved.
           </p>
-          <p className="text-xs text-emerald-400/70 mt-1">
+          <p className="text-xs text-emerald-600/70 mt-1">
             This ticket is ready to move to building.
           </p>
         </div>
@@ -726,9 +726,9 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
                     p.id === activePersona
                       ? "bg-gold/20 border border-gold/30 text-gold-light"
                       : approvedP
-                        ? "bg-emerald-900/20 border border-emerald-500/20 text-emerald-400"
+                        ? "bg-emerald-50 border border-emerald-200 text-emerald-600"
                         : submitted
-                          ? "bg-yellow-900/20 border border-yellow-500/20 text-yellow-400"
+                          ? "bg-yellow-50 border border-yellow-200 text-yellow-600"
                           : "bg-elevated/50 border border-border-visible/30 text-ink-muted"
                   }`}
                 >

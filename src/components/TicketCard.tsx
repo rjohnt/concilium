@@ -78,18 +78,18 @@ export function TicketCard({ ticket }: { ticket: Ticket }) {
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs font-mono text-gray-500">
+              <span className="text-xs font-mono text-ink-muted">
                 {ticket.id}
               </span>
               <span
                 className={`badge ${
                   ticket.status === "draft"
-                    ? "bg-gray-800 text-gray-400"
+                    ? "bg-overlay text-ink-muted border border-border-subtle"
                     : ticket.status === "in-review"
-                      ? "bg-yellow-900/50 text-yellow-400"
+                      ? "bg-yellow-100 text-yellow-700 border border-yellow-200"
                       : ticket.status === "consensus"
-                        ? "bg-emerald-900/50 text-emerald-400"
-                        : "bg-blue-900/50 text-blue-400"
+                        ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
+                        : "bg-blue-100 text-blue-700 border border-blue-200"
                 }`}
               >
                 {ticket.status}
@@ -136,7 +136,7 @@ export function TicketCard({ ticket }: { ticket: Ticket }) {
               </h3>
             )}
 
-            <p className="text-sm text-gray-400 mt-1 line-clamp-2">
+            <p className="text-sm text-ink-secondary mt-1 line-clamp-2">
               {ticket.description}
             </p>
           </div>
@@ -145,14 +145,14 @@ export function TicketCard({ ticket }: { ticket: Ticket }) {
         {/* Progress bar */}
         <div className="mt-4">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs text-gray-500">Consensus</span>
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-ink-muted">Consensus</span>
+            <span className="text-xs text-ink-secondary">
               {ticket.approvals.length}/{allPersonas.length}
             </span>
           </div>
-          <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-overlay rounded-full overflow-hidden">
             <div
-              className="h-full bg-brand-500 rounded-full transition-all duration-500"
+              className="h-full bg-gold rounded-full transition-all duration-500"
               style={{ width: `${progress * 100}%` }}
             />
           </div>
@@ -181,7 +181,7 @@ export function TicketCard({ ticket }: { ticket: Ticket }) {
         <div className="flex items-center justify-between mt-3">
           <div className="flex -space-x-1">
             {allPersonas.map((p) => (
-              <div key={p.id} className="ring-2 ring-gray-900 rounded-full">
+              <div key={p.id} className="ring-2 ring-raised rounded-full">
                 <PersonaBadge
                   personaId={p.id}
                   approved={ticket.approvals.includes(p.id)}
@@ -189,7 +189,7 @@ export function TicketCard({ ticket }: { ticket: Ticket }) {
               </div>
             ))}
           </div>
-          <div className="flex items-center gap-3 text-xs text-gray-500">
+          <div className="flex items-center gap-3 text-xs text-ink-muted">
             <span className="flex items-center gap-1">
               <MessageSquare size={12} />
               {ticket.feedback.length}
