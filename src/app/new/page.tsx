@@ -24,16 +24,24 @@ export default function NewTicketPage() {
   const descLen = description.length;
 
   const titleCounterColor =
-    titleLen < 180 ? "text-ink-muted" : titleLen <= 200 ? "text-gold" : "text-cardinal";
+    titleLen < 180
+      ? "text-ink-muted"
+      : titleLen <= 200
+        ? "text-gold font-medium"
+        : "text-cardinal font-medium";
   const descCounterColor =
-    descLen < 4500 ? "text-ink-muted" : descLen <= 5000 ? "text-gold" : "text-cardinal";
+    descLen < 4500
+      ? "text-ink-muted"
+      : descLen <= 5000
+        ? "text-gold font-medium"
+        : "text-cardinal font-medium";
 
   const titleError: string | null = !titleTouched
     ? null
     : !title.trim()
       ? "Title is required"
       : titleLen > 200
-        ? "Title must be 200 characters or fewer"
+        ? "Title too long"
         : null;
 
   const descError: string | null = !descTouched
