@@ -433,7 +433,6 @@ export async function triggerBuild(ticketId: string): Promise<BuildReport | null
   // Fallback: if API call fails, keep the stub
   return ticket.buildReport;
 }
-}
 
 /**
  * Complete a build, transitioning to done.

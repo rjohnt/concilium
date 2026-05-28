@@ -14,6 +14,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import type { ReactNode } from "react";
+import type { PersonaId } from "@/lib/types";
 
 // ===========================================================================
 // Mocks shared across all test suites
@@ -99,6 +100,7 @@ describe("AC 1: Consensus detection triggers build pipeline", () => {
     vi.stubGlobal("localStorage", mockStorage);
     vi.stubGlobal("window", {
       addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
     });
 
@@ -1097,7 +1099,7 @@ describe("AC 6: Build output visible inline on ticket detail page", () => {
       updatedAt: "2026-05-27T10:00:00Z",
       tags: [],
       feedback: [],
-      approvals: ["engineer", "designer", "qa", "product-owner"],
+      approvals: ["engineer", "designer", "qa", "product-owner"] as PersonaId[],
       buildReport,
     };
 
@@ -1145,7 +1147,7 @@ describe("AC 6: Build output visible inline on ticket detail page", () => {
       updatedAt: "2026-05-27T10:00:00Z",
       tags: [],
       feedback: [],
-      approvals: ["engineer", "designer", "product-owner"],
+      approvals: ["engineer", "designer", "product-owner"] as PersonaId[],
       buildReport,
     };
 
@@ -1490,7 +1492,7 @@ describe("AC 7b: BuildTrigger component integration", () => {
           content: "OK.", createdAt: "2026-01-01T00:00:00.000Z", approved: true,
         },
       ],
-      approvals: ["engineer", "designer", "product-owner"],
+      approvals: ["engineer", "designer", "product-owner"] as PersonaId[],
     };
 
     render(<BuildTrigger ticket={ticket} onBuildTriggered={vi.fn()} />);
@@ -1535,7 +1537,7 @@ describe("AC 7b: BuildTrigger component integration", () => {
       updatedAt: "2026-01-01T00:00:00.000Z",
       tags: [],
       feedback: [],
-      approvals: ["engineer", "designer", "product-owner"],
+      approvals: ["engineer", "designer", "product-owner"] as PersonaId[],
       buildReport: {
         id: "BLD-001",
         ticketId: "TIX-002",
@@ -1587,7 +1589,7 @@ describe("AC 7b: BuildTrigger component integration", () => {
       updatedAt: "2026-01-01T00:00:00.000Z",
       tags: [],
       feedback: [],
-      approvals: ["engineer", "designer", "product-owner", "qa"],
+      approvals: ["engineer", "designer", "product-owner", "qa"] as PersonaId[],
       buildReport: {
         id: "BLD-002",
         ticketId: "TIX-003",
@@ -1920,7 +1922,7 @@ describe("Full pipeline integration: from feedback to build display", () => {
             content: "Test contrast ratios.", createdAt: "2026-05-27T09:45:00Z", approved: true,
           },
         ],
-        approvals: ["engineer", "designer", "product-owner", "qa"],
+        approvals: ["engineer", "designer", "product-owner", "qa"] as PersonaId[],
         buildReport,
       })),
       deleteTicket: vi.fn(),
