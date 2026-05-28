@@ -5,6 +5,7 @@ import { CommandPalette } from "@/components/CommandPalette";
 import { KeyboardShortcutsSheet } from "@/components/KeyboardShortcutsSheet";
 import { AuthProvider } from "@/lib/auth-context";
 import { AuthGuard } from "@/components/AuthGuard";
+import { Breadcrumb } from "@/components/Breadcrumb";
 import PageTransition from "@/components/PageTransition";
 import { ThemeProvider } from "@/lib/theme";
 
@@ -28,6 +29,7 @@ export default function RootLayout({
               <div className="flex min-h-screen">
                 <Sidebar />
                 <main className="flex-1 md:ml-64 pt-14 p-8 md:pt-8">
+                  <Breadcrumb className="mb-4" />
                   <PageTransition>{children}</PageTransition>
                 </main>
               </div>
