@@ -143,6 +143,10 @@ export async function GET(request: NextRequest) {
   }
 
   const persona = getPersona(personaId);
+  if (!persona) {
+    return NextResponse.json({ error: "Persona not found" }, { status: 404 });
+  }
+
   const consensus = checkConsensusThreshold(ticket);
   const history = getFeedbackHistory(ticketId);
   const allPersonas = getAllPersonas();

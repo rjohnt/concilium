@@ -74,6 +74,7 @@ export async function mediate(
 
   const ticket = getTicket(ticketId)!;
   const persona = getPersona(personaId);
+  if (!persona) return null;
 
   const response = await generateLLMResponse(ticket, persona, userMessage, context, false);
 
@@ -95,6 +96,7 @@ export async function continueMediation(
 
   const ticket = getTicket(ticketId)!;
   const persona = getPersona(personaId);
+  if (!persona) return null;
 
   const response = await generateLLMResponse(ticket, persona, userMessage, context, true, previousResponse);
 

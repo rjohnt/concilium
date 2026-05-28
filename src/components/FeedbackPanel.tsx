@@ -245,6 +245,7 @@ export function FeedbackPanel({
             <div className="space-y-3">
               {filteredHistory.map((entry) => {
                 const entryPersona = getPersona(entry.personaId);
+                const personaLabel = entryPersona?.label ?? entry.personaId;
                 return (
                   <div
                     key={entry.id}
@@ -254,7 +255,7 @@ export function FeedbackPanel({
                       <div className="flex items-center gap-2">
                         <PersonaIcon personaId={entry.personaId} size={14} />
                         <span className="text-xs font-medium text-gray-300">
-                          {entryPersona.label}
+                          {personaLabel}
                         </span>
                         <span className="text-xs text-gray-500" title={formatAbsoluteDate(entry.createdAt)}>
                           {formatRelativeTime(entry.createdAt)}

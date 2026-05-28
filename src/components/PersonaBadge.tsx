@@ -13,6 +13,9 @@ export function PersonaBadge({
   size?: "sm" | "lg";
 }) {
   const persona = getPersona(personaId);
+  const personaColor = persona?.color ?? "bg-gray-800";
+  const personaLabel = persona?.label ?? personaId;
+  const personaExpertise = persona?.expertise ?? "";
   const iconSize = size === "lg" ? 16 : 14;
   const sizeClasses =
     size === "lg" ? "px-3 py-1 text-sm gap-2" : "px-2 py-0.5 text-xs gap-1";
@@ -20,12 +23,12 @@ export function PersonaBadge({
   return (
     <span
       className={`inline-flex items-center rounded-full ${sizeClasses} ${
-        approved ? `${persona.color} text-white` : "bg-gray-800 text-gray-400"
+        approved ? `${personaColor} text-white` : "bg-gray-800 text-gray-400"
       } transition-colors`}
-      title={`${persona.label}: ${persona.expertise}`}
+      title={`${personaLabel}: ${personaExpertise}`}
     >
       <PersonaIcon personaId={personaId} size={iconSize} />
-      <span>{persona.label}</span>
+      <span>{personaLabel}</span>
       {approved && <Check size={iconSize} className="ml-0.5" />}
     </span>
   );

@@ -201,7 +201,7 @@ export default function ConsensusRoom() {
   const consensus = checkConsensusThreshold(ticket);
 
   // Group feedback by persona
-  const feedbackByPersona: Record<PersonaId, FeedbackEntry[]> = {};
+  const feedbackByPersona = {} as Record<PersonaId, FeedbackEntry[]>;
   for (const p of allPersonas) {
     feedbackByPersona[p.id] = feedbackHistory.filter((f) => f.personaId === p.id);
   }
