@@ -6,6 +6,7 @@ import { checkConsensusThreshold, generateBuildSummary } from "@/lib/consensus-t
 import { BuildReport } from "@/lib/types";
 import { checkRateLimit, extractIp, applyRateLimitHeaders } from "@/lib/rateLimit";
 import type { RateLimitConfig } from "@/lib/types";
+import { sanitize } from "@/lib/sanitize";
 
 const BUILD_RATE_LIMIT: RateLimitConfig = {
   windowMs: 60_000, // 1 minute
@@ -186,6 +187,9 @@ export async function POST(request: NextRequest) {
       );
       return applyRateLimitHeaders(response, rateLimitResult);
     }
+
+    // Belt-and-suspenders sanitization of ticketId (already regex-validated)
+    body.ticketId = sanitize(body.ticketId);
 
     // Validate ticket exists
     const ticket = getTicket(body.ticketId);

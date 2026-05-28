@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as serverDb from "@/lib/server-db";
 import { PriorityLevel } from "@/lib/types";
+import { sanitize } from "@/lib/sanitize";
 
 export async function GET(request: NextRequest) {
   try {
@@ -44,6 +45,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Sanitize user-supplied string fields against XSS
+    body.title = sanitize(body.title);
+    if (typeof body.description === "string") {
+      body.description = sanitize(body.description);
+    }
+
     const priority = typeof body.priority === "number" ? (body.priority as PriorityLevel) : 2;
     const ticket = serverDb.createTicket(
       body.title,
@@ -74,6 +81,11 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
+
+    // Sanitize user-supplied string fields against XSS
+    if (typeof body.title === "string") body.title = sanitize(body.title);
+    if (typeof body.description === "string") body.description = sanitize(body.description);
+
     const ticket = serverDb.updateTicket(id, {
       title: body.title,
       description: body.description,

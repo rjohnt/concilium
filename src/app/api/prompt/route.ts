@@ -3,6 +3,7 @@ import { mediate, continueMediation } from "@/lib/mediator";
 import { PersonaId } from "@/lib/types";
 import { checkRateLimit, extractIp, applyRateLimitHeaders } from "@/lib/rateLimit";
 import type { RateLimitConfig } from "@/lib/types";
+import { sanitize } from "@/lib/sanitize";
 
 const PROMPT_RATE_LIMIT: RateLimitConfig = {
   windowMs: 60_000, // 1 minute
@@ -68,6 +69,9 @@ export async function POST(request: NextRequest) {
       );
       return applyRateLimitHeaders(response, rateLimitResult);
     }
+
+    // Sanitize user message against XSS (belt-and-suspenders even for LLM-bound text)
+    body.message = sanitize(body.message);
 
     // Validate persona
     if (!VALID_PERSONAS.includes(body.personaId)) {
