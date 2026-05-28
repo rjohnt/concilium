@@ -20,7 +20,7 @@ import { ActivityFeed } from "@/components/ActivityFeed";
 import { EditableField } from "@/components/EditableField";
 import { TagChip } from "@/components/TagChip";
 import { EmptyState } from "@/components/EmptyState";
-import { ArrowLeft, Clock, GitBranch, RefreshCw, Sparkles, ExternalLink, Trash2, FileQuestion, Calendar, Users } from "lucide-react";
+import { Clock, GitBranch, RefreshCw, Sparkles, ExternalLink, Trash2, FileQuestion, Calendar, Users } from "lucide-react";
 import { PersonaIcon } from "@/components/PersonaIcon";
 import Link from "next/link";
 
@@ -139,15 +139,6 @@ export default function TicketDetailPage() {
         isOpen={showJoinModal && !!sessionPersona}
         onJoin={handleJoinSession}
       />
-
-      {/* Breadcrumb */}
-      <Link
-        href="/"
-        className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-ink-primary mb-6 transition-colors"
-      >
-        <ArrowLeft size={14} />
-        Back to Dashboard
-      </Link>
 
       {/* Active persona indicator */}
       {activePersonaObj && (
