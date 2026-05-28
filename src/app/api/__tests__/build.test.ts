@@ -46,6 +46,7 @@ import { callDeepSeek } from "@/lib/llm";
 import * as store from "@/lib/store";
 import * as consensus from "@/lib/consensus-threshold";
 import { Ticket } from "@/lib/types";
+import { resetRateLimitBuckets } from "@/lib/rateLimit";
 
 function makeMockTicket(id: string): Ticket {
   return {
@@ -123,6 +124,7 @@ function createRequest(body: Record<string, unknown>): NextRequest {
 describe("POST /api/build", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetRateLimitBuckets();
   });
 
   it("returns 400 when ticketId is missing", async () => {
@@ -290,5 +292,83 @@ describe("POST /api/build", () => {
     expect(callArgs.userPrompt).toContain("Persona Feedback");
     expect(callArgs.expectJson).toBe(true);
     expect(callArgs.model).toBe("deepseek-v4-pro");
+  });
+
+  // --- Rate Limit Tests ---
+
+  it("6th request from same IP returns 429", async () => {
+    const mockTicket = makeMockTicket("TIX-001");
+    (store.getTicket as ReturnType<typeof vi.fn>).mockReturnValue(mockTicket);
+    (callDeepSeek as ReturnType<typeof vi.fn>).mockResolvedValue({
+      content: buildLLMResponse(),
+      model: "deepseek-v4-pro",
+      usage: { promptTokens: 100, completionTokens: 100, totalTokens: 200 },
+    });
+
+    // First 5 requests should succeed
+    for (let i = 0; i < 5; i++) {
+      const request = createRequest({ ticketId: "TIX-001" });
+      const response = await POST(request);
+      expect(response.status).toBe(200);
+    }
+
+    // 6th request should be rate-limited
+    const blockedRequest = createRequest({ ticketId: "TIX-001" });
+    const blockedResponse = await POST(blockedRequest);
+
+    expect(blockedResponse.status).toBe(429);
+    const body = await blockedResponse.json();
+    expect(body.error).toBe("Too many requests");
+    expect(typeof body.retryAfter).toBe("number");
+  });
+
+  it("429 body contains { error: 'Too many requests', retryAfter: number }", async () => {
+    // Exhaust the rate limit
+    for (let i = 0; i < 5; i++) {
+      const request = createRequest({ ticketId: "TIX-001" });
+      await POST(request);
+    }
+
+    const request = createRequest({ ticketId: "TIX-001" });
+    const response = await POST(request);
+
+    expect(response.status).toBe(429);
+    const body = await response.json();
+    expect(body).toHaveProperty("error", "Too many requests");
+    expect(body).toHaveProperty("retryAfter");
+    expect(typeof body.retryAfter).toBe("number");
+    expect(body.retryAfter).toBeGreaterThanOrEqual(0);
+  });
+
+  it("rate-limit headers present on 200 response", async () => {
+    const mockTicket = makeMockTicket("TIX-001");
+    (store.getTicket as ReturnType<typeof vi.fn>).mockReturnValue(mockTicket);
+    (callDeepSeek as ReturnType<typeof vi.fn>).mockResolvedValue({
+      content: buildLLMResponse(),
+      model: "deepseek-v4-pro",
+      usage: { promptTokens: 100, completionTokens: 100, totalTokens: 200 },
+    });
+
+    const request = createRequest({ ticketId: "TIX-001" });
+    const response = await POST(request);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("X-RateLimit-Remaining")).toBe("4");
+    expect(response.headers.get("X-RateLimit-Reset")).toBeTruthy();
+  });
+
+  it("rate-limit headers present on 429 response", async () => {
+    // Exhaust the rate limit
+    for (let i = 0; i < 5; i++) {
+      const request = createRequest({ ticketId: "TIX-001" });
+      await POST(request);
+    }
+
+    const request = createRequest({ ticketId: "TIX-001" });
+    const response = await POST(request);
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("X-RateLimit-Remaining")).toBe("0");
+    expect(response.headers.get("X-RateLimit-Reset")).toBeTruthy();
   });
 });

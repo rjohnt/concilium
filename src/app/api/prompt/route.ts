@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { mediate, continueMediation } from "@/lib/mediator";
 import { PersonaId } from "@/lib/types";
+import { checkRateLimit, extractIp, applyRateLimitHeaders } from "@/lib/rateLimit";
+import type { RateLimitConfig } from "@/lib/rateLimit";
+
+const PROMPT_RATE_LIMIT: RateLimitConfig = {
+  windowMs: 60_000, // 1 minute
+  maxRequests: 10,
+};
 
 interface PromptRequest {
   ticketId: string;
@@ -26,37 +33,52 @@ const VALID_PERSONAS: PersonaId[] = [
 ];
 
 export async function POST(request: NextRequest) {
+  const ip = extractIp(request);
+  const rateLimitResult = checkRateLimit(ip, PROMPT_RATE_LIMIT);
+
+  if (!rateLimitResult.allowed) {
+    const retryAfter = rateLimitResult.reset - Math.ceil(Date.now() / 1000);
+    const response = NextResponse.json(
+      { error: "Too many requests", retryAfter: Math.max(0, retryAfter) },
+      { status: 429 }
+    );
+    return applyRateLimitHeaders(response, rateLimitResult);
+  }
+
   try {
     const body: PromptRequest = await request.json();
 
     // Validate required fields
     if (!body.ticketId || !body.personaId || !body.message) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         {
           error: "Missing required fields",
           required: ["ticketId", "personaId", "message"],
         },
         { status: 400 }
       );
+      return applyRateLimitHeaders(response, rateLimitResult);
     }
 
     // Validate ticket ID format
     if (!/^TIX-\d{3}$/.test(body.ticketId)) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: "Invalid ticket ID format. Expected: TIX-XXX" },
         { status: 400 }
       );
+      return applyRateLimitHeaders(response, rateLimitResult);
     }
 
     // Validate persona
     if (!VALID_PERSONAS.includes(body.personaId)) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         {
           error: "Invalid persona ID",
           valid: VALID_PERSONAS,
         },
         { status: 400 }
       );
+      return applyRateLimitHeaders(response, rateLimitResult);
     }
 
     // Route to mediator (LLM-powered via DeepSeek V4 Flash)
@@ -68,7 +90,7 @@ export async function POST(request: NextRequest) {
         body.ticketId,
         body.personaId,
         body.message,
-        body.previousResponse as any
+        body.previousResponse as unknown as Parameters<typeof continueMediation>[3]
       );
     } else {
       // Fresh mediation
@@ -76,13 +98,14 @@ export async function POST(request: NextRequest) {
     }
 
     if (!result) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: "Ticket not found" },
         { status: 404 }
       );
+      return applyRateLimitHeaders(response, rateLimitResult);
     }
 
-    return NextResponse.json({
+    const successResponse = NextResponse.json({
       ...result.response,
       context: {
         ticketId: result.context.ticketId,
@@ -93,12 +116,14 @@ export async function POST(request: NextRequest) {
         sessionHistoryCount: result.context.sessionHistory.length,
       },
     });
+    return applyRateLimitHeaders(successResponse, rateLimitResult);
   } catch (error) {
     console.error("Prompt API error:", error);
-    return NextResponse.json(
+    const errorResponse = NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
     );
+    return applyRateLimitHeaders(errorResponse, rateLimitResult);
   }
 }
 
