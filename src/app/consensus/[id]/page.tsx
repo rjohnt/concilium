@@ -9,7 +9,7 @@ import { getAllPersonas, getPersona } from "@/lib/personas";
 import { checkConsensusThreshold } from "@/lib/consensus-threshold";
 import { PersonaIcon } from "@/components/PersonaIcon";
 import { EmptyState } from "@/components/EmptyState";
-import { ArrowLeft, CheckCircle, XCircle, MessageSquare, Send, Users, Sparkles } from "lucide-react";
+import { CheckCircle, XCircle, MessageSquare, Send, Users, Sparkles } from "lucide-react";
 
 function ConsensusProgressBar({ approved, total }: { approved: number; total: number }) {
   const pct = total > 0 ? Math.round((approved / total) * 100) : 0;
@@ -218,13 +218,6 @@ export default function ConsensusRoom() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <Link
-            href={`/ticket/${ticket.id}`}
-            className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-ink-primary mb-3 transition-colors"
-          >
-            <ArrowLeft size={14} />
-            Back to Ticket Detail
-          </Link>
           <h1 className="text-2xl font-bold text-ink-primary">{ticket.title}</h1>
           <div className="flex items-center gap-3 mt-1.5">
             <span className="text-xs font-mono text-ink-muted">{ticket.id}</span>

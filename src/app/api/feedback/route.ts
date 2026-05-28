@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as serverDb from "@/lib/server-db";
 import { PersonaId } from "@/lib/types";
+import { sanitize } from "@/lib/sanitize";
 
 export async function GET(request: NextRequest) {
   try {
@@ -62,6 +63,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Sanitize user-supplied feedback content against XSS
+    body.content = sanitize(body.content);
 
     const approved = body.approved === true;
 
