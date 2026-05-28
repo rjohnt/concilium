@@ -8,7 +8,7 @@ import { getBuildReadiness, generateBuildSummary } from "@/lib/consensus-thresho
 import { BuildReport as BuildReportComponent } from "@/components/BuildReport";
 import { BuildCompleteCelebration } from "@/components/BuildCompleteCelebration";
 import { EmptyState } from "@/components/EmptyState";
-import { ArrowLeft, Clock, CheckCircle2, RefreshCw, Rocket, FileText, FileQuestion } from "lucide-react";
+import { Clock, CheckCircle2, RefreshCw, Rocket, FileText, FileQuestion } from "lucide-react";
 import Link from "next/link";
 
 export default function BuildPage() {
@@ -74,15 +74,6 @@ export default function BuildPage() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* Breadcrumb */}
-      <Link
-        href={`/ticket/${ticket.id}`}
-        className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-ink-primary mb-6 transition-colors"
-      >
-        <ArrowLeft size={14} />
-        Back to Ticket {ticket.id}
-      </Link>
-
       {/* Build Header */}
       <div className="card mb-6">
         <div className="flex items-start justify-between gap-4">
