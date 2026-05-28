@@ -11,6 +11,7 @@ import { EmptyState } from "./EmptyState";
 import { MarkdownPreview } from "./MarkdownPreview";
 import { MessageSquare, CheckCircle, ThumbsUp, RefreshCw, GitBranch } from "lucide-react";
 import { VersionHistory } from "./VersionHistory";
+import { useToast } from "./Toast";
 
 function useModKey(): string {
   const [modKey, setModKey] = useState("Ctrl");
@@ -54,6 +55,7 @@ export function FeedbackPanel({
   const [historyFilter, setHistoryFilter] = useState<PersonaId | "all">("all");
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const MOD_KEY = useModKey();
+  const { addToast } = useToast();
 
   const persona = activePersona ? getPersona(activePersona) : null;
 
@@ -76,6 +78,14 @@ export function FeedbackPanel({
     await new Promise((r) => setTimeout(r, 300));
     const { addFeedback } = await import("@/lib/store");
     addFeedback(ticket.id, activePersona, content.trim(), approved);
+
+    if (persona) {
+      addToast({
+        variant: "success",
+        title: approved ? "Feedback submitted & approved" : "Feedback submitted",
+        description: `${persona.label} has ${approved ? "approved" : "provided feedback on"} "${ticket.title}".`,
+      });
+    }
 
     setContent("");
     setApproved(false);

@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Ticket, PersonaId, PRIORITY_LABELS, PRIORITY_COLORS, PriorityLevel, PREDEFINED_TAGS } from "@/lib/types";
-import { seedData, getTicket, deleteTicket, updateTicket, updateTicketPriority, updateTicketTags, retryBuild } from "@/lib/store";
+import { seedData, getTicket, deleteTicket, updateTicket, updateTicketPriority, updateTicketTags, retryBuild, createTicket } from "@/lib/store";
 import { formatDueDate } from "@/lib/date-utils";
 import { getPersona } from "@/lib/personas";
 import { formatRelativeTime, formatAbsoluteDate } from "@/lib/timeAgo";
@@ -23,10 +23,12 @@ import { EmptyState } from "@/components/EmptyState";
 import { Clock, GitBranch, RefreshCw, Sparkles, ExternalLink, Trash2, FileQuestion, Calendar, Users } from "lucide-react";
 import { PersonaIcon } from "@/components/PersonaIcon";
 import Link from "next/link";
+import { useToast } from "@/components/Toast";
 
 export default function TicketDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { addToast } = useToast();
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -83,8 +85,32 @@ export default function TicketDetailPage() {
 
   const handleDeleteConfirm = () => {
     if (!ticket) return;
+    // Save snapshot for undo
+    const snapshot = { ...ticket };
     const success = deleteTicket(ticket.id);
     if (success) {
+      addToast({
+        variant: "error",
+        title: "Ticket deleted",
+        description: `"${snapshot.title}" has been deleted.`,
+        action: {
+          label: "Undo",
+          onClick: () => {
+            createTicket(
+              snapshot.title,
+              snapshot.description,
+              snapshot.priority as PriorityLevel,
+              snapshot.dueDate || undefined,
+              snapshot.tags
+            );
+            addToast({
+              variant: "success",
+              title: "Ticket restored",
+              description: `"${snapshot.title}" has been restored.`,
+            });
+          },
+        },
+      });
       router.push("/");
     }
   };

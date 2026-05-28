@@ -14,6 +14,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import type { ReactNode } from "react";
+import { ToastProvider } from "@/components/Toast";
 import type { PersonaId } from "@/lib/types";
 
 // ===========================================================================
@@ -1514,6 +1515,7 @@ describe("AC 7b: BuildTrigger component integration", () => {
     }));
 
     const { BuildTrigger } = await import("@/components/BuildTrigger");
+    const { ToastProvider } = await import("@/components/Toast");
 
     const ticket = {
       id: "TIX-001",
@@ -1533,7 +1535,7 @@ describe("AC 7b: BuildTrigger component integration", () => {
       approvals: ["engineer", "designer", "product-owner"] as PersonaId[],
     };
 
-    render(<BuildTrigger ticket={ticket} onBuildTriggered={vi.fn()} />);
+    render(<ToastProvider><BuildTrigger ticket={ticket} onBuildTriggered={vi.fn()} /></ToastProvider>);
 
     // Should show "Ready to Build!" button since readiness is true
     expect(screen.getByText("Ready to Build!")).toBeInTheDocument();
@@ -1564,6 +1566,7 @@ describe("AC 7b: BuildTrigger component integration", () => {
     }));
 
     const { BuildTrigger } = await import("@/components/BuildTrigger");
+    const { ToastProvider } = await import("@/components/Toast");
 
     const ticket = {
       id: "TIX-002",
@@ -1589,7 +1592,7 @@ describe("AC 7b: BuildTrigger component integration", () => {
       },
     };
 
-    render(<BuildTrigger ticket={ticket} onBuildTriggered={vi.fn()} />);
+    render(<ToastProvider><BuildTrigger ticket={ticket} onBuildTriggered={vi.fn()} /></ToastProvider>);
 
     expect(screen.getByText("Build In Progress")).toBeInTheDocument();
     expect(screen.getByText("View Report")).toBeInTheDocument();
@@ -1616,6 +1619,7 @@ describe("AC 7b: BuildTrigger component integration", () => {
     }));
 
     const { BuildTrigger } = await import("@/components/BuildTrigger");
+    const { ToastProvider } = await import("@/components/Toast");
 
     const ticket = {
       id: "TIX-003",
@@ -1641,7 +1645,7 @@ describe("AC 7b: BuildTrigger component integration", () => {
       },
     };
 
-    render(<BuildTrigger ticket={ticket} onBuildTriggered={vi.fn()} />);
+    render(<ToastProvider><BuildTrigger ticket={ticket} onBuildTriggered={vi.fn()} /></ToastProvider>);
 
     expect(screen.getByText("Build Complete")).toBeInTheDocument();
   });

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import type { ReactNode } from "react";
+import { ToastProvider } from "@/components/Toast";
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -166,7 +167,7 @@ describe("DEV-53 Acceptance: Ticket tag/label system with dashboard filtering", 
   describe("AC 3: New Ticket page tag selector", () => {
     it("renders all six predefined tags as toggle chips", async () => {
       const NewTicketPage = (await import("@/app/new/page")).default;
-      render(<NewTicketPage />);
+      render(<ToastProvider><NewTicketPage /></ToastProvider>);
 
       // All six tag labels appear
       for (const tag of PREDEFINED_TAGS) {
@@ -184,7 +185,7 @@ describe("DEV-53 Acceptance: Ticket tag/label system with dashboard filtering", 
 
     it("clicking a tag toggles its selection state", async () => {
       const NewTicketPage = (await import("@/app/new/page")).default;
-      render(<NewTicketPage />);
+      render(<ToastProvider><NewTicketPage /></ToastProvider>);
 
       const bugButton = screen.getByRole("button", { name: /Bug/i });
       expect(bugButton).toHaveAttribute("aria-pressed", "false");
@@ -195,7 +196,7 @@ describe("DEV-53 Acceptance: Ticket tag/label system with dashboard filtering", 
 
     it("selected tags display their color classes", async () => {
       const NewTicketPage = (await import("@/app/new/page")).default;
-      render(<NewTicketPage />);
+      render(<ToastProvider><NewTicketPage /></ToastProvider>);
 
       const bugButton = screen.getByRole("button", { name: /Bug/i });
       // Before selection — muted styling
@@ -223,7 +224,7 @@ describe("DEV-53 Acceptance: Ticket tag/label system with dashboard filtering", 
 
     it("renders Tags section heading with all six toggle chips", async () => {
       const TicketDetailPage = (await import("@/app/ticket/[id]/page")).default;
-      render(<TicketDetailPage />);
+      render(<ToastProvider><TicketDetailPage /></ToastProvider>);
 
       // Tags section heading exists
       const tagsHeading = await screen.findByText("Tags");
@@ -239,7 +240,7 @@ describe("DEV-53 Acceptance: Ticket tag/label system with dashboard filtering", 
 
     it("shows already-assigned tags as selected (pressed) in the toggle section", async () => {
       const TicketDetailPage = (await import("@/app/ticket/[id]/page")).default;
-      render(<TicketDetailPage />);
+      render(<ToastProvider><TicketDetailPage /></ToastProvider>);
 
       await screen.findByText("Tags");
 
@@ -253,7 +254,7 @@ describe("DEV-53 Acceptance: Ticket tag/label system with dashboard filtering", 
 
     it("clicking a tag calls updateTicketTags with the updated tag list", async () => {
       const TicketDetailPage = (await import("@/app/ticket/[id]/page")).default;
-      render(<TicketDetailPage />);
+      render(<ToastProvider><TicketDetailPage /></ToastProvider>);
 
       await screen.findByText("Tags");
 

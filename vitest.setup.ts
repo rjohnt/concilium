@@ -3,6 +3,21 @@ import "@testing-library/jest-dom/vitest";
 // jsdom does not implement scrollIntoView, which is used by CommandPalette
 Element.prototype.scrollIntoView = vi.fn() as unknown as Element["scrollIntoView"];
 
+// jsdom does not implement matchMedia, used by prefers-reduced-motion queries
+Object.defineProperty(window, "matchMedia", {
+  writable: true,
+  value: vi.fn().mockImplementation((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
+
 // Mock framer-motion AnimatePresence to immediately remove exiting children
 // since jsdom does not support real animations.
 vi.mock("framer-motion", async () => {
