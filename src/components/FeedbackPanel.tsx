@@ -259,7 +259,7 @@ export function FeedbackPanel({
             <div className="border border-border-subtle rounded-lg p-3 bg-elevated/50">
               <VersionHistory
                 ticketId={ticket.id}
-                personaId={historyFilter}
+                personaId={historyFilter as PersonaId}
                 feedback={ticket.feedback}
                 onClose={() => setShowVersionHistory(false)}
               />
