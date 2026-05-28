@@ -117,6 +117,25 @@ export default function DashboardPage() {
     return counts;
   }, [tickets, activeFilter, priorityFilter, debouncedSearchQuery]);
 
+  const hasActiveFilters = useMemo(() => {
+    return (
+      activeFilter !== "all" ||
+      searchQuery !== "" ||
+      priorityFilter !== null ||
+      tagFilter.length > 0 ||
+      personaFilter.length > 0
+    );
+  }, [activeFilter, searchQuery, priorityFilter, tagFilter, personaFilter]);
+
+  const clearAllFilters = () => {
+    setActiveFilter("all");
+    setSearchQuery("");
+    setPriorityFilter(null);
+    setTagFilter([]);
+    setPersonaFilter([]);
+    // TODO: Reset sort when sort controls are added
+  };
+
   if (loading) {
     return <DashboardSkeleton />;
   }
@@ -171,6 +190,20 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Clear all filters */}
+      {hasActiveFilters && (
+        <div className="mb-4 flex justify-end">
+          <button
+            onClick={clearAllFilters}
+            aria-label="Clear all filters"
+            className="btn-ghost inline-flex items-center gap-1.5 text-xs"
+          >
+            <X size={14} />
+            Clear all filters
+          </button>
+        </div>
+      )}
 
       {/* Search bar */}
       <div className="mb-6">
