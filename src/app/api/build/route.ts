@@ -5,7 +5,7 @@ import { callDeepSeek, DEEPSEEK_PRO_MODEL } from "@/lib/llm";
 import { checkConsensusThreshold, generateBuildSummary } from "@/lib/consensus-threshold";
 import { BuildReport } from "@/lib/types";
 import { checkRateLimit, extractIp, applyRateLimitHeaders } from "@/lib/rateLimit";
-import type { RateLimitConfig } from "@/lib/rateLimit";
+import type { RateLimitConfig } from "@/lib/types";
 
 const BUILD_RATE_LIMIT: RateLimitConfig = {
   windowMs: 60_000, // 1 minute

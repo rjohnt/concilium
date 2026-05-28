@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { mediate, continueMediation } from "@/lib/mediator";
 import { PersonaId } from "@/lib/types";
 import { checkRateLimit, extractIp, applyRateLimitHeaders } from "@/lib/rateLimit";
-import type { RateLimitConfig } from "@/lib/rateLimit";
+import type { RateLimitConfig } from "@/lib/types";
 
 const PROMPT_RATE_LIMIT: RateLimitConfig = {
   windowMs: 60_000, // 1 minute

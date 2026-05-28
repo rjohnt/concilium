@@ -74,6 +74,22 @@ export interface BuildReport {
   consensusSummary: string;
 }
 
+export interface RateLimitConfig {
+  /** Sliding window duration in milliseconds */
+  windowMs: number;
+  /** Maximum requests allowed within the window */
+  maxRequests: number;
+}
+
+export interface RateLimitResult {
+  /** Whether the request is allowed */
+  allowed: boolean;
+  /** Remaining requests in the current window (0 if blocked) */
+  remaining: number;
+  /** Unix timestamp in seconds when the window resets */
+  reset: number;
+}
+
 export interface Ticket {
   id: string;
   title: string;

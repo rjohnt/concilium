@@ -7,6 +7,7 @@ import { LayoutDashboard, PlusCircle, GitBranch, LogOut, User, Car, Menu, X, Set
 import { motion } from "framer-motion";
 import { useAuth } from "@/lib/auth-context";
 import { getTickets } from "@/lib/store";
+import { TemplateEditor } from "./TemplateEditor";
 import { ThemeToggle } from "./ThemeToggle";
 import { TemplateEditor } from "./TemplateEditor";
 
@@ -15,6 +16,7 @@ export function Sidebar() {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [showTemplateEditor, setShowTemplateEditor] = useState(false);
   const hamburgerRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [isTemplateEditorOpen, setIsTemplateEditorOpen] = useState(false);

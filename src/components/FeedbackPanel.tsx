@@ -9,7 +9,8 @@ import { PersonaBadge } from "./PersonaBadge";
 import { PersonaIcon } from "./PersonaIcon";
 import { EmptyState } from "./EmptyState";
 import { MarkdownPreview } from "./MarkdownPreview";
-import { MessageSquare, CheckCircle, ThumbsUp, RefreshCw } from "lucide-react";
+import { MessageSquare, CheckCircle, ThumbsUp, RefreshCw, GitBranch } from "lucide-react";
+import { VersionHistory } from "./VersionHistory";
 
 function useModKey(): string {
   const [modKey, setModKey] = useState("Ctrl");
@@ -51,6 +52,7 @@ export function FeedbackPanel({
   const [approved, setApproved] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [historyFilter, setHistoryFilter] = useState<PersonaId | "all">("all");
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
   const MOD_KEY = useModKey();
 
   const persona = activePersona ? getPersona(activePersona) : null;
@@ -239,6 +241,30 @@ export function FeedbackPanel({
               );
             })}
           </div>
+
+          {/* Version history toggle */}
+          {historyFilter !== "all" && !showVersionHistory && (
+            <button
+              onClick={() => setShowVersionHistory(true)}
+              className="flex items-center gap-1.5 text-xs text-gold hover:text-gold-light transition-colors"
+            >
+              <GitBranch size={12} />
+              Version History
+              <span className="text-ink-muted">({ticket.feedback.filter(f => f.personaId === historyFilter).length})</span>
+            </button>
+          )}
+
+          {/* Version history panel */}
+          {showVersionHistory && (
+            <div className="border border-border-subtle rounded-lg p-3 bg-elevated/50">
+              <VersionHistory
+                ticketId={ticket.id}
+                personaId={historyFilter}
+                feedback={ticket.feedback}
+                onClose={() => setShowVersionHistory(false)}
+              />
+            </div>
+          )}
 
           {/* Filtered feedback entries */}
           {filteredHistory.length > 0 ? (

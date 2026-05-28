@@ -4,22 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-
-export interface RateLimitConfig {
-  /** Sliding window duration in milliseconds */
-  windowMs: number;
-  /** Maximum requests allowed within the window */
-  maxRequests: number;
-}
-
-export interface RateLimitResult {
-  /** Whether the request is allowed */
-  allowed: boolean;
-  /** Remaining requests in the current window (0 if blocked) */
-  remaining: number;
-  /** Unix timestamp in seconds when the window resets */
-  reset: number;
-}
+import type { RateLimitConfig, RateLimitResult } from "./types";
 
 /** Per-IP sliding-window buckets: IP → sorted array of request timestamps (ms) */
 const buckets = new Map<string, number[]>();

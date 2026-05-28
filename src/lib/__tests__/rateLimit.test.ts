@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   checkRateLimit,
   extractIp,
@@ -6,7 +6,7 @@ import {
   resetRateLimitBuckets,
 } from "../rateLimit";
 import { NextRequest, NextResponse } from "next/server";
-import type { RateLimitConfig } from "../rateLimit";
+import type { RateLimitConfig } from "../types";
 
 const defaultConfig: RateLimitConfig = {
   windowMs: 60_000, // 1 minute
