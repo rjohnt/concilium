@@ -4,6 +4,13 @@ import { getAllPersonas } from "@/lib/personas";
 import { callDeepSeek, DEEPSEEK_PRO_MODEL } from "@/lib/llm";
 import { checkConsensusThreshold, generateBuildSummary } from "@/lib/consensus-threshold";
 import { BuildReport } from "@/lib/types";
+import { checkRateLimit, extractIp, applyRateLimitHeaders } from "@/lib/rateLimit";
+import type { RateLimitConfig } from "@/lib/types";
+
+const BUILD_RATE_LIMIT: RateLimitConfig = {
+  windowMs: 60_000, // 1 minute
+  maxRequests: 5,
+};
 
 interface BuildRequest {
   ticketId: string;
@@ -148,40 +155,56 @@ Based on the above ticket context, consensus state, and persona feedback, genera
  * persists it to the store, and returns the BuildReport.
  */
 export async function POST(request: NextRequest) {
+  const ip = extractIp(request);
+  const rateLimitResult = checkRateLimit(ip, BUILD_RATE_LIMIT);
+
+  if (!rateLimitResult.allowed) {
+    const retryAfter = rateLimitResult.reset - Math.ceil(Date.now() / 1000);
+    const response = NextResponse.json(
+      { error: "Too many requests", retryAfter: Math.max(0, retryAfter) },
+      { status: 429 }
+    );
+    return applyRateLimitHeaders(response, rateLimitResult);
+  }
+
   try {
     const body: BuildRequest = await request.json();
 
     // Validate ticketId
     if (!body.ticketId) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: "Missing required field: ticketId" },
         { status: 400 }
       );
+      return applyRateLimitHeaders(response, rateLimitResult);
     }
 
     if (!/^TIX-\d{3}$/.test(body.ticketId)) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: "Invalid ticket ID format. Expected: TIX-XXX" },
         { status: 400 }
       );
+      return applyRateLimitHeaders(response, rateLimitResult);
     }
 
     // Validate ticket exists
     const ticket = getTicket(body.ticketId);
     if (!ticket) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: "Ticket not found" },
         { status: 404 }
       );
+      return applyRateLimitHeaders(response, rateLimitResult);
     }
 
     // Build the prompt
     const prompt = buildBuildPrompt(body.ticketId);
     if (!prompt) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: "Failed to build prompt for ticket" },
         { status: 500 }
       );
+      return applyRateLimitHeaders(response, rateLimitResult);
     }
 
     // Call DeepSeek V4 Pro
@@ -199,7 +222,7 @@ export async function POST(request: NextRequest) {
     // Persist to store
     setBuildReport(body.ticketId, report);
 
-    return NextResponse.json(
+    const successResponse = NextResponse.json(
       {
         buildReport: report,
         meta: {
@@ -210,11 +233,13 @@ export async function POST(request: NextRequest) {
       },
       { status: 200 }
     );
+    return applyRateLimitHeaders(successResponse, rateLimitResult);
   } catch (error) {
     console.error("Build API error:", error);
-    return NextResponse.json(
+    const errorResponse = NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
     );
+    return applyRateLimitHeaders(errorResponse, rateLimitResult);
   }
 }
