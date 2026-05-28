@@ -29,6 +29,7 @@ const mockStorage = getMockStorage();
 vi.stubGlobal("localStorage", mockStorage);
 vi.stubGlobal("window", {
   addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
   dispatchEvent: vi.fn(),
 });
 

@@ -10,8 +10,10 @@ import { FilterBar } from "@/components/FilterBar";
 import { DashboardSkeleton, SkeletonCard } from "@/components/Skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { PersonaIcon } from "@/components/PersonaIcon";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { PlusCircle, Users, Filter, HelpCircle, SearchX, Search, X, ChevronDown } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 type FilterKey = "all" | TicketStatus;
 
@@ -157,6 +159,19 @@ export default function DashboardPage() {
   const hasMore = displayCount < filteredTickets.length;
   const remaining = filteredTickets.length - displayCount;
 
+  // ── Keyboard shortcut refs ────────────────────────────────────────────
+  const router = useRouter();
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // ── Keyboard shortcuts for power-user navigation (DEV-78) ─────────────
+  const { selectedIndex } = useKeyboardShortcuts({
+    ticketCount: displayedTickets.length,
+    ticketIds: displayedTickets.map((t) => t.id),
+    onOpenTicket: (id: string) => router.push(`/ticket/${id}`),
+    onNewTicket: () => router.push("/new"),
+    searchInputRef,
+  });
+
   const handleLoadMore = useCallback(() => {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
@@ -254,6 +269,7 @@ export default function DashboardPage() {
             className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none"
           />
           <input
+            ref={searchInputRef}
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -452,8 +468,12 @@ export default function DashboardPage() {
           </EmptyState>
         ) : (
           <>
-            {displayedTickets.map((ticket) => (
-              <TicketCard key={ticket.id} ticket={ticket} />
+            {displayedTickets.map((ticket, idx) => (
+              <TicketCard
+                key={ticket.id}
+                ticket={ticket}
+                selected={selectedIndex === idx}
+              />
             ))}
 
             {/* Skeleton cards while loading more (AC5) */}

@@ -313,4 +313,20 @@ describe("TicketCard", () => {
       title: longerTitle,
     });
   });
+
+  // === selected prop (DEV-78 keyboard shortcuts) ===
+
+  it("[AC7] adds gold ring styling when selected is true", () => {
+    render(<TicketCard ticket={createTestTicket()} selected={true} />);
+    // The card Link element should have ring-2 and ring-gold/70 classes
+    const link = screen.getByRole("link");
+    expect(link.className).toContain("ring-2");
+    expect(link.className).toContain("ring-gold/70");
+  });
+
+  it("does not have gold ring when selected is false or omitted", () => {
+    render(<TicketCard ticket={createTestTicket()} />);
+    const link = screen.getByRole("link");
+    expect(link.className).not.toContain("ring-gold/70");
+  });
 });
