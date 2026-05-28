@@ -3,10 +3,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, PlusCircle, GitBranch, LogOut, User, Car, Menu, X } from "lucide-react";
+import { LayoutDashboard, PlusCircle, GitBranch, LogOut, User, Car, Menu, X, Settings } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/lib/auth-context";
 import { getTickets } from "@/lib/store";
+import { TemplateEditor } from "./TemplateEditor";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -15,6 +16,7 @@ export function Sidebar() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const hamburgerRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const [isTemplateEditorOpen, setIsTemplateEditorOpen] = useState(false);
 
   const openSidebar = useCallback(() => {
     setIsMobileOpen(true);
@@ -97,6 +99,7 @@ export function Sidebar() {
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/new", label: "New Ticket", icon: PlusCircle },
     { href: "/vin", label: "VIN Decoder", icon: Car },
+    { label: "Templates", icon: Settings, onClick: () => setIsTemplateEditorOpen(true) },
   ];
 
   const handleSignOut = async () => {
@@ -110,7 +113,7 @@ export function Sidebar() {
       <button
         ref={hamburgerRef}
         onClick={openSidebar}
-        className="fixed top-4 left-4 z-50 p-2 rounded-lg bg-base border border-border-subtle text-ink-primary hover:bg-raised transition-colors md:hidden"
+        className="fixed top-4 left-4 z-50 p-2 rounded-lg bg-base border border-border-subtle text-ink-primary hover:bg-raised transition-colors md:hidden shadow-sm"
         aria-label="Open sidebar"
         aria-expanded={isMobileOpen}
         aria-controls="sidebar-navigation"
@@ -121,7 +124,7 @@ export function Sidebar() {
       {/* Backdrop overlay — only visible on mobile when sidebar is open */}
       {isMobileOpen && (
         <button
-          className="fixed inset-0 bg-deep/50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/30 z-40 md:hidden"
           onClick={closeSidebar}
           aria-label="Close sidebar"
         />
@@ -149,10 +152,10 @@ export function Sidebar() {
         <div className="p-6 border-b border-border-subtle">
           <Link href="/" className="flex items-center gap-3" onClick={closeSidebar}>
             <div className="w-8 h-8 rounded-lg bg-gold flex items-center justify-center">
-              <GitBranch size={18} className="text-deep" />
+            <GitBranch size={18} className="text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-ink-primary tracking-tight">
+              <h1 className="text-lg font-bold text-ink-primary tracking-tight font-sans">
                 Concilium
               </h1>
               <p className="text-[10px] text-ink-muted uppercase tracking-wider">
@@ -165,18 +168,37 @@ export function Sidebar() {
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-1">
           {navItems.map((item) => {
-            const isActive = pathname === item.href;
-            const isDashboard = item.href === "/";
+            const isActive = "href" in item && item.href ? pathname === item.href : false;
+            const isDashboard = "href" in item && item.href === "/";
+            const className = `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              isActive
+                ? "bg-gold/10 text-gold"
+                : "text-ink-secondary hover:text-ink-primary hover:bg-raised"
+            }`;
+
+            // Button-style nav item (no href, e.g. Templates)
+            if ("onClick" in item && item.onClick) {
+              return (
+                <button
+                  key={item.label}
+                  onClick={() => {
+                    item.onClick?.();
+                    closeSidebar();
+                  }}
+                  className={className + " w-full text-left cursor-pointer"}
+                >
+                  <item.icon size={18} />
+                  <span className="flex-1">{item.label}</span>
+                </button>
+              );
+            }
+
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                href={item.href ?? "/"}
                 onClick={closeSidebar}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-gold/10 text-gold"
-                    : "text-ink-secondary hover:text-ink-primary hover:bg-raised"
-                }`}
+                className={className}
               >
                 <item.icon size={18} />
                 <span className="flex-1">{item.label}</span>
@@ -237,7 +259,7 @@ export function Sidebar() {
                   />
                 ) : (
                   <div className="w-8 h-8 rounded-full bg-gold flex items-center justify-center">
-                    <User size={16} className="text-deep" />
+                    <User size={16} className="text-white" />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
@@ -272,6 +294,12 @@ export function Sidebar() {
           )}
         </div>
       </aside>
+
+      {/* Template Editor Modal */}
+      <TemplateEditor
+        isOpen={isTemplateEditorOpen}
+        onClose={() => setIsTemplateEditorOpen(false)}
+      />
     </>
   );
 }
