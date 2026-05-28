@@ -11,6 +11,7 @@ import { ConsensusProgress } from "@/components/ConsensusProgress";
 import { JoinSessionModal } from "@/components/JoinSessionModal";
 import { PromptSessionSkeleton } from "@/components/Skeleton";
 import { EmptyState } from "@/components/EmptyState";
+import { PromptErrorBoundary } from "@/components/PromptErrorBoundary";
 import {
   ArrowLeft,
   Clock,
@@ -141,7 +142,8 @@ export default function PromptSessionPage() {
       </header>
 
       {/* Main content: two-panel layout */}
-      <div className="flex-1 flex overflow-hidden">
+      <PromptErrorBoundary>
+        <div className="flex-1 flex overflow-hidden">
         {/* Left panel: ticket info + consensus */}
         <div className="w-80 lg:w-96 flex-shrink-0 border-r border-border-subtle bg-base/40 overflow-y-auto p-6">
           <div className="space-y-6">
@@ -241,6 +243,7 @@ export default function PromptSessionPage() {
           )}
         </div>
       </div>
+      </PromptErrorBoundary>
     </div>
   );
 }
