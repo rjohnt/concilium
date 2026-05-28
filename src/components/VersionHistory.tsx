@@ -29,7 +29,7 @@ export function VersionHistory({ personaId, feedback, onClose }: VersionHistoryP
   const versions = useMemo(() => {
     return feedback
       .filter((f) => f.personaId === personaId)
-      .sort((a, b) => (b.version ?? 0) - (a.version ?? 0));
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [feedback, personaId]);
 
   if (versions.length === 0) {
@@ -65,10 +65,10 @@ export function VersionHistory({ personaId, feedback, onClose }: VersionHistoryP
       {/* Timeline */}
       <div className="space-y-2">
         {versions.map((entry, idx) => {
-          const versionNum = entry.version ?? versions.length - idx;
+          const versionNum = versions.length - idx;
           const isLatest = idx === 0;
           const isSelected = selectedVersion === versionNum;
-          const prevEntry = versions.find((f) => (f.version ?? 0) === versionNum - 1);
+          const prevEntry = idx > 0 ? versions[idx - 1] : null;
 
           return (
             <div key={entry.id} className="card !p-3 cursor-pointer hover:border-gold/30 transition-colors"
