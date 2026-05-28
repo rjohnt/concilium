@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Pencil, Check, X } from "lucide-react";
 
 interface EditableFieldProps {
@@ -28,6 +28,16 @@ export function EditableField({
   const inputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Auto-save refs
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const initialValueRef = useRef(value);
+  const draftRef = useRef(draft);
+
+  // Keep draftRef in sync for stale closure protection
+  useEffect(() => {
+    draftRef.current = draft;
+  }, [draft]);
+
   // Sync draft when value changes externally
   useEffect(() => {
     setDraft(value);
@@ -44,7 +54,44 @@ export function EditableField({
     }
   }, [editing, type]);
 
+  // Cleanup auto-save timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, []);
+
+  const performAutoSave = useCallback(() => {
+    const currentDraft = draftRef.current.trim();
+    if (!currentDraft) return; // Don't auto-save empty values
+    if (currentDraft !== initialValueRef.current) {
+      onSave(currentDraft);
+      initialValueRef.current = currentDraft;
+    }
+  }, [onSave]);
+
+  const clearAutoSaveTimer = () => {
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = null;
+    }
+  };
+
+  const scheduleAutoSave = () => {
+    clearAutoSaveTimer();
+    autoSaveTimerRef.current = setTimeout(performAutoSave, 1500);
+  };
+
+  const handleChange = (newDraft: string) => {
+    setDraft(newDraft);
+    setError(null);
+    scheduleAutoSave();
+  };
+
   const handleSave = () => {
+    clearAutoSaveTimer();
     const trimmed = draft.trim();
     if (!trimmed) {
       setError(`${label} cannot be empty`);
@@ -58,6 +105,7 @@ export function EditableField({
   };
 
   const handleCancel = () => {
+    clearAutoSaveTimer();
     setDraft(value);
     setEditing(false);
     setError(null);
@@ -84,10 +132,7 @@ export function EditableField({
           <textarea
             ref={textareaRef}
             value={draft}
-            onChange={(e) => {
-              setDraft(e.target.value);
-              setError(null);
-            }}
+            onChange={(e) => handleChange(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             rows={4}
@@ -99,10 +144,7 @@ export function EditableField({
             ref={inputRef}
             type="text"
             value={draft}
-            onChange={(e) => {
-              setDraft(e.target.value);
-              setError(null);
-            }}
+            onChange={(e) => handleChange(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             className="w-full bg-[#1a1714] border border-gold/40 rounded-lg px-3 py-2 text-ink-primary placeholder:text-ink-muted/50 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold/30 text-2xl font-bold"
@@ -142,6 +184,7 @@ export function EditableField({
       <button
         onClick={(e) => {
           e.stopPropagation();
+          initialValueRef.current = value;
           setEditing(true);
         }}
         className="absolute -right-2 -top-1 p-1.5 rounded-lg text-ink-muted opacity-0 group-hover:opacity-100 hover:text-gold-light hover:bg-elevated transition-all focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-gold/30"
