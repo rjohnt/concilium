@@ -9,7 +9,6 @@ function BrokenComponent({ message }: { message?: string }): never {
 
 // Helper component that throws a non-Error value
 function BrokenNonError(): never {
-  // eslint-disable-next-line @typescript-eslint/only-throw-error
   throw "string error";
 }
 
