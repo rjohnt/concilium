@@ -338,12 +338,16 @@ describe("Sidebar", () => {
 
   // --- Design token test ---
 
-  it("uses text-deep instead of hardcoded color on GitBranch icon", () => {
+  it("renders the Concilium logo GitBranch icon inside a gold background", () => {
     render(<Sidebar />);
     const aside = document.getElementById("sidebar-navigation");
-    // The GitBranch SVG should have text-deep class
-    const svgIcon = aside!.querySelector("svg.text-deep");
+    // The GitBranch SVG is inside a gold background div with text-white for contrast
+    const svgIcon = aside!.querySelector("svg.text-white");
     expect(svgIcon).toBeInTheDocument();
+    // Also verify it's inside a bg-gold container
+    const goldContainer = aside!.querySelector(".bg-gold");
+    expect(goldContainer).toBeInTheDocument();
+    expect(goldContainer!.querySelector("svg")).toBe(svgIcon);
   });
 
   // --- Renders nav items ---

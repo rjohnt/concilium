@@ -5,7 +5,7 @@ import { Ticket } from "@/lib/types";
 import { getBuildReadiness, generateBuildSummary, DEFAULT_THRESHOLD } from "@/lib/consensus-threshold";
 import { triggerBuild } from "@/lib/store";
 import { getAllPersonas } from "@/lib/personas";
-import { AlertTriangle, CheckCircle2, Clock, Play, Rocket, X, FileText, Wrench, Palette, FlaskConical, CheckCircle, ArrowRight } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, Play, Rocket, X, XCircle, FileText, Wrench, Palette, FlaskConical, CheckCircle, ArrowRight, Loader2, RefreshCw } from "lucide-react";
 
 interface BuildTriggerProps {
   ticket: Ticket;
@@ -15,6 +15,8 @@ interface BuildTriggerProps {
 export function BuildTrigger({ ticket, onBuildTriggered }: BuildTriggerProps) {
   const [showModal, setShowModal] = useState(false);
   const [summary, setSummary] = useState("");
+  const [isBuilding, setIsBuilding] = useState(false);
+  const [buildError, setBuildError] = useState<string | null>(null);
 
   const readiness = getBuildReadiness(ticket);
   const scoreColor =
@@ -30,12 +32,24 @@ export function BuildTrigger({ ticket, onBuildTriggered }: BuildTriggerProps) {
     setShowModal(true);
   };
 
-  const handleTriggerBuild = () => {
-    const report = triggerBuild(ticket.id);
-    if (report) {
-      onBuildTriggered();
-    }
+  const handleTriggerBuild = async () => {
     setShowModal(false);
+    setIsBuilding(true);
+    setBuildError(null);
+    try {
+      const report = await triggerBuild(ticket.id);
+      if (report) {
+        onBuildTriggered();
+      } else {
+        setBuildError("Build failed. The API may be unavailable or the ticket is not ready.");
+      }
+    } catch (err) {
+      setBuildError(
+        err instanceof Error ? err.message : "An unexpected error occurred."
+      );
+    } finally {
+      setIsBuilding(false);
+    }
   };
 
   // Already building or done
@@ -169,6 +183,47 @@ export function BuildTrigger({ ticket, onBuildTriggered }: BuildTriggerProps) {
         )}
       </div>
 
+      {/* Loading banner */}
+      {isBuilding && (
+        <div className="card mt-4 border border-yellow-700/50 bg-yellow-900/10">
+          <div className="flex items-center gap-3">
+            <Loader2 size={18} className="animate-spin text-yellow-400" />
+            <div>
+              <p className="text-sm font-medium text-yellow-400">Build in progress...</p>
+              <p className="text-xs text-yellow-400/70">
+                The build has been triggered. The report will appear shortly.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error banner */}
+      {buildError && (
+        <div className="card mt-4 border border-cardinal/50 bg-cardinal/10">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <XCircle size={18} className="text-cardinal flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-cardinal">Build failed</p>
+                <p className="text-xs text-cardinal/70">{buildError}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setBuildError(null);
+                setIsBuilding(true);
+                handleTriggerBuild();
+              }}
+              className="btn-secondary text-xs flex-shrink-0"
+            >
+              <RefreshCw size={12} />
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Build Summary Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-deep/70 backdrop-blur-sm">
@@ -257,13 +312,20 @@ export function BuildTrigger({ ticket, onBuildTriggered }: BuildTriggerProps) {
               </button>
               <button
                 onClick={handleTriggerBuild}
-                disabled={!readiness.ready}
+                disabled={!readiness.ready || isBuilding}
                 className="btn-primary flex-1 justify-center"
               >
-                <>
-                  <Play size={16} />
-                  Trigger Build
-                </>
+                {isBuilding ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    Building...
+                  </>
+                ) : (
+                  <>
+                    <Play size={16} />
+                    Trigger Build
+                  </>
+                )}
               </button>
             </div>
           </div>

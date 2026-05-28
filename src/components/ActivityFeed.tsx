@@ -96,7 +96,7 @@ function deriveActivity(ticket: Ticket): ActivityItem[] {
 
   for (const fb of ticket.feedback) {
     const persona = getPersona(fb.personaId);
-    const personaLabel = persona ? persona.label : fb.personaId;
+    const personaLabel = persona?.label || fb.personaId;
 
     // Feedback submitted
     items.push({

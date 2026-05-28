@@ -57,7 +57,7 @@ export function BuildReport({ report }: BuildReportProps) {
 
       {/* Design Decisions */}
       <ReportSection
-        icon={<Palette size={16} className="text-purple-400" />}
+        icon={<Palette size={16} className="text-[#b48ead]" />}
         title="Design Decisions"
         items={report.designDecisions}
         emptyText="No design decisions documented."
@@ -65,7 +65,7 @@ export function BuildReport({ report }: BuildReportProps) {
 
       {/* QA Criteria */}
       <ReportSection
-        icon={<FlaskConical size={16} className="text-amber-400" />}
+        icon={<FlaskConical size={16} className="text-[#c9a84c]" />}
         title="QA Criteria"
         items={report.qaCriteria}
         emptyText="No QA criteria specified."

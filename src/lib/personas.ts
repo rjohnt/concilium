@@ -1,11 +1,12 @@
 import { Persona, PersonaId } from "./types";
+import { getTemplate } from "./templateStore";
 
 export const PERSONAS: Record<PersonaId, Persona> = {
   engineer: {
     id: "engineer",
     label: "Engineer",
     emoji: "⚙️",
-    color: "bg-blue-600",
+    color: "bg-[#7ec8e3]",
     expertise:
       "Technical feasibility, architecture, implementation approach, and code quality.",
     promptTemplate: `You are weighing in as the Engineer on this feature ticket.
@@ -22,7 +23,7 @@ Provide your assessment:`,
     id: "designer",
     label: "Designer",
     emoji: "🎨",
-    color: "bg-purple-600",
+    color: "bg-[#c5a3cf]",
     expertise:
       "User experience, visual design, interaction patterns, and accessibility.",
     promptTemplate: `You are weighing in as the Designer on this feature ticket.
@@ -39,7 +40,7 @@ Provide your assessment:`,
     id: "product-owner",
     label: "Product Owner",
     emoji: "📋",
-    color: "bg-emerald-600",
+    color: "bg-[#a3d9a5]",
     expertise:
       "Business value, priority, scope definition, and stakeholder alignment.",
     promptTemplate: `You are weighing in as the Product Owner on this feature ticket.
@@ -56,7 +57,7 @@ Provide your assessment:`,
     id: "qa",
     label: "QA",
     emoji: "🧪",
-    color: "bg-amber-600",
+    color: "bg-[#f5cba7]",
     expertise:
       "Edge cases, test scenarios, acceptance criteria, and quality gates.",
     promptTemplate: `You are weighing in as QA on this feature ticket.
@@ -71,8 +72,13 @@ Provide your assessment:`,
   },
 };
 
-export function getPersona(id: PersonaId): Persona {
-  return PERSONAS[id];
+export function getPersona(id: PersonaId): Persona | undefined {
+  const persona = PERSONAS[id];
+  if (!persona) return undefined;
+  return {
+    ...persona,
+    promptTemplate: getTemplate(id),
+  };
 }
 
 export function getAllPersonas(): Persona[] {
