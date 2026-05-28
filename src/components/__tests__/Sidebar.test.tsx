@@ -30,6 +30,15 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+// Mock theme (needed by ThemeToggle inside Sidebar)
+vi.mock("@/lib/theme", () => ({
+  useTheme: vi.fn(() => ({
+    theme: "dark",
+    toggleTheme: vi.fn(),
+    setTheme: vi.fn(),
+  })),
+}));
+
 // Mock auth-context
 const mockSignOut = vi.fn().mockResolvedValue(undefined);
 vi.mock("@/lib/auth-context", () => ({
