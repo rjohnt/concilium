@@ -28,7 +28,7 @@ Instead of throw-it-over-the-wall ticket workflows, Concilium creates a *living 
 
 ## Status
 
-🏗️ **v0.6** — Real-time session presence & notifications. Multiplayer collaboration goes live.
+🏗️ **v0.7** — Real-time feedback streaming in multiplayer prompt sessions. Feedback appears instantly across all session participants.
 
 ### What Works
 - Ticket dashboard with persona status indicators and consensus progress bars
@@ -56,13 +56,12 @@ Instead of throw-it-over-the-wall ticket workflows, Concilium creates a *living 
 - **Persona claim system** — prevents duplicate persona claims; shows available/unclaimed personas for quick-join
 - **🔔 Multiplayer notifications** — in-app notification store with cross-tab sync; browser Notification API integration for feedback submissions, consensus reached, and build completions
 - **Notification bell** — unread badge in prompt session header; persistent across tabs
+- **⚡ Real-time feedback streaming** — when one persona submits feedback, it appears instantly in all other session participants' chat timeline without refreshing. Live indicator badge shows "X just submitted" with pulsing dot. BroadcastChannel-powered, zero infrastructure needed.
 
 ### Next Up
-- Session-based multi-user collaboration (multiple real users weighing in simultaneously) — foundation laid with session presence
-- Notification system for persona feedback triggers — Done ✅
-- Real-time feedback streaming between session participants
-- VIN lookup tool completion
+- Feedback notification preferences (mute certain persona types)
 - Edit history and version diffing for ticket descriptions
+- VIN lookup tool completion
 
 ## Development
 

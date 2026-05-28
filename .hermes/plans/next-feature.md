@@ -1,42 +1,31 @@
-# Next Feature: Real-time Session Presence & Notifications
+# Feature: Real-time Feedback Streaming in Prompt Sessions
 
-## Why this is highest-impact
-The core innovation of Concilium is multiplayer AI-assisted ticket collaboration. Currently, one user switches between personas in isolation. This feature makes it **actually multiplayer** — multiple users can be in a prompt session simultaneously, see each other, and get notified when others contribute.
+**Impact:** High — this is the core multiplayer value prop. Currently sessions show who's present but don't stream feedback live between participants.
 
-## What we're building
+## What We'll Build
 
-### 1. Session Presence Manager (`src/lib/session-presence.ts`)
-- BroadcastChannel-based presence tracking (separate channel from ticket sync)
-- Each client generates a UUID on first load (stored in localStorage as `session-client-id`)
-- When a user joins a prompt session, they broadcast: "Client X joined session Y as persona Z"
-- Heartbeat every 30 seconds to show alive status
-- Auto-remove stale participants (>60s since last heartbeat)
-- Store tracks: `Map<clientId, { ticketId, personaId, joinedAt, lastHeartbeat, label? }>`
+1. **`src/lib/feedback-stream.ts`** — A BroadcastChannel-based feedback streaming module that:
+   - Broadcasts new feedback entries as they're submitted
+   - Deduplicates by feedback ID
+   - Provides a subscription API for components to listen
+   - Auto-cleans stale listeners
 
-### 2. Session Participants UI (`src/components/SessionParticipants.tsx`)
-- Shows all active participants in the current prompt session
-- Each participant card shows: persona icon/name, "online" indicator, how long they've been here
-- "Available personas" list shows unclaimed personas for quick-join
-- Live-updates via BroadcastChannel listener
+2. **Update `SessionPrompt.tsx`** — Subscribe to the feedback stream and auto-append new feedback entries from other participants into the chat timeline in real-time. Show a live indicator.
 
-### 3. Inline Real-time Notifications (`src/lib/notifications.ts`)
-- Simple notification store: `{ id, type, title, message, ticketId, timestamp, read }`
-- Events: `feedback-submitted`, `consensus-reached`, `build-completed`, `persona-joined`
-- In-app notification bell in the sidebar with unread count badge
-- Browser Notification API integration (with permission prompt)
+3. **Update `store.ts` (`addFeedback`)** — After persisting, broadcast to the feedback stream channel so other session participants see it immediately.
 
-### 4. Integration
-- Update `SessionPrompt` to notify when feedback is submitted
-- Update prompt page to show real-time presence
-- Sidebar shows notification badge
-- Cross-tab: all of this syncs via BroadcastChannel
+4. **Update `SessionParticipants.tsx`** — Show a streaming-active indicator when other participants are actively submitting.
 
-## Files to Create
-- `src/lib/session-presence.ts` — Session presence manager
-- `src/components/SessionParticipants.tsx` — Participants panel component
-- `src/lib/notifications.ts` — Notification store and helpers
+## Why This Matters
 
-## Files to Modify
-- `src/app/prompt/[id]/page.tsx` — Integrate presence + real-time updates
-- `src/components/Sidebar.tsx` — Add notification bell/badge
-- `src/lib/crossTabSync.ts` — Add session presence message types
+- The README lists "Real-time feedback streaming between session participants" as the top next item
+- This makes the "multiplayer" experience truly collaborative
+- Users see each other's contributions appear instantly without manual refresh
+- Builds naturally on top of the existing BroadcastChannel infrastructure
+
+## Files to Change
+- `src/lib/` — new file `feedback-stream.ts`
+- `src/components/SessionPrompt.tsx` — add streaming subscription
+- `src/lib/store.ts` — broadcast after feedback submission
+- `src/lib/types.ts` — optional streaming metadata
+- README.md — update status

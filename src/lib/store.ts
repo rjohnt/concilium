@@ -23,6 +23,7 @@ import {
   notifyConsensusReached,
   notifyBuildCompleted,
 } from "./notifications";
+import { broadcastFeedback } from "./feedback-stream";
 
 // === In-memory store with localStorage persistence + server sync ===
 
@@ -276,6 +277,30 @@ export function addFeedback(
     if (persona) {
       notifyFeedbackSubmitted(ticketId, ticket.title, persona.label, approved);
     }
+  }
+
+  // Broadcast to real-time feedback stream for multiplayer sessions
+  if (typeof window !== "undefined") {
+    const allPersonas = getAllPersonas();
+    broadcastFeedback({
+      type: "feedback-submitted",
+      feedbackEntry: {
+        id: entry.id,
+        ticketId: entry.ticketId,
+        personaId: entry.personaId,
+        content: entry.content,
+        createdAt: entry.createdAt,
+        approved: entry.approved,
+      },
+      ticketSnapshot: {
+        id: ticket.id,
+        status: ticket.status,
+        approvals: ticket.approvals,
+        approvalCount: ticket.approvals.length,
+        totalPersonas: allPersonas.length,
+      },
+      timestamp: Date.now(),
+    });
   }
 
   return entry;

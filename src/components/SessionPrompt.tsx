@@ -31,6 +31,9 @@ import {
 } from "lucide-react";
 import { PersonaIcon } from "./PersonaIcon";
 
+// === Feedback stream for real-time multiplayer ===
+import { onFeedbackStream } from "@/lib/feedback-stream";
+
 // === Types for mediator responses ===
 
 interface MediatorResponse {
@@ -87,6 +90,10 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
   const [previousResponse, setPreviousResponse] =
     useState<MediatorResponse | null>(null);
   const [activeFollowUp, setActiveFollowUp] = useState<string | null>(null);
+
+  // ── Real-time feedback stream state ──
+  const [liveStreamActive, setLiveStreamActive] = useState(false);
+  const [streamEventLog, setStreamEventLog] = useState<Array<{personaId: string; label: string; timestamp: number}>>([]);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -340,6 +347,50 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
     }
   }, [feedbackEntries.length, ticket.id]);
 
+  // ── Subscribe to real-time feedback stream ──
+  // When other participants submit feedback, it auto-appears in the chat.
+  useEffect(() => {
+    const unsub = onFeedbackStream((event) => {
+      // Only process events for this ticket
+      if (event.feedbackEntry.ticketId !== ticket.id) return;
+      // Don't re-add our own submissions (already in feedbackEntries)
+      if (event.feedbackEntry.personaId === activePersona) return;
+
+      // Check if this entry is already in feedbackEntries (dedup)
+      const alreadyExists = feedbackEntries.some(
+        (f) => f.id === event.feedbackEntry.id
+      );
+      if (alreadyExists) return;
+
+      // Add the incoming feedback to our local state
+      const newEntry: FeedbackEntry = {
+        id: event.feedbackEntry.id,
+        ticketId: event.feedbackEntry.ticketId,
+        personaId: event.feedbackEntry.personaId as PersonaId,
+        content: event.feedbackEntry.content,
+        createdAt: event.feedbackEntry.createdAt,
+        approved: event.feedbackEntry.approved,
+      };
+      setFeedbackEntries((prev) => [...prev, newEntry]);
+
+      // Log the stream event for the live indicator
+      const persona = allPersonas.find((p) => p.id === event.feedbackEntry.personaId);
+      setStreamEventLog((prev) => [
+        ...prev.slice(-4), // Keep last 5 events
+        {
+          personaId: event.feedbackEntry.personaId,
+          label: persona?.label || event.feedbackEntry.personaId,
+          timestamp: Date.now(),
+        },
+      ]);
+      setLiveStreamActive(true);
+    });
+
+    return () => {
+      unsub();
+    };
+  }, [ticket.id, activePersona]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <div className="space-y-4">
       {/* Prompt template header */}
@@ -382,8 +433,27 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
       {/* Conversation area */}
       <div
         ref={conversationRef}
-        className="space-y-3 max-h-[420px] overflow-y-auto pr-2"
+        className="space-y-3 max-h-[420px] overflow-y-auto pr-2 relative"
       >
+        {/* Real-time streaming indicator */}
+        {liveStreamActive && (
+          <div className="sticky top-0 z-10 mb-2 flex items-center justify-center">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-900/30 border border-emerald-500/30 text-xs text-emerald-400 animate-in fade-in slide-in-from-top-2 duration-300">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              <span>
+                Live
+                {streamEventLog.length > 0 && (
+                  <span className="ml-1 text-emerald-400/70">
+                    · {streamEventLog[streamEventLog.length - 1].label} just submitted
+                  </span>
+                )}
+              </span>
+            </div>
+          </div>
+        )}
         {/* Existing feedback entries as chat bubbles */}
         {sortedFeedback.length === 0 &&
           messages.length === 0 &&
