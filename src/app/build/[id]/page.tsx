@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Ticket } from "@/lib/types";
-import { seedData, getTicket } from "@/lib/store";
+import { seedData, getTicket, retryBuild } from "@/lib/store";
 import { getBuildReadiness, generateBuildSummary } from "@/lib/consensus-threshold";
 import { BuildReport as BuildReportComponent } from "@/components/BuildReport";
 import { BuildCompleteCelebration } from "@/components/BuildCompleteCelebration";
@@ -17,6 +17,7 @@ export default function BuildPage() {
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState("");
+  const [isRetrying, setIsRetrying] = useState(false);
 
   const loadTicket = useCallback(() => {
     seedData();
@@ -71,6 +72,17 @@ export default function BuildPage() {
 
   const readiness = getBuildReadiness(ticket);
   const report = ticket.buildReport;
+
+  const handleRetry = async () => {
+    if (!ticket) return;
+    setIsRetrying(true);
+    try {
+      await retryBuild(ticket.id);
+      loadTicket();
+    } finally {
+      setIsRetrying(false);
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -129,8 +141,14 @@ export default function BuildPage() {
           <Rocket size={18} className="text-gold" />
           <h2 className="text-lg font-semibold text-ink-primary">Build Report</h2>
         </div>
-        {report ? (
-          <BuildReportComponent report={report} />
+        {(ticket.status === "building" || report) ? (
+          <BuildReportComponent
+            report={report}
+            ticketStatus={ticket.status}
+            buildRetryCount={ticket.buildRetryCount}
+            isRetrying={isRetrying}
+            onRetry={handleRetry}
+          />
         ) : (
           <EmptyState
             icon={Rocket}

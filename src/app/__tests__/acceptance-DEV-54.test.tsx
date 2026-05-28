@@ -1201,6 +1201,7 @@ describe("AC 6: Build output visible inline on ticket detail page", () => {
       qaCriteria: [],
       implementationPlan: "",
       consensusSummary: "Build failed due to API error.",
+      errorMessage: "Build failed due to API error.",
     };
 
     const ticket = {
@@ -1219,7 +1220,8 @@ describe("AC 6: Build output visible inline on ticket detail page", () => {
 
     render(<BuildReportInline ticket={ticket} />);
 
-    expect(screen.getByText("Failed")).toBeInTheDocument();
+    // When ticket is building and report is failed, the retry card is shown
+    expect(screen.getByText("Build Generation Failed")).toBeInTheDocument();
     expect(screen.getByText("Build failed due to API error.")).toBeInTheDocument();
   });
 

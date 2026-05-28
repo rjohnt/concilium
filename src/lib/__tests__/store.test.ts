@@ -33,6 +33,9 @@ import {
   updateTicketPriority,
   updateTicketTags,
   getTicket,
+  retryBuild,
+  updateTicketStatus,
+  setBuildReport,
 } from "../store";
 
 // --- Helpers ---
@@ -578,5 +581,253 @@ describe("updateTicketTags", () => {
   it("createTicket without tags defaults to empty array", () => {
     const ticket = createTicket("No tags", "Description");
     expect(ticket.tags).toEqual([]);
+  });
+});
+
+// ========================================================================
+// retryBuild tests (new tests for DEV-63)
+// ========================================================================
+
+describe("retryBuild", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    mockStorage.clear();
+    clearStorage();
+    // Ensure window.location is available so fetchBuildFromAPI can build URLs
+    vi.stubGlobal("window", {
+      addEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+      location: { origin: "http://localhost:3000" },
+    });
+    // Reset fetch mock
+    vi.stubGlobal("fetch", vi.fn());
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    // Restore window and fetch to their pre-stub state (but leave
+    // the module-level localStorage stub intact for other tests).
+    vi.unstubAllGlobals();
+    vi.stubGlobal("localStorage", mockStorage);
+    vi.stubGlobal("window", { addEventListener: vi.fn(), dispatchEvent: vi.fn() });
+  });
+
+  /** Helper: create a ticket in "building" state with a stub build report. */
+  function setupBuildingTicket(title = "Build Test") {
+    const ticket = createTicket(title, "Description");
+    updateTicketStatus(ticket.id, "building");
+    setBuildReport(ticket.id, {
+      id: "BLD-001",
+      ticketId: ticket.id,
+      createdAt: new Date().toISOString(),
+      status: "building",
+      requirements: ["Generating..."],
+      designDecisions: [],
+      qaCriteria: [],
+      implementationPlan: "## Building...",
+      consensusSummary: "Pending...",
+    });
+    // Flush any pending persist from setup
+    vi.advanceTimersByTime(100);
+    return ticket;
+  }
+
+  /** Helper: mock a successful fetch response */
+  function mockFetchSuccess(buildReport: Record<string, unknown>) {
+    (global as any).fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ buildReport }),
+    });
+  }
+
+  /** Helper: mock a failed fetch response */
+  function mockFetchFailure() {
+    (global as any).fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: () => Promise.resolve({ error: "internal error" }),
+    });
+  }
+
+  it("returns null for a non-existent ticket", async () => {
+    const result = await retryBuild("NONEXISTENT-999");
+    expect(result).toBeNull();
+  });
+
+  it("returns null when ticket is not in building status", async () => {
+    const ticket = createTicket("Draft Ticket", "Not building");
+    const result = await retryBuild(ticket.id);
+    expect(result).toBeNull();
+  });
+
+  it("returns null when ticket is in 'done' status", async () => {
+    const ticket = createTicket("Done Ticket", "Already done");
+    updateTicketStatus(ticket.id, "done");
+    const result = await retryBuild(ticket.id);
+    expect(result).toBeNull();
+  });
+
+  it("enforces 5-second cooldown between retries", async () => {
+    mockFetchFailure();
+    const ticket = setupBuildingTicket("Cooldown Test");
+
+    // First retry (should succeed in being attempted)
+    const first = await retryBuild(ticket.id);
+    expect(first).toBeNull(); // fetch failed
+    expect(ticket.buildRetryCount).toBe(1);
+
+    // Second retry immediately (should be blocked by cooldown)
+    const second = await retryBuild(ticket.id);
+    expect(second).toBeNull(); // cooldown active
+    // Count should still be 1 (second call was blocked before increment)
+    expect(ticket.buildRetryCount).toBe(1);
+
+    // Advance past cooldown (5 seconds)
+    vi.advanceTimersByTime(5000);
+
+    // Third retry after cooldown (should be attempted)
+    const third = await retryBuild(ticket.id);
+    expect(third).toBeNull(); // fetch still fails
+    expect(ticket.buildRetryCount).toBe(2);
+  });
+
+  it("increments buildRetryCount on each attempt", async () => {
+    mockFetchFailure();
+    const ticket = setupBuildingTicket("Count Test");
+
+    // Attempt 1
+    await retryBuild(ticket.id);
+    expect(ticket.buildRetryCount).toBe(1);
+
+    // Advance past cooldown
+    vi.advanceTimersByTime(5000);
+
+    // Attempt 2
+    await retryBuild(ticket.id);
+    expect(ticket.buildRetryCount).toBe(2);
+
+    // Advance past cooldown
+    vi.advanceTimersByTime(5000);
+
+    // Attempt 3
+    await retryBuild(ticket.id);
+    expect(ticket.buildRetryCount).toBe(3);
+  });
+
+  it("sets lastAttemptedAt on each attempt", async () => {
+    mockFetchFailure();
+    const ticket = setupBuildingTicket("Timestamp Test");
+
+    expect(ticket.lastAttemptedAt).toBeUndefined();
+
+    await retryBuild(ticket.id);
+    expect(ticket.lastAttemptedAt).toBeDefined();
+    const firstTimestamp = ticket.lastAttemptedAt!;
+
+    // Advance past cooldown
+    vi.advanceTimersByTime(5000);
+
+    await retryBuild(ticket.id);
+    expect(ticket.lastAttemptedAt).not.toBe(firstTimestamp);
+  });
+
+  it("successful retry completes the build and resets retry state", async () => {
+    const successReport = {
+      id: "BLD-999",
+      ticketId: "",
+      createdAt: new Date().toISOString(),
+      status: "completed" as const,
+      requirements: ["Req 1"],
+      designDecisions: ["Design 1"],
+      qaCriteria: ["QA 1"],
+      implementationPlan: "## Plan",
+      consensusSummary: "All good",
+    };
+
+    mockFetchSuccess(successReport);
+    const ticket = setupBuildingTicket("Success Test");
+    successReport.ticketId = ticket.id;
+
+    const result = await retryBuild(ticket.id);
+
+    expect(result).not.toBeNull();
+    expect(result!.id).toBe("BLD-999");
+    expect(result!.status).toBe("completed");
+
+    // Ticket should be done
+    expect(ticket.status).toBe("done");
+
+    // Retry state should be reset
+    expect(ticket.buildRetryCount).toBeUndefined();
+    expect(ticket.lastAttemptedAt).toBeUndefined();
+
+    // Build report should be updated
+    expect(ticket.buildReport).toBeDefined();
+    expect(ticket.buildReport!.status).toBe("completed");
+  });
+
+  it("does not set failed status when retry count is below 3", async () => {
+    mockFetchFailure();
+    const ticket = setupBuildingTicket("Below Threshold");
+
+    // Two failed attempts
+    await retryBuild(ticket.id);
+    vi.advanceTimersByTime(5000);
+    await retryBuild(ticket.id);
+
+    // Build report should still be in "building" status (not "failed")
+    expect(ticket.buildReport).toBeDefined();
+    expect(ticket.buildReport!.status).toBe("building");
+    expect(ticket.buildReport!.errorMessage).toBeUndefined();
+    expect(ticket.status).toBe("building");
+  });
+
+  it("sets failed status and error message after 3 failed retries", async () => {
+    mockFetchFailure();
+    const ticket = setupBuildingTicket("Max Retries");
+
+    // Three failed attempts
+    await retryBuild(ticket.id);
+    vi.advanceTimersByTime(5000);
+    await retryBuild(ticket.id);
+    vi.advanceTimersByTime(5000);
+    await retryBuild(ticket.id);
+
+    // Build report should be marked as failed
+    expect(ticket.buildReport).toBeDefined();
+    expect(ticket.buildReport!.status).toBe("failed");
+    expect(ticket.buildReport!.errorMessage).toBe(
+      "Build generation failed after 3 attempts."
+    );
+    expect(ticket.buildRetryCount).toBe(3);
+  });
+
+  it("persists failed state to localStorage after 3 retries", async () => {
+    mockFetchFailure();
+    const ticket = setupBuildingTicket("Persist Fail");
+    vi.advanceTimersByTime(100); // flush setup persist
+
+    // Three failed attempts
+    await retryBuild(ticket.id);
+    vi.advanceTimersByTime(5000);
+    await retryBuild(ticket.id);
+    vi.advanceTimersByTime(5000);
+    await retryBuild(ticket.id);
+
+    // Flush persist debounce
+    vi.advanceTimersByTime(100);
+
+    const raw = mockStorage.getItem(STORAGE_KEY);
+    expect(raw).not.toBeNull();
+    const parsed = JSON.parse(raw!);
+    const persistedTicket = parsed.tickets.find(
+      (t: any) => t.id === ticket.id
+    );
+    expect(persistedTicket).toBeDefined();
+    expect(persistedTicket.buildRetryCount).toBe(3);
+    expect(persistedTicket.buildReport.status).toBe("failed");
+    expect(persistedTicket.buildReport.errorMessage).toBe(
+      "Build generation failed after 3 attempts."
+    );
   });
 });
