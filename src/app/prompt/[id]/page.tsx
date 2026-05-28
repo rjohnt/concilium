@@ -21,6 +21,7 @@ import {
   MessageSquare,
   FileQuestion,
 } from "lucide-react";
+import { PersonaIcon } from "@/components/PersonaIcon";
 import Link from "next/link";
 
 export default function PromptSessionPage() {
@@ -116,7 +117,7 @@ export default function PromptSessionPage() {
             {/* Active persona */}
             {activePersonaObj ? (
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-elevated/60 border border-border-visible/50">
-                <span>{activePersonaObj.emoji}</span>
+                <PersonaIcon personaId={activePersonaObj.id} size={18} />
                 <span className="text-sm font-medium text-ink-primary">
                   {activePersonaObj.label}
                 </span>

@@ -125,7 +125,7 @@ describe('FeedbackPanel', () => {
 
     // Click engineer filter button (the one with aria-pressed)
     const engineerFilterBtn = screen.getByRole('button', {
-      name: /⚙️ Engineer/,
+      name: /Engineer/,
       pressed: false,
     })
     fireEvent.click(engineerFilterBtn)
@@ -145,7 +145,7 @@ describe('FeedbackPanel', () => {
 
     const allButton = screen.getByRole('button', { name: /All \(2\)/ })
     const engineerFilterBtn = screen.getByRole('button', {
-      name: /⚙️ Engineer/,
+      name: /Engineer/,
       pressed: false,
     })
 
@@ -168,7 +168,7 @@ describe('FeedbackPanel', () => {
 
     // Click QA filter (has no feedback)  — use pressed:false to get the filter button
     const qaFilterBtn = screen.getByRole('button', {
-      name: /🧪 QA/,
+      name: /QA/,
       pressed: false,
     })
     fireEvent.click(qaFilterBtn)

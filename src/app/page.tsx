@@ -9,6 +9,7 @@ import { TagChip } from "@/components/TagChip";
 import { FilterBar } from "@/components/FilterBar";
 import { DashboardSkeleton } from "@/components/Skeleton";
 import { EmptyState } from "@/components/EmptyState";
+import { PersonaIcon } from "@/components/PersonaIcon";
 import { PlusCircle, Users, Filter, HelpCircle, SearchX, Search, X } from "lucide-react";
 import Link from "next/link";
 
@@ -312,7 +313,7 @@ export default function DashboardPage() {
                     : "bg-elevated border border-border-visible/30 text-ink-muted"
                 }`}
               >
-                {persona.emoji} {persona.label}
+                <PersonaIcon personaId={persona.id} size={14} className="mr-1 inline-block align-text-bottom" /> {persona.label}
                 {count > 0 && (
                   <span
                     className={`ml-1 px-1 py-0.5 rounded text-[10px] font-bold ${

@@ -11,6 +11,7 @@ import { MarkdownPreview } from "./MarkdownPreview";
 import {
   Send,
   CheckCircle,
+  Check,
   ThumbsUp,
   MessageSquare,
   Clock,
@@ -24,7 +25,11 @@ import {
   X,
   RefreshCw,
   MessageCircle,
+  PartyPopper,
+  Minus,
+  Pencil,
 } from "lucide-react";
+import { PersonaIcon } from "./PersonaIcon";
 
 // === Types for mediator responses ===
 
@@ -180,7 +185,7 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
           ...prev,
           {
             type: "system",
-            content: `⚠️ Mediation unavailable — submitting raw feedback. (${error instanceof Error ? error.message : "Unknown error"})`,
+            content: `Mediation unavailable — submitting raw feedback. (${error instanceof Error ? error.message : "Unknown error"})`,
             timestamp: new Date().toISOString(),
           },
         ]);
@@ -340,7 +345,7 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
       {/* Prompt template header */}
       <div className="p-4 rounded-xl bg-raised/80 border border-border-subtle">
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-xl">{persona?.emoji}</span>
+          <PersonaIcon personaId={activePersona} size={24} />
           <div>
             <h3 className="text-sm font-semibold text-ink-primary">
               {persona?.label} Assessment
@@ -405,7 +410,7 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
                   entryPersona?.color || "bg-overlay"
                 } ${isCurrentPersona ? "ring-2 ring-gold" : ""}`}
               >
-                {entryPersona?.emoji}
+                <PersonaIcon personaId={entry.personaId} size={16} />
               </div>
 
               <div
@@ -621,13 +626,13 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
                 <span>
                   Suggested next:{" "}
                   <span className="text-gold font-medium">
-                    {
-                      allPersonas.find(
-                        (p) =>
-                          p.id ===
-                          currentMediatorResponse.suggestedNextPersona
-                      )?.emoji
-                    }{" "}
+                    <PersonaIcon
+                      personaId={
+                        currentMediatorResponse.suggestedNextPersona
+                      }
+                      size={14}
+                      className="inline-block align-text-bottom"
+                    />{" "}
                     {
                       allPersonas.find(
                         (p) =>
@@ -694,8 +699,9 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
       {/* Consensus reached banner */}
       {consensusReached && (
         <div className="p-3 rounded-lg bg-emerald-900/30 border border-emerald-500/30 text-center animate-in fade-in slide-in-from-bottom-2 duration-500">
-          <p className="text-sm font-semibold text-emerald-300">
-            🎉 Consensus reached! All required personas have approved.
+          <p className="text-sm font-semibold text-emerald-300 flex items-center justify-center gap-2">
+            <PartyPopper size={16} />
+            Consensus reached! All required personas have approved.
           </p>
           <p className="text-xs text-emerald-400/70 mt-1">
             This ticket is ready to move to building.
@@ -726,15 +732,15 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
                           : "bg-elevated/50 border border-border-visible/30 text-ink-muted"
                   }`}
                 >
-                  <span>{p.emoji}</span>
+                  <PersonaIcon personaId={p.id} size={14} />
                   <span>
                     {p.id === activePersona
                       ? "You"
                       : approvedP
-                        ? "✓"
+                        ? <Check size={12} />
                         : submitted
-                          ? "✎"
-                          : "—"}
+                          ? <Pencil size={12} />
+                          : <Minus size={12} />}
                   </span>
                 </div>
               );

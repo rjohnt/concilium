@@ -5,7 +5,7 @@ import { Ticket } from "@/lib/types";
 import { getBuildReadiness, generateBuildSummary, DEFAULT_THRESHOLD } from "@/lib/consensus-threshold";
 import { triggerBuild } from "@/lib/store";
 import { getAllPersonas } from "@/lib/personas";
-import { AlertTriangle, CheckCircle2, Clock, Play, Rocket, X, FileText, Wrench, Palette, FlaskConical } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, Play, Rocket, X, FileText, Wrench, Palette, FlaskConical, CheckCircle, ArrowRight } from "lucide-react";
 
 interface BuildTriggerProps {
   ticket: Ticket;
@@ -122,7 +122,7 @@ export function BuildTrigger({ ticket, onBuildTriggered }: BuildTriggerProps) {
                   key={idx}
                   className="flex items-start gap-2 text-xs text-cardinal/80"
                 >
-                  <span className="mt-0.5">⚠</span>
+                  <span className="mt-0.5"><AlertTriangle size={12} /></span>
                   <span>{blocker}</span>
                 </li>
               ))}
@@ -140,7 +140,7 @@ export function BuildTrigger({ ticket, onBuildTriggered }: BuildTriggerProps) {
                   key={idx}
                   className="flex items-start gap-2 text-xs text-ink-muted"
                 >
-                  <span className="text-gold mt-0.5">→</span>
+                  <span className="text-gold mt-0.5"><ArrowRight size={12} /></span>
                   <span>{step}</span>
                 </li>
               ))}
@@ -218,7 +218,7 @@ export function BuildTrigger({ ticket, onBuildTriggered }: BuildTriggerProps) {
                           approved ? "text-olive" : "text-gold"
                         }`}
                       >
-                        {approved ? "✅ Approved" : "⏳ Pending"}
+                        {approved ? <span className="flex items-center gap-1"><CheckCircle size={12} className="text-olive" /> Approved</span> : <span className="flex items-center gap-1"><Clock size={12} className="text-gold" /> Pending</span>}
                       </span>
                     </div>
                     {personaFeedback.length > 0 ? (

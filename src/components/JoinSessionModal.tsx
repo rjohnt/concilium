@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Persona, PersonaId } from "@/lib/types";
 import { getAllPersonas } from "@/lib/personas";
 import { X, Sparkles, ArrowRight } from "lucide-react";
+import { PersonaIcon } from "./PersonaIcon";
 
 const PERSONA_BORDER_COLORS: Record<PersonaId, string> = {
   engineer: "border-blue-500/50 hover:border-blue-400 group-hover:shadow-blue-500/20",
@@ -127,9 +128,9 @@ export function JoinSessionModal({
               )}
 
               <div className="relative z-10">
-                {/* Emoji + Label row */}
+                {/* Icon + Label row */}
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="text-3xl">{persona.emoji}</span>
+                  <span className="text-3xl"><PersonaIcon personaId={persona.id} size={32} /></span>
                   <div>
                     <h3
                       className={`text-lg font-semibold ${

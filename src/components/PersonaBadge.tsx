@@ -1,5 +1,7 @@
 import { Persona, PersonaId } from "@/lib/types";
 import { getPersona } from "@/lib/personas";
+import { PersonaIcon } from "./PersonaIcon";
+import { Check } from "lucide-react";
 
 export function PersonaBadge({
   personaId,
@@ -11,6 +13,7 @@ export function PersonaBadge({
   size?: "sm" | "lg";
 }) {
   const persona = getPersona(personaId);
+  const iconSize = size === "lg" ? 16 : 14;
   const sizeClasses =
     size === "lg" ? "px-3 py-1 text-sm gap-2" : "px-2 py-0.5 text-xs gap-1";
 
@@ -21,9 +24,9 @@ export function PersonaBadge({
       } transition-colors`}
       title={`${persona.label}: ${persona.expertise}`}
     >
-      <span>{persona.emoji}</span>
+      <PersonaIcon personaId={personaId} size={iconSize} />
       <span>{persona.label}</span>
-      {approved && <span className="ml-0.5">✓</span>}
+      {approved && <Check size={iconSize} className="ml-0.5" />}
     </span>
   );
 }

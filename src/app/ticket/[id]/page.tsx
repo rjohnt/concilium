@@ -20,6 +20,7 @@ import { EditableField } from "@/components/EditableField";
 import { TagChip } from "@/components/TagChip";
 import { EmptyState } from "@/components/EmptyState";
 import { ArrowLeft, Clock, GitBranch, RefreshCw, Sparkles, ExternalLink, Trash2, FileQuestion, Calendar } from "lucide-react";
+import { PersonaIcon } from "@/components/PersonaIcon";
 import Link from "next/link";
 
 export default function TicketDetailPage() {
@@ -135,7 +136,7 @@ export default function TicketDetailPage() {
       {/* Active persona indicator */}
       {activePersonaObj && (
         <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-raised/60 border border-border-subtle">
-          <span className="text-lg">{activePersonaObj.emoji}</span>
+          <PersonaIcon personaId={activePersonaObj.id} size={24} />
           <div className="flex-1">
             <p className="text-sm font-medium text-ink-primary">
               Viewing as{" "}
