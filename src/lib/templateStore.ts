@@ -24,7 +24,7 @@ function saveOverrides(store: TemplateStore): void {
 /** Get the effective template for a persona — custom override or hardcoded default. */
 export function getTemplate(personaId: PersonaId): string {
   const overrides = loadOverrides();
-  return overrides[personaId] ?? PERSONAS[personaId].promptTemplate;
+  return overrides[personaId] ?? PERSONAS[personaId]?.promptTemplate ?? "";
 }
 
 /** Save a custom template override for a persona. */

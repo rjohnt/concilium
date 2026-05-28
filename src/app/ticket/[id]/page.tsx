@@ -20,7 +20,7 @@ import { ActivityFeed } from "@/components/ActivityFeed";
 import { EditableField } from "@/components/EditableField";
 import { TagChip } from "@/components/TagChip";
 import { EmptyState } from "@/components/EmptyState";
-import { ArrowLeft, Clock, GitBranch, RefreshCw, Sparkles, ExternalLink, Trash2, FileQuestion, Calendar } from "lucide-react";
+import { ArrowLeft, Clock, GitBranch, RefreshCw, Sparkles, ExternalLink, Trash2, FileQuestion, Calendar, Users } from "lucide-react";
 import { PersonaIcon } from "@/components/PersonaIcon";
 import Link from "next/link";
 
@@ -318,6 +318,16 @@ export default function TicketDetailPage() {
                 label="Copy link to this ticket"
                 icon="link"
               />
+
+              {/* Consensus Room button */}
+              <Link
+                href={`/consensus/${ticket.id}`}
+                className="btn-secondary whitespace-nowrap"
+                title="Open consensus room"
+              >
+                <Users size={16} />
+                <span className="hidden sm:inline">Consensus</span>
+              </Link>
 
               {/* Start Prompt Session button */}
               <Link

@@ -72,8 +72,9 @@ Provide your assessment:`,
   },
 };
 
-export function getPersona(id: PersonaId): Persona {
+export function getPersona(id: PersonaId): Persona | undefined {
   const persona = PERSONAS[id];
+  if (!persona) return undefined;
   return {
     ...persona,
     promptTemplate: getTemplate(id),

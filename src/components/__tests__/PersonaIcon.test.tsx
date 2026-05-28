@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import { PersonaIcon } from "@/components/PersonaIcon";
 import type { PersonaId } from "@/lib/types";
 
@@ -15,33 +15,30 @@ describe("PersonaIcon", () => {
     "renders $iconTitle icon for $id persona",
     ({ id }) => {
       const { container } = render(<PersonaIcon personaId={id} />);
-      // Lucide SVGs render with a specific structure — check that an SVG exists
       const svg = container.querySelector("svg");
       expect(svg).toBeInTheDocument();
-      expect(svg).toHaveClass("text-blue-400", "text-purple-400", "text-emerald-400", "text-amber-400", {
-        mode: "some",
-      });
+      const colorClasses = ["text-blue-400", "text-purple-400", "text-emerald-400", "text-amber-400"];
+      const hasColorClass = colorClasses.some((cls) => svg!.classList.contains(cls));
+      expect(hasColorClass).toBe(true);
     }
   );
 
   it("uses default size 16 when no size prop given", () => {
-    const { container } = render(<PersonaIcon personaId={"engineer"} />);
+    const { container } = render(<PersonaIcon personaId="engineer" />);
     const svg = container.querySelector("svg");
-    expect(svg).toBeInTheDocument();
-    // Lucide sets width/height attributes
     expect(svg).toHaveAttribute("width", "16");
     expect(svg).toHaveAttribute("height", "16");
   });
 
   it("accepts custom size prop", () => {
-    const { container } = render(<PersonaIcon personaId={"designer"} size={24} />);
+    const { container } = render(<PersonaIcon personaId="designer" size={24} />);
     const svg = container.querySelector("svg");
     expect(svg).toHaveAttribute("width", "24");
     expect(svg).toHaveAttribute("height", "24");
   });
 
   it("accepts custom className", () => {
-    const { container } = render(<PersonaIcon personaId={"qa"} className="ml-2" />);
+    const { container } = render(<PersonaIcon personaId="qa" className="ml-2" />);
     const svg = container.querySelector("svg");
     expect(svg).toHaveClass("ml-2");
   });
