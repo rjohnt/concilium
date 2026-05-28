@@ -48,6 +48,21 @@ export default function TicketDetailPage() {
     loadTicket();
   }, [loadTicket]);
 
+  // Listen for cross-tab/same-tab ticket updates and refresh
+  useEffect(() => {
+    const handler = () => {
+      const t = getTicket(params.id as string);
+      if (t) {
+        setTicket(t);
+      } else {
+        // Ticket was deleted — redirect to dashboard
+        router.push("/");
+      }
+    };
+    window.addEventListener("tickets-changed", handler);
+    return () => window.removeEventListener("tickets-changed", handler);
+  }, [params.id, router]);
+
   // After ticket loads, show the join modal if no session is active
   useEffect(() => {
     if (!loading && ticket && !sessionPersona && !showJoinModal) {
