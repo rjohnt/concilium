@@ -1,19 +1,21 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { Ticket, TicketStatus, PersonaId, PRIORITY_LABELS, PRIORITY_COLORS, PriorityLevel, PREDEFINED_TAGS } from "@/lib/types";
 import { seedData, getTickets } from "@/lib/store";
 import { getAllPersonas } from "@/lib/personas";
 import { TicketCard } from "@/components/TicketCard";
 import { TagChip } from "@/components/TagChip";
 import { FilterBar } from "@/components/FilterBar";
-import { DashboardSkeleton } from "@/components/Skeleton";
+import { DashboardSkeleton, SkeletonCard } from "@/components/Skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { PersonaIcon } from "@/components/PersonaIcon";
-import { PlusCircle, Users, Filter, HelpCircle, SearchX, Search, X } from "lucide-react";
+import { PlusCircle, Users, Filter, HelpCircle, SearchX, Search, X, ChevronDown } from "lucide-react";
 import Link from "next/link";
 
 type FilterKey = "all" | TicketStatus;
+
+const BATCH_SIZE = 20;
 
 export default function DashboardPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -25,6 +27,9 @@ export default function DashboardPage() {
   const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [personaFilter, setPersonaFilter] = useState<PersonaId[]>([]);
   const [personaFilterMode, setPersonaFilterMode] = useState<"reviewed-by" | "awaiting-review">("reviewed-by");
+  const [displayCount, setDisplayCount] = useState(BATCH_SIZE);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const ticketListRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     seedData();
@@ -34,10 +39,18 @@ export default function DashboardPage() {
 
   // Listen for store-driven ticket changes (e.g. inline title edit dispatches "tickets-changed")
   useEffect(() => {
-    const handler = () => setTickets(getTickets());
+    const handler = () => {
+      setTickets(getTickets());
+      setDisplayCount(BATCH_SIZE);
+    };
     window.addEventListener("tickets-changed", handler);
     return () => window.removeEventListener?.("tickets-changed", handler);
   }, []);
+
+  // Reset display count when filters change (AC7)
+  useEffect(() => {
+    setDisplayCount(BATCH_SIZE);
+  }, [activeFilter, priorityFilter, tagFilter, personaFilter, personaFilterMode, debouncedSearchQuery]);
 
   // Debounce search input by 300ms
   useEffect(() => {
@@ -135,6 +148,34 @@ export default function DashboardPage() {
     setPersonaFilter([]);
     // TODO: Reset sort when sort controls are added
   };
+
+  // --- Pagination (DEV-58) ---
+  const displayedTickets = useMemo(
+    () => filteredTickets.slice(0, displayCount),
+    [filteredTickets, displayCount]
+  );
+  const hasMore = displayCount < filteredTickets.length;
+  const remaining = filteredTickets.length - displayCount;
+
+  const handleLoadMore = useCallback(() => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    // Brief delay to show skeleton cards (AC5)
+    setTimeout(() => {
+      setDisplayCount((prev) => prev + BATCH_SIZE);
+      setLoadingMore(false);
+    }, 100);
+  }, [loadingMore, hasMore]);
+
+  // Smooth scroll to top of newly loaded batch after cards render (AC6)
+  useEffect(() => {
+    if (displayCount <= BATCH_SIZE || !ticketListRef.current) return;
+    const cards = ticketListRef.current.querySelectorAll("[data-ticket-card]");
+    const prevCount = displayCount - BATCH_SIZE;
+    if (cards.length > prevCount) {
+      cards[prevCount]?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [displayCount]);
 
   if (loading) {
     return <DashboardSkeleton />;
@@ -365,7 +406,7 @@ export default function DashboardPage() {
       )}
 
       {/* Ticket list */}
-      <div className="space-y-4">
+      <div className="space-y-4" ref={ticketListRef}>
         {filteredTickets.length === 0 ? (
           <EmptyState
             icon={
@@ -410,9 +451,30 @@ export default function DashboardPage() {
             )}
           </EmptyState>
         ) : (
-          filteredTickets.map((ticket) => (
-            <TicketCard key={ticket.id} ticket={ticket} />
-          ))
+          <>
+            {displayedTickets.map((ticket) => (
+              <TicketCard key={ticket.id} ticket={ticket} />
+            ))}
+
+            {/* Skeleton cards while loading more (AC5) */}
+            {loadingMore &&
+              Array.from({ length: Math.min(BATCH_SIZE, remaining) }).map((_, i) => (
+                <SkeletonCard key={`skeleton-${i}`} />
+              ))}
+
+            {/* Load More button (AC2, AC4) */}
+            {hasMore && !loadingMore && (
+              <div className="flex justify-center pt-4 pb-2">
+                <button
+                  onClick={handleLoadMore}
+                  className="btn-secondary inline-flex items-center gap-2"
+                >
+                  <ChevronDown size={16} />
+                  Load More ({remaining} remaining)
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

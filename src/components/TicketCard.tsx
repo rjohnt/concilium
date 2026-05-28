@@ -70,7 +70,7 @@ export function TicketCard({ ticket }: { ticket: Ticket }) {
   );
 
   return (
-    <div className="relative">
+    <div className="relative" data-ticket-card>
       <Link
         href={`/ticket/${ticket.id}`}
         className="card block group cursor-pointer"

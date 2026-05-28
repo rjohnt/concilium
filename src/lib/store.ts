@@ -113,6 +113,25 @@ export function getTickets(): Ticket[] {
   );
 }
 
+export interface PaginatedTickets {
+  tickets: Ticket[];
+  total: number;
+  hasMore: boolean;
+}
+
+export function getTicketsPaginated(limit: number, offset: number): PaginatedTickets {
+  const sorted = [...tickets].sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  );
+  const total = sorted.length;
+  const slice = sorted.slice(offset, offset + limit);
+  return {
+    tickets: slice,
+    total,
+    hasMore: offset + limit < total,
+  };
+}
+
 export function getTicket(id: string): Ticket | undefined {
   return tickets.find((t) => t.id === id);
 }
