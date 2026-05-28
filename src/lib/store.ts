@@ -331,10 +331,13 @@ async function autoTransitionToBuilding(ticketId: string): Promise<boolean> {
   };
   persistState();
 
-  // Fire background API call to generate the real LLM-powered report
+  // Fire background API call to generate the real LLM-powered report,
+  // then auto-complete the build when the report arrives.
   fetchBuildFromAPI(ticketId).then((report) => {
     if (report) {
       setBuildReport(ticketId, report);
+      // Auto-transition to done — the full pipeline is complete.
+      completeBuild(ticketId);
     }
   }).catch((err) => {
     console.error("Background build API call failed:", err);
@@ -427,6 +430,8 @@ export async function triggerBuild(ticketId: string): Promise<BuildReport | null
   const report = await fetchBuildFromAPI(ticketId);
   if (report) {
     setBuildReport(ticketId, report);
+    // Auto-transition to done — the full pipeline is complete.
+    completeBuild(ticketId);
     return report;
   }
 

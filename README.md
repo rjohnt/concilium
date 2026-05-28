@@ -27,7 +27,7 @@ Instead of throw-it-over-the-wall ticket workflows, Concilium creates a *living 
 
 ## Status
 
-🏗️ **v0.3** — Design system uniformity + prompt session polish.
+🏗️ **v0.4** — Build auto-completion + celebration pipeline.
 
 ### What Works
 - Ticket dashboard with persona status indicators and consensus progress bars
@@ -43,6 +43,9 @@ Instead of throw-it-over-the-wall ticket workflows, Concilium creates a *living 
 - **Consensus auto-build trigger** — auto-transitions draft→in-review→consensus→building→done
 - **Dark parchment design system** — unified `ink-*`, `bg-*` (raised/elevated/deep), `gold`, `olive`, `cardinal`, `blue-steel` tokens across all components
 - **Build report viewer** — `/build/[id]` page with structured requirements, design decisions, QA criteria
+- **Build auto-completion** — when the LLM generates the build report, the ticket auto-transitions to "done" (no manual step needed)
+- **Build complete celebration** — animated confetti particles and status display when a build finishes
+- **Full autonomous pipeline** — draft → in-review → consensus → building → done, all automatic
 
 ### Next Up
 - Backend persistence (SQLite/Postgres replacing localStorage)
