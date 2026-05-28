@@ -1,10 +1,15 @@
 "use client";
 
-import { BuildReport as BuildReportType } from "@/lib/types";
+import { BuildReport as BuildReportType, TicketStatus } from "@/lib/types";
 import { CheckCircle2, Clock, XCircle, Wrench, Palette, FlaskConical, FileText } from "lucide-react";
+import { BuildRetryCard } from "@/components/BuildRetryCard";
 
 interface BuildReportProps {
-  report: BuildReportType;
+  report?: BuildReportType;
+  ticketStatus?: TicketStatus;
+  buildRetryCount?: number;
+  isRetrying?: boolean;
+  onRetry?: () => void;
 }
 
 const statusConfig: Record<string, { icon: typeof CheckCircle2; color: string; label: string }> = {
@@ -13,8 +18,37 @@ const statusConfig: Record<string, { icon: typeof CheckCircle2; color: string; l
   failed: { icon: XCircle, color: "text-cardinal bg-cardinal/10 border border-cardinal/30", label: "Failed" },
 };
 
-export function BuildReport({ report }: BuildReportProps) {
-  const status = statusConfig[report.status] || statusConfig.building;
+export function BuildReport({
+  report,
+  ticketStatus,
+  buildRetryCount,
+  isRetrying = false,
+  onRetry,
+}: BuildReportProps) {
+  // No report + building → show retry card
+  if (!report && ticketStatus === "building") {
+    return (
+      <BuildRetryCard
+        buildRetryCount={buildRetryCount}
+        isRetrying={isRetrying}
+        onRetry={onRetry}
+      />
+    );
+  }
+
+  // No report + not building → empty state
+  if (!report) {
+    return (
+      <div className="text-center py-8">
+        <FileText size={32} className="text-ink-muted mx-auto mb-3" />
+        <p className="text-sm text-ink-muted">No build report available.</p>
+      </div>
+    );
+  }
+
+  // report is guaranteed non-null from here
+  const reportRef = report;
+  const status = statusConfig[reportRef.status] || statusConfig.building;
   const StatusIcon = status.icon;
 
   return (
@@ -23,64 +57,78 @@ export function BuildReport({ report }: BuildReportProps) {
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <span className="text-sm font-mono text-ink-muted">{report.id}</span>
+            <span className="text-sm font-mono text-ink-muted">{reportRef.id}</span>
             <span className={`badge ${status.color}`}>
               <StatusIcon size={12} />
               {status.label}
             </span>
             <span className="text-xs text-ink-muted">
-              Ticket {report.ticketId}
+              Ticket {reportRef.ticketId}
             </span>
           </div>
           <p className="text-xs text-ink-muted">
-            Generated {new Date(report.createdAt).toLocaleString()}
+            Generated {new Date(reportRef.createdAt).toLocaleString()}
           </p>
         </div>
       </div>
 
-      {/* Consensus Summary */}
-      <div className="bg-elevated/40 border border-border-subtle rounded-lg p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <FileText size={16} className="text-ink-muted" />
-          <h3 className="text-sm font-semibold text-ink-primary">Consensus Summary</h3>
-        </div>
-        <p className="text-sm text-ink-secondary">{report.consensusSummary}</p>
-      </div>
+      {/* Failed state: show retry card below header */}
+      {reportRef.status === "failed" && (
+        <BuildRetryCard
+          errorMessage={reportRef.errorMessage}
+          buildRetryCount={buildRetryCount}
+          isRetrying={isRetrying}
+          onRetry={onRetry}
+        />
+      )}
 
-      {/* Requirements */}
-      <ReportSection
-        icon={<Wrench size={16} className="text-blue-steel" />}
-        title="Technical Requirements"
-        items={report.requirements}
-        emptyText="No technical requirements extracted."
-      />
+      {reportRef.status !== "failed" && (
+        <>
+          {/* Consensus Summary */}
+          <div className="bg-elevated/40 border border-border-subtle rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <FileText size={16} className="text-ink-muted" />
+              <h3 className="text-sm font-semibold text-ink-primary">Consensus Summary</h3>
+            </div>
+            <p className="text-sm text-ink-secondary">{reportRef.consensusSummary}</p>
+          </div>
 
-      {/* Design Decisions */}
-      <ReportSection
-        icon={<Palette size={16} className="text-[#b48ead]" />}
-        title="Design Decisions"
-        items={report.designDecisions}
-        emptyText="No design decisions documented."
-      />
+          {/* Requirements */}
+          <ReportSection
+            icon={<Wrench size={16} className="text-blue-steel" />}
+            title="Technical Requirements"
+            items={reportRef.requirements}
+            emptyText="No technical requirements extracted."
+          />
 
-      {/* QA Criteria */}
-      <ReportSection
-        icon={<FlaskConical size={16} className="text-[#c9a84c]" />}
-        title="QA Criteria"
-        items={report.qaCriteria}
-        emptyText="No QA criteria specified."
-      />
+          {/* Design Decisions */}
+          <ReportSection
+            icon={<Palette size={16} className="text-[#b48ead]" />}
+            title="Design Decisions"
+            items={reportRef.designDecisions}
+            emptyText="No design decisions documented."
+          />
 
-      {/* Implementation Plan */}
-      <div className="bg-elevated/40 border border-border-subtle rounded-lg p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <FileText size={16} className="text-olive" />
-          <h3 className="text-sm font-semibold text-ink-primary">Implementation Plan</h3>
-        </div>
-        <div className="text-sm text-ink-secondary whitespace-pre-wrap">
-          {report.implementationPlan}
-        </div>
-      </div>
+          {/* QA Criteria */}
+          <ReportSection
+            icon={<FlaskConical size={16} className="text-[#c9a84c]" />}
+            title="QA Criteria"
+            items={reportRef.qaCriteria}
+            emptyText="No QA criteria specified."
+          />
+
+          {/* Implementation Plan */}
+          <div className="bg-elevated/40 border border-border-subtle rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <FileText size={16} className="text-olive" />
+              <h3 className="text-sm font-semibold text-ink-primary">Implementation Plan</h3>
+            </div>
+            <div className="text-sm text-ink-secondary whitespace-pre-wrap">
+              {reportRef.implementationPlan}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

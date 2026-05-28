@@ -72,6 +72,8 @@ export interface BuildReport {
   qaCriteria: string[];
   implementationPlan: string;
   consensusSummary: string;
+  /** Human-readable error message from the last failed API call. */
+  errorMessage?: string;
 }
 
 export interface RateLimitConfig {
@@ -104,4 +106,8 @@ export interface Ticket {
   // Derived: which personas have approved?
   approvals: PersonaId[];
   buildReport?: BuildReport;
+  /** Timestamp of the last build retry attempt (ISO string). Enforces 5s cooldown. */
+  lastAttemptedAt?: string;
+  /** Number of times the user has retried the build (0 = never retried). Capped at 3. */
+  buildRetryCount?: number;
 }

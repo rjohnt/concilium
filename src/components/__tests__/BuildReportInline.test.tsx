@@ -366,7 +366,7 @@ describe("BuildReportInline", () => {
   // ==========================================================================
 
   describe("edge cases", () => {
-    it("returns null when no build report on ticket", () => {
+    it("returns null when no build report on ticket and not building", () => {
       const ticket = createTicket({ buildReport: undefined });
       const { container } = render(<BuildReportInline ticket={ticket} />);
       expect(container.firstChild).toBeNull();
@@ -385,6 +385,59 @@ describe("BuildReportInline", () => {
       render(<BuildReportInline ticket={ticket} />);
       // Should still render without errors
       expect(screen.getByText("View Full Report")).toBeInTheDocument();
+    });
+  });
+
+  // ==========================================================================
+  // Retry UI
+  // ==========================================================================
+
+  describe("retry UI", () => {
+    it("renders failure card when status is building and no buildReport", () => {
+      const ticket = createTicket({
+        status: "building",
+        buildReport: undefined,
+      });
+      render(<BuildReportInline ticket={ticket} />);
+      expect(
+        screen.getByText("Build Generation Failed")
+      ).toBeInTheDocument();
+      expect(screen.getByText("Retry Build")).toBeInTheDocument();
+    });
+
+    it("renders failure card when report status is failed", () => {
+      const ticket = createTicket({
+        status: "building",
+        buildReport: createBuildReport({
+          status: "failed",
+          errorMessage: "LLM overload",
+        }),
+      });
+      render(<BuildReportInline ticket={ticket} />);
+      expect(screen.getByText("Build Generation Failed")).toBeInTheDocument();
+      expect(screen.getByText("LLM overload")).toBeInTheDocument();
+    });
+
+    it("calls onRetry when retry button is clicked", () => {
+      const onRetry = vi.fn();
+      const ticket = createTicket({
+        status: "building",
+        buildReport: undefined,
+      });
+      render(
+        <BuildReportInline ticket={ticket} onRetry={onRetry} />
+      );
+      fireEvent.click(screen.getByText("Retry Build"));
+      expect(onRetry).toHaveBeenCalledWith("TIX-001");
+    });
+
+    it("does not show failure card when ticket is done with no report", () => {
+      const ticket = createTicket({
+        status: "done",
+        buildReport: undefined,
+      });
+      const { container } = render(<BuildReportInline ticket={ticket} />);
+      expect(container.firstChild).toBeNull();
     });
   });
 });

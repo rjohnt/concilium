@@ -515,6 +515,59 @@ export function completeBuild(ticketId: string): Ticket | null {
   return ticket;
 }
 
+/**
+ * Retry a failed build. Only valid when the ticket is in "building" status.
+ * Enforces a 5-second cooldown between retry attempts. Maximum 3 retries;
+ * on the third failure, the build report is marked as "failed" with an
+ * error message.
+ */
+export async function retryBuild(ticketId: string): Promise<BuildReport | null> {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  if (!ticket) return null;
+
+  // Only retry in building state
+  if (ticket.status !== "building") return null;
+
+  // Enforce 5-second cooldown
+  if (ticket.lastAttemptedAt) {
+    const elapsed = Date.now() - new Date(ticket.lastAttemptedAt).getTime();
+    if (elapsed < 5000) return null;
+  }
+
+  // Max 3 retries — prevent programmatic bypass
+  if ((ticket.buildRetryCount ?? 0) >= 3) return null;
+
+  // Increment retry count (defaults to 0)
+  ticket.buildRetryCount = (ticket.buildRetryCount ?? 0) + 1;
+  ticket.lastAttemptedAt = new Date().toISOString();
+  persistState(ticketId);
+
+  // Call the API
+  const report = await fetchBuildFromAPI(ticketId);
+
+  if (report) {
+    // Success: update report and complete the build
+    setBuildReport(ticketId, report);
+    completeBuild(ticketId);
+    // Reset retry state
+    ticket.buildRetryCount = undefined;
+    ticket.lastAttemptedAt = undefined;
+    persistState(ticketId);
+    return report;
+  }
+
+  // Failure: update lastAttemptedAt for cooldown
+  ticket.lastAttemptedAt = new Date().toISOString();
+  if (ticket.buildRetryCount >= 3) {
+    if (ticket.buildReport) {
+      ticket.buildReport.status = "failed";
+      ticket.buildReport.errorMessage = "Build generation failed after 3 attempts.";
+    }
+    persistState(ticketId);
+  }
+  return null;
+}
+
 // --- Seed Data ---
 
 export function seedData(): void {

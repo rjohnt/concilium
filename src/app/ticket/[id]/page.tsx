@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Ticket, PersonaId, PRIORITY_LABELS, PRIORITY_COLORS, PriorityLevel, PREDEFINED_TAGS } from "@/lib/types";
-import { seedData, getTicket, deleteTicket, updateTicket, updateTicketPriority, updateTicketTags } from "@/lib/store";
+import { seedData, getTicket, deleteTicket, updateTicket, updateTicketPriority, updateTicketTags, retryBuild } from "@/lib/store";
 import { formatDueDate } from "@/lib/date-utils";
 import { getPersona } from "@/lib/personas";
 import { formatRelativeTime, formatAbsoluteDate } from "@/lib/timeAgo";
@@ -87,6 +87,12 @@ export default function TicketDetailPage() {
     if (success) {
       router.push("/");
     }
+  };
+
+  const handleRetryBuild = async () => {
+    if (!ticket) return;
+    await retryBuild(ticket.id);
+    loadTicket();
   };
 
   const handleUpdateTitle = (newTitle: string) => {
@@ -381,10 +387,14 @@ export default function TicketDetailPage() {
         </div>
       )}
 
-      {/* Build Report Inline — show when a build report exists */}
-      {ticket.buildReport && (
+      {/* Build Report Inline — show when building or a build report exists */}
+      {(ticket.status === "building" || ticket.buildReport) && (
         <div className="mt-6">
-          <BuildReportInline ticket={ticket} onBuildUpdated={() => loadTicket()} />
+          <BuildReportInline
+            ticket={ticket}
+            onBuildUpdated={() => loadTicket()}
+            onRetry={handleRetryBuild}
+          />
         </div>
       )}
 

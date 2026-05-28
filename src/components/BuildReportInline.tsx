@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Ticket } from "@/lib/types";
 import { seedData, getTicket } from "@/lib/store";
 import { parseMarkdown } from "@/components/MarkdownPreview";
+import { BuildRetryCard } from "@/components/BuildRetryCard";
 import {
   Loader2,
   ChevronDown,
@@ -22,6 +23,7 @@ import Link from "next/link";
 interface BuildReportInlineProps {
   ticket: Ticket;
   onBuildUpdated?: () => void;
+  onRetry?: (ticketId: string) => Promise<void>;
 }
 
 type SectionKey = "requirements" | "designDecisions" | "qaCriteria";
@@ -34,13 +36,14 @@ interface SectionConfig {
   emptyText: string;
 }
 
-export function BuildReportInline({ ticket, onBuildUpdated }: BuildReportInlineProps) {
+export function BuildReportInline({ ticket, onBuildUpdated, onRetry }: BuildReportInlineProps) {
   const report = ticket.buildReport;
   const [collapsed, setCollapsed] = useState<Record<SectionKey, boolean>>({
     requirements: true,
     designDecisions: true,
     qaCriteria: true,
   });
+  const [isRetrying, setIsRetrying] = useState(false);
 
   const toggleSection = (key: SectionKey) => {
     setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -53,14 +56,45 @@ export function BuildReportInline({ ticket, onBuildUpdated }: BuildReportInlineP
     if (fresh && fresh.buildReport?.status !== ticket.buildReport?.status) {
       onBuildUpdated?.();
     }
-  }, [ticket.id, ticket.buildReport?.status, onBuildUpdated]);
+    // Also refresh if ticket status changed (e.g., building → done)
+    if (fresh && fresh.status !== ticket.status) {
+      onBuildUpdated?.();
+    }
+  }, [ticket.id, ticket.buildReport?.status, ticket.status, onBuildUpdated]);
 
   useEffect(() => {
-    if (!report || report.status !== "building") return;
+    // Poll when building (by ticket status or report status) — covers retry scenarios
+    if (ticket.status !== "building" && (!report || report.status !== "building")) return;
     const interval = setInterval(pollTicket, 2000);
     return () => clearInterval(interval);
-  }, [report, pollTicket]);
+  }, [ticket.status, report, pollTicket]);
 
+  // Handle retry
+  const handleRetry = async () => {
+    if (!onRetry) return;
+    setIsRetrying(true);
+    try {
+      await onRetry(ticket.id);
+    } finally {
+      setIsRetrying(false);
+    }
+  };
+
+  // Failure state: building with no report or failed report → show retry card
+  if (ticket.status === "building" && (!report || report.status === "failed")) {
+    return (
+      <div className="mt-6">
+        <BuildRetryCard
+          errorMessage={report?.errorMessage}
+          buildRetryCount={ticket.buildRetryCount}
+          isRetrying={isRetrying}
+          onRetry={handleRetry}
+        />
+      </div>
+    );
+  }
+
+  // No report and not building → nothing to show
   if (!report) return null;
 
   const statusBadge = getStatusBadge(report.status);
