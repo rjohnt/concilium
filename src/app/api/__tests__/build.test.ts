@@ -8,7 +8,7 @@ vi.mock("@/lib/llm", () => ({
   DEEPSEEK_PRO_MODEL: "deepseek-v4-pro",
 }));
 
-vi.mock("@/lib/store", () => {
+vi.mock("@/lib/server-db", () => {
   const mockTickets: Map<string, Record<string, unknown>> = new Map();
   return {
     getTicket: vi.fn((id: string) => mockTickets.get(id) ?? undefined),
@@ -43,7 +43,7 @@ vi.mock("@/lib/consensus-threshold", () => ({
 
 import { POST } from "../build/route";
 import { callDeepSeek } from "@/lib/llm";
-import * as store from "@/lib/store";
+import * as serverDb from "@/lib/server-db";
 import * as consensus from "@/lib/consensus-threshold";
 import { Ticket } from "@/lib/types";
 
@@ -153,7 +153,7 @@ describe("POST /api/build", () => {
   });
 
   it("returns 404 when ticket does not exist", async () => {
-    (store.getTicket as ReturnType<typeof vi.fn>).mockReturnValue(undefined);
+    (serverDb.getTicket as ReturnType<typeof vi.fn>).mockReturnValue(undefined);
 
     const request = createRequest({ ticketId: "TIX-999" });
     const response = await POST(request);
@@ -166,7 +166,7 @@ describe("POST /api/build", () => {
   it("returns 200 with a build report on successful generation", async () => {
     // Setup: ticket exists
     const mockTicket = makeMockTicket("TIX-001");
-    (store.getTicket as ReturnType<typeof vi.fn>).mockReturnValue(mockTicket);
+    (serverDb.getTicket as ReturnType<typeof vi.fn>).mockReturnValue(mockTicket);
 
     // Setup: LLM returns valid JSON
     const mockLLMResponse = buildLLMResponse();
@@ -200,7 +200,7 @@ describe("POST /api/build", () => {
     expect(body.meta.tokensUsed).toBe(800);
 
     // Verify setBuildReport was called
-    expect(store.setBuildReport).toHaveBeenCalledWith("TIX-001", body.buildReport);
+    expect(serverDb.setBuildReport).toHaveBeenCalledWith("TIX-001", body.buildReport);
 
     // Verify callDeepSeek was called with correct model
     expect(callDeepSeek).toHaveBeenCalledWith(
@@ -213,7 +213,7 @@ describe("POST /api/build", () => {
 
   it("handles LLM response in markdown code fences", async () => {
     const mockTicket = makeMockTicket("TIX-002");
-    (store.getTicket as ReturnType<typeof vi.fn>).mockReturnValue(mockTicket);
+    (serverDb.getTicket as ReturnType<typeof vi.fn>).mockReturnValue(mockTicket);
 
     const jsonContent = buildLLMResponse();
     const fencedResponse = `Here is the build report:\n\n\`\`\`json\n${jsonContent}\n\`\`\``;
@@ -234,7 +234,7 @@ describe("POST /api/build", () => {
 
   it("handles LLM response with missing fields gracefully", async () => {
     const mockTicket = makeMockTicket("TIX-003");
-    (store.getTicket as ReturnType<typeof vi.fn>).mockReturnValue(mockTicket);
+    (serverDb.getTicket as ReturnType<typeof vi.fn>).mockReturnValue(mockTicket);
 
     (callDeepSeek as ReturnType<typeof vi.fn>).mockResolvedValue({
       content: JSON.stringify({}),
@@ -256,7 +256,7 @@ describe("POST /api/build", () => {
 
   it("returns 500 on LLM failure", async () => {
     const mockTicket = makeMockTicket("TIX-004");
-    (store.getTicket as ReturnType<typeof vi.fn>).mockReturnValue(mockTicket);
+    (serverDb.getTicket as ReturnType<typeof vi.fn>).mockReturnValue(mockTicket);
 
     (callDeepSeek as ReturnType<typeof vi.fn>).mockRejectedValue(
       new Error("API timeout")
@@ -272,7 +272,7 @@ describe("POST /api/build", () => {
 
   it("passes the correct system prompt with persona context", async () => {
     const mockTicket = makeMockTicket("TIX-005");
-    (store.getTicket as ReturnType<typeof vi.fn>).mockReturnValue(mockTicket);
+    (serverDb.getTicket as ReturnType<typeof vi.fn>).mockReturnValue(mockTicket);
 
     (callDeepSeek as ReturnType<typeof vi.fn>).mockResolvedValue({
       content: buildLLMResponse(),

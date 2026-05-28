@@ -8,8 +8,21 @@ import {
   STORAGE_KEY,
 } from "./persistence";
 import { broadcastTicketUpdate, broadcastFullSync, onTicketUpdate } from "./crossTabSync";
+import {
+  fetchAllTickets,
+  fetchTicket as apiFetchTicket,
+  createTicketOnServer,
+  updateTicketOnServer,
+  deleteTicketOnServer,
+  addFeedbackOnServer,
+  syncPullAll,
+  syncPushAll,
+} from "./api-client";
 
-// === In-memory store with localStorage persistence ===
+// === In-memory store with localStorage persistence + server sync ===
+
+// Track whether we've seeded from the server in this session
+let serverSyncAttempted = false;
 
 const initial =
   typeof window !== "undefined"
@@ -123,6 +136,11 @@ export function createTicket(
   };
   tickets.push(ticket);
   persistState(id);
+
+  // Fire-and-forget server sync
+  createTicketOnServer(title, description, priority, dueDate, tags)
+    .catch(() => { /* server unreachable — fine */ });
+
   return ticket;
 }
 
@@ -131,6 +149,10 @@ export function deleteTicket(ticketId: string): boolean {
   if (index === -1) return false;
   tickets.splice(index, 1);
   persistState(ticketId);
+
+  // Fire-and-forget server sync
+  deleteTicketOnServer(ticketId).catch(() => {});
+
   return true;
 }
 
@@ -151,6 +173,10 @@ export function updateTicket(
   }
   ticket.updatedAt = new Date().toISOString();
   persistState(ticketId);
+
+  // Fire-and-forget server sync
+  updateTicketOnServer(ticketId, updates as any).catch(() => {});
+
   return ticket;
 }
 
@@ -460,6 +486,45 @@ export function completeBuild(ticketId: string): Ticket | null {
 // --- Seed Data ---
 
 export function seedData(): void {
+  if (tickets.length > 0 && serverSyncAttempted) return;
+
+  // Only try server sync once per session
+  if (!serverSyncAttempted) {
+    serverSyncAttempted = true;
+    // Fire-and-forget: try to pull from server, seed with local data if empty
+    syncPullAll().then((serverTickets) => {
+      if (serverTickets && serverTickets.length > 0) {
+        // Server has data — overwrite localStorage with server state
+        cancelPendingPersist();
+        tickets = serverTickets;
+        // Recalculate next IDs
+        const maxTicketNum = tickets.reduce((max, t) => {
+          const m = parseInt(t.id.replace("TIX-", ""), 10);
+          return isNaN(m) ? max : Math.max(max, m);
+        }, 0);
+        nextTicketId = maxTicketNum + 1;
+        const maxFeedbackNum = tickets.reduce((max, t) => {
+          return t.feedback.reduce((fm, f) => {
+            const n = parseInt(f.id.replace("FB-", ""), 10);
+            return isNaN(n) ? fm : Math.max(fm, n);
+          }, max);
+        }, 0);
+        nextFeedbackId = maxFeedbackNum + 1;
+        persistState();
+        window.dispatchEvent(new CustomEvent("tickets-changed"));
+        return;
+      }
+
+      // Server is empty — push local seed data to server
+      if (tickets.length > 0) {
+        syncPushAll(tickets, nextTicketId, nextFeedbackId, nextBuildReportId);
+      }
+    }).catch(() => {
+      // Server unreachable — continue with localStorage only
+    });
+  }
+
+  // Local seed data (if empty)
   if (tickets.length > 0) return;
 
   const t1 = createTicket(

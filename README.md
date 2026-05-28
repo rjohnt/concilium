@@ -22,12 +22,13 @@ Instead of throw-it-over-the-wall ticket workflows, Concilium creates a *living 
 ## Stack
 
 - **Frontend**: Next.js 14 + TypeScript + Tailwind CSS
-- **State**: In-memory store (to be replaced with SQLite/Postgres)
-- **AI integration**: Planned via Hermes Agent delegation for persona-mediated prompting
+- **State**: localStorage (client) ↔ SQLite (server, via better-sqlite3)
+- **Data**: SQLite via better-sqlite3, persisted in `data/concilium.db`
+- **AI**: DeepSeek V4 Flash / V4 Pro via llm.ts, with persona-aware mediation
 
 ## Status
 
-🏗️ **v0.4** — Build auto-completion + celebration pipeline.
+🏗️ **v0.5** — SQLite backend persistence. Data survives server restarts.
 
 ### What Works
 - Ticket dashboard with persona status indicators and consensus progress bars
@@ -46,9 +47,13 @@ Instead of throw-it-over-the-wall ticket workflows, Concilium creates a *living 
 - **Build auto-completion** — when the LLM generates the build report, the ticket auto-transitions to "done" (no manual step needed)
 - **Build complete celebration** — animated confetti particles and status display when a build finishes
 - **Full autonomous pipeline** — draft → in-review → consensus → building → done, all automatic
+- **SQLite backend persistence** — all tickets, feedback, and build reports stored in `data/concilium.db`
+- **Server-side CRUD API** — `/api/tickets`, `/api/feedback`, `/api/sync` RESTful endpoints
+- **Client-server sync** — client automatically syncs localStorage to server DB on every write
+- **Server-side mediator** — `/api/prompt` and `/api/build` use persistent SQLite data instead of ephemeral in-memory store
+- **Seed data migration** — localStorage data pushed to server on first client load
 
 ### Next Up
-- Backend persistence (SQLite/Postgres replacing localStorage)
 - Session-based multi-user collaboration (multiple real users weighing in simultaneously)
 - Notification system for persona feedback triggers
 - VIN lookup tool completion

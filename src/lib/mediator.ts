@@ -1,6 +1,6 @@
 import { Persona, PersonaId, Ticket, FeedbackEntry } from "./types";
 import { getPersona, getAllPersonas } from "./personas";
-import { getTicket, getFeedbackHistory } from "./store";
+import { getTicket, getFeedbackHistory } from "./server-db";
 import { checkConsensusThreshold } from "./consensus-threshold";
 import { callDeepSeek } from "./llm";
 

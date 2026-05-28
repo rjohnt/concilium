@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Return minimal context without mediating
-  const { getTicket, getFeedbackHistory } = await import("@/lib/store");
+  const { getTicket, getFeedbackHistory } = await import("@/lib/server-db");
   const { checkConsensusThreshold } = await import("@/lib/consensus-threshold");
   const { getPersona, getAllPersonas } = await import("@/lib/personas");
 

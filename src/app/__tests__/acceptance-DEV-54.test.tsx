@@ -319,6 +319,12 @@ describe("AC 2: Full-context prompt includes all persona feedback", () => {
       approvals: ["engineer", "designer", "product-owner"] as const,
     };
 
+    vi.doMock("@/lib/server-db", () => ({
+      getTicket: vi.fn(() => mockTicket),
+      getFeedbackHistory: vi.fn(() => mockTicket.feedback),
+      setBuildReport: vi.fn(),
+    }));
+
     vi.doMock("@/lib/store", () => ({
       getTicket: vi.fn(() => mockTicket),
       getFeedbackHistory: vi.fn(() => mockTicket.feedback),
@@ -471,6 +477,12 @@ describe("AC 2: Full-context prompt includes all persona feedback", () => {
       approvals: ["engineer", "designer", "product-owner"] as const,
     };
 
+    vi.doMock("@/lib/server-db", () => ({
+      getTicket: vi.fn(() => mockTicket),
+      getFeedbackHistory: vi.fn(() => mockTicket.feedback),
+      setBuildReport: vi.fn(),
+    }));
+
     vi.doMock("@/lib/store", () => ({
       getTicket: vi.fn(() => mockTicket),
       getFeedbackHistory: vi.fn(() => mockTicket.feedback),
@@ -610,6 +622,12 @@ describe("AC 3: POST /api/build returns BuildReport", () => {
       DEEPSEEK_PRO_MODEL: "deepseek-v4-pro",
     }));
 
+    vi.doMock("@/lib/server-db", () => ({
+      getTicket: vi.fn(() => undefined),
+      getFeedbackHistory: vi.fn(() => []),
+      setBuildReport: vi.fn(),
+    }));
+
     vi.doMock("@/lib/store", () => ({
       getTicket: vi.fn(() => undefined),
       getFeedbackHistory: vi.fn(() => []),
@@ -671,6 +689,12 @@ describe("AC 3: POST /api/build returns BuildReport", () => {
       ],
       approvals: ["engineer", "designer", "product-owner"] as const,
     };
+
+    vi.doMock("@/lib/server-db", () => ({
+      getTicket: vi.fn(() => mockTicket),
+      getFeedbackHistory: vi.fn(() => mockTicket.feedback),
+      setBuildReport: vi.fn(),
+    }));
 
     vi.doMock("@/lib/store", () => ({
       getTicket: vi.fn(() => mockTicket),
@@ -796,6 +820,12 @@ describe("AC 4: LLM response parsed into BuildReport shape", () => {
         usage: { promptTokens: 10, completionTokens: 10, totalTokens: 20 },
       }),
       DEEPSEEK_PRO_MODEL: "deepseek-v4-pro",
+    }));
+
+    vi.doMock("@/lib/server-db", () => ({
+      getTicket: vi.fn(() => mockTicket),
+      getFeedbackHistory: vi.fn(() => mockTicket.feedback),
+      setBuildReport: vi.fn(),
     }));
 
     vi.doMock("@/lib/store", () => ({
@@ -1655,6 +1685,12 @@ describe("AC 8: Graceful error handling", () => {
       ],
       approvals: ["engineer", "designer", "product-owner"] as const,
     };
+
+    vi.doMock("@/lib/server-db", () => ({
+      getTicket: vi.fn(() => mockTicket),
+      getFeedbackHistory: vi.fn(() => mockTicket.feedback),
+      setBuildReport: vi.fn(),
+    }));
 
     vi.doMock("@/lib/store", () => ({
       getTicket: vi.fn(() => mockTicket),
