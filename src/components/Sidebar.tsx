@@ -7,6 +7,7 @@ import { LayoutDashboard, PlusCircle, GitBranch, LogOut, User, Car, Menu, X } fr
 import { motion } from "framer-motion";
 import { useAuth } from "@/lib/auth-context";
 import { getTickets } from "@/lib/store";
+import { ThemeToggle } from "./ThemeToggle";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -249,6 +250,8 @@ export function Sidebar() {
                   <p className="text-xs text-ink-muted truncate">{user.email}</p>
                 </div>
               </div>
+
+              <ThemeToggle />
 
               {/* Logout */}
               <button
