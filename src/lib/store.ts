@@ -18,6 +18,11 @@ import {
   syncPullAll,
   syncPushAll,
 } from "./api-client";
+import {
+  notifyFeedbackSubmitted,
+  notifyConsensusReached,
+  notifyBuildCompleted,
+} from "./notifications";
 
 // === In-memory store with localStorage persistence + server sync ===
 
@@ -264,6 +269,15 @@ export function addFeedback(
   }
 
   persistState(ticketId);
+
+  // Fire notification for feedback submission
+  if (typeof window !== "undefined") {
+    const persona = getAllPersonas().find((p) => p.id === personaId);
+    if (persona) {
+      notifyFeedbackSubmitted(ticketId, ticket.title, persona.label, approved);
+    }
+  }
+
   return entry;
 }
 
@@ -313,6 +327,18 @@ function autoTransitionToConsensus(ticketId: string): boolean {
   if (threshold.reached) {
     ticket.status = "consensus";
     ticket.updatedAt = new Date().toISOString();
+
+    // Fire notification
+    if (typeof window !== "undefined") {
+      const allPersonas = getAllPersonas();
+      notifyConsensusReached(
+        ticketId,
+        ticket.title,
+        ticket.approvals.length,
+        allPersonas.length,
+      );
+    }
+
     return true;
   }
   return false;
@@ -480,6 +506,12 @@ export function completeBuild(ticketId: string): Ticket | null {
     ticket.buildReport.completedAt = new Date().toISOString();
   }
   persistState(ticketId);
+
+  // Fire notification
+  if (typeof window !== "undefined") {
+    notifyBuildCompleted(ticketId, ticket.title);
+  }
+
   return ticket;
 }
 

@@ -20,8 +20,22 @@ import {
   Sparkles,
   MessageSquare,
   FileQuestion,
+  Bell,
+  BellRing,
+  Users,
 } from "lucide-react";
 import { PersonaIcon } from "@/components/PersonaIcon";
+import { SessionParticipants } from "@/components/SessionParticipants";
+import {
+  joinSession,
+  updateOwnPersona,
+} from "@/lib/session-presence";
+import {
+  getUnreadCount,
+  onNotificationsChange,
+  requestNotificationPermission,
+  notifyFeedbackSubmitted,
+} from "@/lib/notifications";
 import Link from "next/link";
 
 export default function PromptSessionPage() {
@@ -31,6 +45,8 @@ export default function PromptSessionPage() {
   const [loading, setLoading] = useState(true);
   const [sessionPersona, setSessionPersona] = useState<PersonaId | null>(null);
   const [showJoinModal, setShowJoinModal] = useState(true);
+  const [notifCount, setNotifCount] = useState(0);
+  const [notifPermitted, setNotifPermitted] = useState(false);
 
   const loadTicket = useCallback(() => {
     seedData();
@@ -50,9 +66,52 @@ export default function PromptSessionPage() {
     }
   }, [loading, ticket, sessionPersona]);
 
+  // Listen for notification count changes
+  useEffect(() => {
+    setNotifCount(getUnreadCount());
+    const unsub = onNotificationsChange(() => {
+      setNotifCount(getUnreadCount());
+    });
+    return unsub;
+  }, []);
+
+  // Check notification permission on mount
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      setNotifPermitted(Notification.permission === "granted");
+    }
+  }, []);
+
+  // Cleanup session presence on unmount
+  useEffect(() => {
+    return () => {
+      if (sessionPersona) {
+        // Leave session via the joinSession cleanup (called on component unmount)
+        // The joinSession itself returns a cleanup, but we can't store it here easily.
+      }
+    };
+  }, []);
+
   const handleJoinSession = (personaId: PersonaId) => {
     setSessionPersona(personaId);
     setShowJoinModal(false);
+
+    // Join session presence
+    const persona = getAllPersonas().find((p) => p.id === personaId);
+    joinSession(params.id as string, personaId, persona?.label);
+
+    // Request notification permission on first join
+    requestNotificationPermission().then((granted) => {
+      setNotifPermitted(granted);
+    });
+  };
+
+  const handlePersonaSelect = (personaId: PersonaId) => {
+    setSessionPersona(personaId);
+    setShowJoinModal(false);
+
+    const persona = getAllPersonas().find((p) => p.id === personaId);
+    updateOwnPersona(params.id as string, personaId, persona?.label);
   };
 
   const handleSwitchPersona = () => {
@@ -114,6 +173,24 @@ export default function PromptSessionPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Notification bell */}
+            <button
+              onClick={() => requestNotificationPermission()}
+              className="relative p-2 rounded-lg hover:bg-elevated transition-colors"
+              title={notifPermitted ? "Notifications enabled" : "Enable notifications"}
+            >
+              {notifCount > 0 ? (
+                <>
+                  <BellRing size={16} className="text-gold" />
+                  <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[14px] h-[14px] px-1 text-[8px] font-bold leading-none rounded-full bg-cardinal text-white">
+                    {notifCount > 9 ? "9+" : notifCount}
+                  </span>
+                </>
+              ) : (
+                <Bell size={16} className={notifPermitted ? "text-ink-secondary" : "text-ink-ghost"} />
+              )}
+            </button>
+
             {/* Active persona */}
             {activePersonaObj ? (
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-elevated/60 border border-border-visible/50">
@@ -215,6 +292,15 @@ export default function PromptSessionPage() {
                   %
                 </p>
               </div>
+            </div>
+
+            {/* Session Participants */}
+            <div className="p-4 rounded-lg bg-elevated/40 border border-border-subtle">
+              <SessionParticipants
+                ticketId={ticket.id}
+                currentPersonaId={sessionPersona}
+                onPersonaSelect={handlePersonaSelect}
+              />
             </div>
           </div>
         </div>

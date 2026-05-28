@@ -16,10 +16,45 @@ export default function NewTicketPage() {
   const [dueDate, setDueDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [titleTouched, setTitleTouched] = useState(false);
+  const [descTouched, setDescTouched] = useState(false);
+
+  // ── Derived validation ──────────────────────────────────────────────
+  const titleLen = title.length;
+  const descLen = description.length;
+
+  const titleCounterColor =
+    titleLen < 180 ? "text-ink-muted" : titleLen <= 200 ? "text-gold" : "text-cardinal";
+  const descCounterColor =
+    descLen < 4500 ? "text-ink-muted" : descLen <= 5000 ? "text-gold" : "text-cardinal";
+
+  const titleError: string | null = !titleTouched
+    ? null
+    : !title.trim()
+      ? "Title is required"
+      : titleLen > 200
+        ? "Title must be 200 characters or fewer"
+        : null;
+
+  const descError: string | null = !descTouched
+    ? null
+    : !description.trim()
+      ? "Description is required"
+      : descLen > 5000
+        ? "Description must be 5,000 characters or fewer"
+        : null;
+
+  const hasError = titleError !== null || descError !== null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Touch both fields so validation surfaces on submit
+    setTitleTouched(true);
+    setDescTouched(true);
+
     if (!title.trim() || !description.trim()) return;
+    if (titleLen > 200 || descLen > 5000) return;
 
     setSubmitting(true);
     const tags: Tag[] = PREDEFINED_TAGS.filter((t) => selectedTagIds.includes(t.id));
@@ -64,10 +99,27 @@ export default function NewTicketPage() {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              onBlur={() => setTitleTouched(true)}
+              maxLength={200}
               placeholder="What needs to be built?"
+              aria-describedby="title-counter title-error"
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
               autoFocus
             />
+            <div className="min-h-[20px] mt-1">
+              <p
+                id="title-counter"
+                className={`text-xs ${titleCounterColor}`}
+                aria-live="off"
+              >
+                {titleLen}/200
+              </p>
+              {titleError && (
+                <p id="title-error" className="text-xs text-cardinal" role="alert">
+                  {titleError}
+                </p>
+              )}
+            </div>
           </div>
 
           <div>
@@ -81,10 +133,27 @@ export default function NewTicketPage() {
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              onBlur={() => setDescTouched(true)}
+              maxLength={5000}
               placeholder="Describe the feature, bug, or task in detail..."
               rows={6}
+              aria-describedby="desc-counter desc-error"
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
             />
+            <div className="min-h-[20px] mt-1">
+              <p
+                id="desc-counter"
+                className={`text-xs ${descCounterColor}`}
+                aria-live="off"
+              >
+                {descLen}/5000
+              </p>
+              {descError && (
+                <p id="desc-error" className="text-xs text-cardinal" role="alert">
+                  {descError}
+                </p>
+              )}
+            </div>
           </div>
 
           <div>
@@ -169,7 +238,7 @@ export default function NewTicketPage() {
             </p>
             <button
               type="submit"
-              disabled={!title.trim() || !description.trim() || submitting}
+              disabled={!title.trim() || !description.trim() || submitting || hasError}
               className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting ? "Creating..." : "Create Ticket"}

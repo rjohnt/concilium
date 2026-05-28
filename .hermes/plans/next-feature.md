@@ -1,38 +1,42 @@
-# Feature: SQLite Backend Persistence
+# Next Feature: Real-time Session Presence & Notifications
 
-## Problem
-All data lives in client-side localStorage. API routes start with an empty in-memory store on every server restart. Railway deployments lose all state. Multi-user collaboration is impossible.
+## Why this is highest-impact
+The core innovation of Concilium is multiplayer AI-assisted ticket collaboration. Currently, one user switches between personas in isolation. This feature makes it **actually multiplayer** — multiple users can be in a prompt session simultaneously, see each other, and get notified when others contribute.
 
-## Plan
+## What we're building
 
-### 1. Install better-sqlite3
-- `npm install better-sqlite3 @types/better-sqlite3`
+### 1. Session Presence Manager (`src/lib/session-presence.ts`)
+- BroadcastChannel-based presence tracking (separate channel from ticket sync)
+- Each client generates a UUID on first load (stored in localStorage as `session-client-id`)
+- When a user joins a prompt session, they broadcast: "Client X joined session Y as persona Z"
+- Heartbeat every 30 seconds to show alive status
+- Auto-remove stale participants (>60s since last heartbeat)
+- Store tracks: `Map<clientId, { ticketId, personaId, joinedAt, lastHeartbeat, label? }>`
 
-### 2. Create server-db.ts
-- SQLite database at `data/concilium.db`
-- Schema: tickets, feedback, build_reports tables
-- CRUD operations matching the store.ts interface
-- Auto-create tables + seed data on first run
+### 2. Session Participants UI (`src/components/SessionParticipants.tsx`)
+- Shows all active participants in the current prompt session
+- Each participant card shows: persona icon/name, "online" indicator, how long they've been here
+- "Available personas" list shows unclaimed personas for quick-join
+- Live-updates via BroadcastChannel listener
 
-### 3. Create API routes
-- `GET /api/tickets` — list all tickets
-- `POST /api/tickets` — create ticket
-- `GET /api/tickets/[id]` — get single ticket
-- `PATCH /api/tickets/[id]` — update ticket
-- `DELETE /api/tickets/[id]` — delete ticket
-- `POST /api/feedback` — add feedback to ticket
-- `GET /api/feedback?ticketId=X` — get feedback for ticket
+### 3. Inline Real-time Notifications (`src/lib/notifications.ts`)
+- Simple notification store: `{ id, type, title, message, ticketId, timestamp, read }`
+- Events: `feedback-submitted`, `consensus-reached`, `build-completed`, `persona-joined`
+- In-app notification bell in the sidebar with unread count badge
+- Browser Notification API integration (with permission prompt)
 
-### 4. Update client store (store.ts)
-- Keep localStorage for instant UI
-- Add API sync: on every write operation, also POST/PATCH/DELETE via API
-- On page load, attempt to fetch from API first, fall back to localStorage
+### 4. Integration
+- Update `SessionPrompt` to notify when feedback is submitted
+- Update prompt page to show real-time presence
+- Sidebar shows notification badge
+- Cross-tab: all of this syncs via BroadcastChannel
 
-### 5. Update existing API routes
-- Update `/api/build` and `/api/prompt` to use server-db directly
-- Remove dependency on client store in API routes
+## Files to Create
+- `src/lib/session-presence.ts` — Session presence manager
+- `src/components/SessionParticipants.tsx` — Participants panel component
+- `src/lib/notifications.ts` — Notification store and helpers
 
-### 6. Update README
-
-## Status
-Planning phase — ready to build.
+## Files to Modify
+- `src/app/prompt/[id]/page.tsx` — Integrate presence + real-time updates
+- `src/components/Sidebar.tsx` — Add notification bell/badge
+- `src/lib/crossTabSync.ts` — Add session presence message types
