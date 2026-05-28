@@ -99,8 +99,8 @@ describe('ActivityFeed', () => {
     render(<ActivityFeed ticket={ticket} />)
 
     expect(screen.getByText('Ticket created')).toBeInTheDocument()
-    expect(screen.getByText('⚙️ Engineer submitted feedback')).toBeInTheDocument()
-    expect(screen.getByText('⚙️ Engineer approved the ticket')).toBeInTheDocument()
+    expect(screen.getByText('Engineer submitted feedback')).toBeInTheDocument()
+    expect(screen.getByText('Engineer approved the ticket')).toBeInTheDocument()
     // 4 events: created, feedback, approval, status-change (draft → in-review)
     expect(screen.getByText('4 events')).toBeInTheDocument()
   })
@@ -119,8 +119,8 @@ describe('ActivityFeed', () => {
     })
     render(<ActivityFeed ticket={ticket} />)
 
-    expect(screen.getByText('⚙️ Engineer approved the ticket')).toBeInTheDocument()
-    expect(screen.getByText('⚙️ Engineer withdrew approval')).toBeInTheDocument()
+    expect(screen.getByText('Engineer approved the ticket')).toBeInTheDocument()
+    expect(screen.getByText('Engineer withdrew approval')).toBeInTheDocument()
     // 6 events: created, feedback x2, approval, approval-withdrawn, status-change
     expect(screen.getByText('6 events')).toBeInTheDocument()
   })

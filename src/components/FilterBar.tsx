@@ -1,12 +1,19 @@
 import { TicketStatus } from "@/lib/types";
+import { ListFilter, FileEdit, Search, Handshake, Hammer, CheckCheck } from "lucide-react";
 
-const STATUS_TABS: { key: "all" | TicketStatus; label: string; emoji: string }[] = [
-  { key: "all", label: "All", emoji: "📋" },
-  { key: "draft", label: "Draft", emoji: "📝" },
-  { key: "in-review", label: "In Review", emoji: "🔍" },
-  { key: "consensus", label: "Consensus", emoji: "🤝" },
-  { key: "building", label: "Building", emoji: "🔨" },
-  { key: "done", label: "Done", emoji: "✅" },
+const ICON_SIZE = 15;
+
+const STATUS_TABS: {
+  key: "all" | TicketStatus;
+  label: string;
+  icon: React.ReactNode;
+}[] = [
+  { key: "all", label: "All", icon: <ListFilter size={ICON_SIZE} /> },
+  { key: "draft", label: "Draft", icon: <FileEdit size={ICON_SIZE} /> },
+  { key: "in-review", label: "In Review", icon: <Search size={ICON_SIZE} /> },
+  { key: "consensus", label: "Consensus", icon: <Handshake size={ICON_SIZE} /> },
+  { key: "building", label: "Building", icon: <Hammer size={ICON_SIZE} /> },
+  { key: "done", label: "Done", icon: <CheckCheck size={ICON_SIZE} /> },
 ];
 
 interface FilterBarProps {
@@ -41,7 +48,7 @@ export function FilterBar({
                   : "bg-elevated border-border-visible/30 text-ink-secondary hover:bg-elevated/80 hover:text-ink-primary hover:border-border-visible/50"
               }`}
             >
-              <span className="text-sm leading-none">{tab.emoji}</span>
+              <span className="text-sm leading-none">{tab.icon}</span>
               <span>{tab.label}</span>
               <span
                 className={`ml-1 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full text-xs font-semibold ${

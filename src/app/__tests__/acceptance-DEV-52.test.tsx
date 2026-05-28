@@ -141,12 +141,12 @@ describe("DEV-52: Persona reviewed-by filter (acceptance)", () => {
     });
   });
 
-  // ── AC2: Each persona shows emoji + label ───────────────────────────
+  // ── AC2: Each persona shows icon + label ───────────────────────────
 
-  describe("AC2 — Each persona button shows emoji + label from personas.ts", () => {
-    it.each(getAllPersonas().map((p) => [p.id, p.emoji, p.label] as const))(
-      "persona %s renders emoji %s and label %s",
-      (_id, emoji, label) => {
+  describe("AC2 — Each persona button shows icon + label from personas.ts", () => {
+    it.each(getAllPersonas().map((p) => [p.id, p.label] as const))(
+      "persona %s renders icon and label %s",
+      (_id, label) => {
         setupTicketsWithFeedback();
         renderDashboard();
 
@@ -154,7 +154,9 @@ describe("DEV-52: Persona reviewed-by filter (acceptance)", () => {
           name: new RegExp(label, "i"),
         });
         expect(button).toBeInTheDocument();
-        expect(button.textContent).toContain(emoji);
+        // Persona icon is rendered as SVG (lucide icon), verify it exists
+        const svg = button.querySelector("svg");
+        expect(svg).not.toBeNull();
         expect(button.textContent).toContain(label);
       }
     );

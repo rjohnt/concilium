@@ -16,6 +16,7 @@ import {
   Activity,
 } from "lucide-react";
 import { EmptyState } from "./EmptyState";
+import { PersonaIcon } from "./PersonaIcon";
 
 // ---------------------------------------------------------------------------
 // Activity item type – derived from ticket data, no backend needed
@@ -95,7 +96,7 @@ function deriveActivity(ticket: Ticket): ActivityItem[] {
 
   for (const fb of ticket.feedback) {
     const persona = getPersona(fb.personaId);
-    const label = persona ? `${persona.emoji} ${persona.label}` : fb.personaId;
+    const personaLabel = persona ? persona.label : fb.personaId;
 
     // Feedback submitted
     items.push({
@@ -103,7 +104,7 @@ function deriveActivity(ticket: Ticket): ActivityItem[] {
       timestamp: fb.createdAt,
       type: "feedback",
       actor: fb.personaId,
-      description: `${label} submitted feedback`,
+      description: `${personaLabel} submitted feedback`,
       feedbackEntry: fb,
     });
 
@@ -117,7 +118,7 @@ function deriveActivity(ticket: Ticket): ActivityItem[] {
           timestamp: fb.createdAt,
           type: "approval",
           actor: fb.personaId,
-          description: `${label} approved the ticket`,
+          description: `${personaLabel} approved the ticket`,
           feedbackEntry: fb,
         });
       }
@@ -130,7 +131,7 @@ function deriveActivity(ticket: Ticket): ActivityItem[] {
           timestamp: fb.createdAt,
           type: "approval-withdrawn",
           actor: fb.personaId,
-          description: `${label} withdrew approval`,
+          description: `${personaLabel} withdrew approval`,
           feedbackEntry: fb,
         });
       }

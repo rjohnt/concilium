@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Persona, PersonaId } from "@/lib/types";
 import { getAllPersonas } from "@/lib/personas";
 import { X, Sparkles, ArrowRight } from "lucide-react";
+import { PersonaIcon } from "./PersonaIcon";
 
 const PERSONA_BORDER_COLORS: Record<PersonaId, string> = {
   engineer: "border-blue-500/50 hover:border-blue-400 group-hover:shadow-blue-500/20",
@@ -43,9 +44,11 @@ const PERSONA_BG_GLOW: Record<PersonaId, string> = {
 export function JoinSessionModal({
   isOpen,
   onJoin,
+  mode = "initial",
 }: {
   isOpen: boolean;
   onJoin: (personaId: PersonaId) => void;
+  mode?: "initial" | "switch";
 }) {
   const [selectedId, setSelectedId] = useState<PersonaId | null>(null);
   const [joining, setJoining] = useState(false);
@@ -66,11 +69,17 @@ export function JoinSessionModal({
     }, 500);
   };
 
+  const title = mode === "switch" ? "Switch Persona" : "Choose Your Role";
+  const description =
+    mode === "switch"
+      ? "Switching personas changes your perspective in this session. You can always switch back."
+      : "Join this ticket session as a stakeholder persona. Your perspective will shape the review — weigh in with the lens of your chosen role.";
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-gray-950/90 backdrop-blur-sm"
+        className="absolute inset-0 bg-deep/95 backdrop-blur-sm"
         aria-hidden
       />
 
@@ -78,16 +87,15 @@ export function JoinSessionModal({
       <div className="relative w-full max-w-3xl animate-in fade-in zoom-in-95 duration-300">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-xs font-medium mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold/10 border border-gold/20 text-gold text-xs font-medium mb-4">
             <Sparkles size={14} />
-            Session Join
+            {mode === "switch" ? "Switch Role" : "Session Join"}
           </div>
-          <h2 className="text-3xl font-bold text-white mb-2">
-            Choose Your Role
+          <h2 className="text-3xl font-bold text-ink-primary mb-2">
+            {title}
           </h2>
-          <p className="text-gray-400 max-w-lg mx-auto leading-relaxed">
-            Join this ticket session as a stakeholder persona. Your perspective
-            will shape the review — weigh in with the lens of your chosen role.
+          <p className="text-ink-muted max-w-lg mx-auto leading-relaxed">
+            {description}
           </p>
         </div>
 
@@ -99,11 +107,11 @@ export function JoinSessionModal({
               onClick={() => handleSelect(persona.id)}
               disabled={joining}
               className={`group relative text-left p-5 rounded-xl border transition-all duration-300 cursor-pointer
-                bg-gray-900/80 hover:bg-gray-900
+                bg-elevated/80 hover:bg-elevated
                 ${
                   selectedId === persona.id
                     ? `border-2 ${PERSONA_BORDER_COLORS[persona.id].split(" ")[0]} ring-2 ${PERSONA_RING_COLORS[persona.id]} ${PERSONA_GLOW_COLORS[persona.id]} shadow-xl scale-[1.02]`
-                    : `border-gray-800 hover:border-gray-700 hover:shadow-lg hover:scale-[1.01]`
+                    : `border-border-visible hover:border-border-visible/60 hover:shadow-lg hover:scale-[1.01]`
                 }
                 animate-in fade-in slide-in-from-bottom-4
               `}
@@ -120,15 +128,15 @@ export function JoinSessionModal({
               )}
 
               <div className="relative z-10">
-                {/* Emoji + Label row */}
+                {/* Icon + Label row */}
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="text-3xl">{persona.emoji}</span>
+                  <span className="text-3xl"><PersonaIcon personaId={persona.id} size={32} /></span>
                   <div>
                     <h3
                       className={`text-lg font-semibold ${
                         selectedId === persona.id
-                          ? "text-white"
-                          : "text-gray-200 group-hover:text-white"
+                          ? "text-ink-primary"
+                          : "text-ink-secondary group-hover:text-ink-primary"
                       } transition-colors`}
                     >
                       {persona.label}
@@ -137,7 +145,7 @@ export function JoinSessionModal({
                       className={`text-xs ${
                         selectedId === persona.id
                           ? PERSONA_TEXT_COLORS[persona.id]
-                          : "text-gray-500"
+                          : "text-ink-muted"
                       } transition-colors`}
                     >
                       {persona.expertise}
@@ -146,16 +154,16 @@ export function JoinSessionModal({
                 </div>
 
                 {/* Prompt preview */}
-                <div className="mt-3 p-3 rounded-lg bg-gray-950/60 border border-gray-800/60">
-                  <p className="text-xs text-gray-500 leading-relaxed line-clamp-3 font-mono">
+                <div className="mt-3 p-3 rounded-lg bg-deep/80 border border-border-subtle/60">
+                  <p className="text-xs text-ink-muted leading-relaxed line-clamp-3 font-mono">
                     {persona.promptTemplate}
                   </p>
                 </div>
 
                 {/* Selected indicator */}
                 {selectedId === persona.id && (
-                  <div className="mt-3 flex items-center gap-1.5 text-sm font-medium text-brand-400">
-                    <span className="w-2 h-2 rounded-full bg-brand-400 animate-pulse" />
+                  <div className="mt-3 flex items-center gap-1.5 text-sm font-medium text-gold">
+                    <span className="w-2 h-2 rounded-full bg-gold animate-pulse" />
                     Selected
                   </div>
                 )}
@@ -170,7 +178,7 @@ export function JoinSessionModal({
             onClick={handleJoin}
             disabled={!selectedId || joining}
             className="btn-primary text-base px-8 py-3 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300
-              flex items-center gap-2 shadow-lg shadow-brand-500/20 hover:shadow-brand-500/30"
+              flex items-center gap-2 shadow-lg shadow-gold/20 hover:shadow-gold/30"
           >
             {joining ? (
               <>
@@ -181,7 +189,7 @@ export function JoinSessionModal({
               </>
             ) : (
               <>
-                Join as{" "}
+                {mode === "switch" ? "Switch to" : "Join as"}{" "}
                 {selectedId
                   ? personas.find((p) => p.id === selectedId)?.label
                   : "..."}
@@ -192,8 +200,10 @@ export function JoinSessionModal({
         </div>
 
         {/* Footer hint */}
-        <p className="text-center text-xs text-gray-600 mt-6">
-          You can switch your persona at any time during the session.
+        <p className="text-center text-xs text-ink-ghost mt-6">
+          {mode === "switch"
+            ? "Your current feedback will be preserved when switching."
+            : "You can switch your persona at any time during the session."}
         </p>
       </div>
     </div>

@@ -6,6 +6,7 @@ import { getPersona, getAllPersonas } from "@/lib/personas";
 import { getFeedbackHistory } from "@/lib/store";
 import { formatRelativeTime, formatAbsoluteDate } from "@/lib/timeAgo";
 import { PersonaBadge } from "./PersonaBadge";
+import { PersonaIcon } from "./PersonaIcon";
 import { EmptyState } from "./EmptyState";
 import { MarkdownPreview } from "./MarkdownPreview";
 import { MessageSquare, CheckCircle, ThumbsUp, RefreshCw } from "lucide-react";
@@ -141,7 +142,7 @@ export function FeedbackPanel({
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-400 mb-0">
               <span className="font-medium text-gray-300">
-                {persona.emoji} {persona.label}
+                <PersonaIcon personaId={persona.id} size={14} className="inline-block align-text-bottom" /> {persona.label}
               </span>{" "}
               — {persona.expertise}
             </p>
@@ -230,7 +231,7 @@ export function FeedbackPanel({
                       : "text-gray-500 hover:text-gray-300"
                   }`}
                 >
-                  {p.emoji} {p.label}
+                  <PersonaIcon personaId={p.id} size={12} className="inline-block align-text-bottom" /> {p.label}
                   {count > 0 && (
                     <span className="ml-1 text-gray-600">({count})</span>
                   )}
@@ -251,9 +252,7 @@ export function FeedbackPanel({
                   >
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs">
-                          {entryPersona.emoji}
-                        </span>
+                        <PersonaIcon personaId={entry.personaId} size={14} />
                         <span className="text-xs font-medium text-gray-300">
                           {entryPersona.label}
                         </span>

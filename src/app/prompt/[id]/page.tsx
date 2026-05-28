@@ -11,6 +11,7 @@ import { ConsensusProgress } from "@/components/ConsensusProgress";
 import { JoinSessionModal } from "@/components/JoinSessionModal";
 import { PromptSessionSkeleton } from "@/components/Skeleton";
 import { EmptyState } from "@/components/EmptyState";
+import { PromptErrorBoundary } from "@/components/PromptErrorBoundary";
 import {
   ArrowLeft,
   Clock,
@@ -20,6 +21,7 @@ import {
   MessageSquare,
   FileQuestion,
 } from "lucide-react";
+import { PersonaIcon } from "@/components/PersonaIcon";
 import Link from "next/link";
 
 export default function PromptSessionPage() {
@@ -82,14 +84,11 @@ export default function PromptSessionPage() {
 
   return (
     <div className="h-screen flex flex-col bg-deep">
-      {/* Join Session Modal */}
+      {/* Join Session Modal — single instance with mode prop */}
       <JoinSessionModal
-        isOpen={showJoinModal && !sessionPersona}
+        isOpen={showJoinModal}
         onJoin={handleJoinSession}
-      />
-      <JoinSessionModal
-        isOpen={showJoinModal && !!sessionPersona}
-        onJoin={handleJoinSession}
+        mode={sessionPersona ? "switch" : "initial"}
       />
 
       {/* Top bar */}
@@ -118,7 +117,7 @@ export default function PromptSessionPage() {
             {/* Active persona */}
             {activePersonaObj ? (
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-elevated/60 border border-border-visible/50">
-                <span>{activePersonaObj.emoji}</span>
+                <PersonaIcon personaId={activePersonaObj.id} size={18} />
                 <span className="text-sm font-medium text-ink-primary">
                   {activePersonaObj.label}
                 </span>
@@ -144,7 +143,8 @@ export default function PromptSessionPage() {
       </header>
 
       {/* Main content: two-panel layout */}
-      <div className="flex-1 flex overflow-hidden">
+      <PromptErrorBoundary>
+        <div className="flex-1 flex overflow-hidden">
         {/* Left panel: ticket info + consensus */}
         <div className="w-80 lg:w-96 flex-shrink-0 border-r border-border-subtle bg-base/40 overflow-y-auto p-6">
           <div className="space-y-6">
@@ -244,6 +244,7 @@ export default function PromptSessionPage() {
           )}
         </div>
       </div>
+      </PromptErrorBoundary>
     </div>
   );
 }
