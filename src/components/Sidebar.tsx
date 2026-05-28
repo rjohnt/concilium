@@ -9,7 +9,6 @@ import { useAuth } from "@/lib/auth-context";
 import { getTickets } from "@/lib/store";
 import { TemplateEditor } from "./TemplateEditor";
 import { ThemeToggle } from "./ThemeToggle";
-import { TemplateEditor } from "./TemplateEditor";
 
 export function Sidebar() {
   const pathname = usePathname();
