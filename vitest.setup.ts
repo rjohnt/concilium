@@ -12,3 +12,17 @@ vi.mock("framer-motion", async () => {
     AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
   };
 });
+
+// Mock next/navigation for tests that render dashboard pages directly.
+// Individual tests can override with their own mocks if needed.
+vi.mock("next/navigation", () => ({
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    back: vi.fn(),
+    prefetch: vi.fn(),
+  })),
+  usePathname: vi.fn(() => "/"),
+  useSearchParams: vi.fn(() => new URLSearchParams()),
+  useParams: vi.fn(() => ({})),
+}));

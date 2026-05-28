@@ -10,7 +10,13 @@ import { Clock, MessageSquare, Calendar } from "lucide-react";
 import Link from "next/link";
 import { useState, useRef, useEffect, useCallback } from "react";
 
-export function TicketCard({ ticket }: { ticket: Ticket }) {
+export function TicketCard({
+  ticket,
+  selected = false,
+}: {
+  ticket: Ticket;
+  selected?: boolean;
+}) {
   const allPersonas = getAllPersonas();
   const progress = ticket.approvals.length / allPersonas.length;
 
@@ -73,7 +79,7 @@ export function TicketCard({ ticket }: { ticket: Ticket }) {
     <div className="relative" data-ticket-card>
       <Link
         href={`/ticket/${ticket.id}`}
-        className="card block group cursor-pointer"
+        className={`card block group cursor-pointer ${selected ? "ring-2 ring-gold/70" : ""}`}
       >
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
