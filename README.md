@@ -28,14 +28,14 @@ Instead of throw-it-over-the-wall ticket workflows, Concilium creates a *living 
 
 ## Status
 
-🏗️ **v0.5** — SQLite backend persistence. Data survives server restarts.
+🏗️ **v0.6** — Real-time session presence & notifications. Multiplayer collaboration goes live.
 
 ### What Works
 - Ticket dashboard with persona status indicators and consensus progress bars
 - Ticket detail page with stakeholder feedback panel
 - Per-persona feedback entry (Engineer, Designer, PO, QA)
 - Approval tracking and consensus visualization
-- New ticket creation flow
+- New ticket creation flow (with field validation and character counters)
 - Seed data with realistic multi-persona feedback
 - **AI-mediated prompting session** — write raw thoughts, DeepSeek V4 Flash mediator refines through persona lens
 - **LLM-powered mediator** — DeepSeek V4 Flash-powered persona-aware response generation (concerns, recommendations, follow-ups)
@@ -52,11 +52,17 @@ Instead of throw-it-over-the-wall ticket workflows, Concilium creates a *living 
 - **Client-server sync** — client automatically syncs localStorage to server DB on every write
 - **Server-side mediator** — `/api/prompt` and `/api/build` use persistent SQLite data instead of ephemeral in-memory store
 - **Seed data migration** — localStorage data pushed to server on first client load
+- **🎮 Real-time session presence** — BroadcastChannel-powered presence tracking shows who's in a prompt session, which persona they're using, and how long they've been there
+- **Persona claim system** — prevents duplicate persona claims; shows available/unclaimed personas for quick-join
+- **🔔 Multiplayer notifications** — in-app notification store with cross-tab sync; browser Notification API integration for feedback submissions, consensus reached, and build completions
+- **Notification bell** — unread badge in prompt session header; persistent across tabs
 
 ### Next Up
-- Session-based multi-user collaboration (multiple real users weighing in simultaneously)
-- Notification system for persona feedback triggers
+- Session-based multi-user collaboration (multiple real users weighing in simultaneously) — foundation laid with session presence
+- Notification system for persona feedback triggers — Done ✅
+- Real-time feedback streaming between session participants
 - VIN lookup tool completion
+- Edit history and version diffing for ticket descriptions
 
 ## Development
 
