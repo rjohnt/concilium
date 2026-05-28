@@ -13,6 +13,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import type { ReactNode } from "react";
+import type { PersonaId } from "@/lib/types";
 
 // ===========================================================================
 // Shared top-level mocks (persist across vi.resetModules())
@@ -211,7 +212,7 @@ describe("AC-2: Retry UI in BuildReportInline", () => {
       updatedAt: "2026-01-01T00:00:00Z",
       tags: [],
       feedback: [],
-      approvals: ["engineer", "designer", "product-owner", "qa"] as const,
+      approvals: ["engineer", "designer", "product-owner", "qa"] as PersonaId[],
       // No buildReport — simulating "building with no report"
     };
 
@@ -239,7 +240,7 @@ describe("AC-2: Retry UI in BuildReportInline", () => {
       updatedAt: "2026-01-01T00:00:00Z",
       tags: [],
       feedback: [],
-      approvals: ["engineer", "designer", "product-owner", "qa"] as const,
+      approvals: ["engineer", "designer", "product-owner", "qa"] as PersonaId[],
       buildRetryCount: 3,
       buildReport: {
         id: "BLD-001",
@@ -675,7 +676,7 @@ describe("AC-7: Integration with ticket detail page", () => {
       updatedAt: "2026-01-01T00:00:00Z",
       tags: [],
       feedback: [],
-      approvals: ["engineer", "designer", "product-owner", "qa"] as const,
+      approvals: ["engineer", "designer", "product-owner", "qa"] as PersonaId[],
       // No buildReport → failure card should appear
     };
 
@@ -706,7 +707,7 @@ describe("AC-7: Integration with ticket detail page", () => {
       updatedAt: "2026-01-01T00:00:00Z",
       tags: [],
       feedback: [],
-      approvals: ["engineer", "designer", "product-owner", "qa"] as const,
+      approvals: ["engineer", "designer", "product-owner", "qa"] as PersonaId[],
       buildReport: {
         id: "BLD-001",
         ticketId: "TIX-001",
