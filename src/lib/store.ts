@@ -7,6 +7,7 @@ import {
   clearStorage as clearPersistedStorage,
   STORAGE_KEY,
 } from "./persistence";
+import { broadcastTicketUpdate, broadcastFullSync, onTicketUpdate } from "./crossTabSync";
 
 // === In-memory store with localStorage persistence ===
 
@@ -32,7 +33,7 @@ function generateId(prefix: string, counter: number): string {
   return `${prefix}-${String(counter).padStart(3, "0")}`;
 }
 
-function persistState(): void {
+function persistState(changedTicketId?: string): void {
   if (persistTimer !== null) {
     clearTimeout(persistTimer);
   }
@@ -41,6 +42,10 @@ function persistState(): void {
     persistTimer = null;
     if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("tickets-changed"));
+      // Broadcast via BroadcastChannel for immediate cross-tab sync
+      if (changedTicketId) {
+        broadcastTicketUpdate(changedTicketId, "updated");
+      }
     }
   }, 50);
 }
@@ -60,14 +65,25 @@ function reloadFromStorage(): void {
   nextBuildReportId = state.nextBuildReportId;
 }
 
-// --- Cross-tab sync via storage event ---
+// --- Cross-tab sync via storage event and BroadcastChannel ---
 
 if (typeof window !== "undefined") {
+  // Storage event: fires in OTHER tabs when localStorage is modified
   window.addEventListener("storage", (event) => {
     if (event.key === STORAGE_KEY) {
       cancelPendingPersist();
       reloadFromStorage();
     }
+  });
+
+  // BroadcastChannel: immediate sync for same-origin tabs (including the
+  // emitting tab, which doesn't receive the storage event above).
+  onTicketUpdate(() => {
+    cancelPendingPersist();
+    reloadFromStorage();
+    // Let in-tab listeners know state has changed without waiting for
+    // the 50 ms debounce window that persistState() would have used.
+    window.dispatchEvent(new CustomEvent("tickets-changed"));
   });
 }
 
@@ -106,7 +122,7 @@ export function createTicket(
     approvals: [],
   };
   tickets.push(ticket);
-  persistState();
+  persistState(id);
   return ticket;
 }
 
@@ -114,7 +130,7 @@ export function deleteTicket(ticketId: string): boolean {
   const index = tickets.findIndex((t) => t.id === ticketId);
   if (index === -1) return false;
   tickets.splice(index, 1);
-  persistState();
+  persistState(ticketId);
   return true;
 }
 
@@ -134,7 +150,7 @@ export function updateTicket(
     ticket.dueDate = updates.dueDate || undefined;
   }
   ticket.updatedAt = new Date().toISOString();
-  persistState();
+  persistState(ticketId);
   return ticket;
 }
 
@@ -147,7 +163,7 @@ export function updateTicketStatus(
   if (!ticket) return null;
   ticket.status = status;
   ticket.updatedAt = new Date().toISOString();
-  persistState();
+  persistState(ticketId);
   return ticket;
 }
 
@@ -159,7 +175,7 @@ export function updateTicketPriority(
   if (!ticket) return null;
   ticket.priority = priority;
   ticket.updatedAt = new Date().toISOString();
-  persistState();
+  persistState(ticketId);
   return ticket;
 }
 
@@ -171,7 +187,7 @@ export function updateTicketTags(
   if (!ticket) return null;
   ticket.tags = tags;
   ticket.updatedAt = new Date().toISOString();
-  persistState();
+  persistState(ticketId);
   return ticket;
 }
 
@@ -221,7 +237,7 @@ export function addFeedback(
     autoTransitionToBuilding(ticket.id);
   }
 
-  persistState();
+  persistState(ticketId);
   return entry;
 }
 
@@ -324,7 +340,7 @@ export function setBuildReport(
   if (!ticket) return null;
   ticket.buildReport = report;
   ticket.updatedAt = new Date().toISOString();
-  persistState();
+  persistState(ticketId);
   return report;
 }
 
@@ -346,7 +362,7 @@ export function triggerBuild(ticketId: string): BuildReport | null {
   ticket.status = "building";
   ticket.updatedAt = new Date().toISOString();
 
-  persistState();
+  persistState(ticketId);
   return report;
 }
 
@@ -364,7 +380,7 @@ export function completeBuild(ticketId: string): Ticket | null {
     ticket.buildReport.status = "completed";
     ticket.buildReport.completedAt = new Date().toISOString();
   }
-  persistState();
+  persistState(ticketId);
   return ticket;
 }
 
@@ -451,4 +467,7 @@ export function clearStorage(): void {
   nextBuildReportId = 1;
   cancelPendingPersist();
   clearPersistedStorage();
+  if (typeof window !== "undefined") {
+    broadcastFullSync();
+  }
 }
