@@ -329,6 +329,26 @@ describe("AC5 — Unauthenticated access to public paths", () => {
     expect(mockReplace).not.toHaveBeenCalled();
   });
 
+  it("allows access to /share", () => {
+    setPathname("/share");
+    setupAuthState(null, false);
+
+    renderAuthGuard();
+
+    expect(screen.getByTestId("child")).toBeInTheDocument();
+    expect(mockReplace).not.toHaveBeenCalled();
+  });
+
+  it("allows access to /share/a1b2c3d4-e5f6-4000-8000-000000000001 (subpath via startsWith)", () => {
+    setPathname("/share/a1b2c3d4-e5f6-4000-8000-000000000001");
+    setupAuthState(null, false);
+
+    renderAuthGuard();
+
+    expect(screen.getByTestId("child")).toBeInTheDocument();
+    expect(mockReplace).not.toHaveBeenCalled();
+  });
+
   it("NOTE: /vintage is matched as public due to startsWith('/vin') overmatch", () => {
     setPathname("/vintage");
     setupAuthState(null, false);
