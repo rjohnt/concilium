@@ -1,7 +1,8 @@
-import { Ticket, PRIORITY_LABELS, PRIORITY_COLORS } from "@/lib/types";
+import { Ticket, PRIORITY_LABELS, PRIORITY_COLORS, TicketStatus } from "@/lib/types";
 import { formatDueDate } from "@/lib/date-utils";
 import { getAllPersonas } from "@/lib/personas";
 import { PersonaBadge } from "./PersonaBadge";
+import { PersonaIcon } from "./PersonaIcon";
 import { TagChip } from "./TagChip";
 import { CopyButton } from "@/components/CopyButton";
 import { formatRelativeTime, formatAbsoluteDate } from "@/lib/timeAgo";
@@ -9,6 +10,8 @@ import { updateTicket } from "@/lib/store";
 import { Clock, MessageSquare, Calendar } from "lucide-react";
 import Link from "next/link";
 import { useState, useRef, useEffect, useCallback } from "react";
+
+const SHOW_CONSENSUS_DOTS: TicketStatus[] = ["in-review", "consensus"];
 
 export function TicketCard({
   ticket,
@@ -148,21 +151,48 @@ export function TicketCard({
           </div>
         </div>
 
-        {/* Progress bar */}
-        <div className="mt-4">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs text-gray-500">Consensus</span>
-            <span className="text-xs text-gray-400">
-              {ticket.approvals.length}/{allPersonas.length}
-            </span>
+        {/* Progress bar — hidden for in-review and consensus (shown as dots instead) */}
+        {!SHOW_CONSENSUS_DOTS.includes(ticket.status) && (
+          <div className="mt-4">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs text-gray-500">Consensus</span>
+              <span className="text-xs text-gray-400">
+                {ticket.approvals.length}/{allPersonas.length}
+              </span>
+            </div>
+            <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-brand-500 rounded-full transition-all duration-500"
+                style={{ width: `${progress * 100}%` }}
+              />
+            </div>
           </div>
-          <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-brand-500 rounded-full transition-all duration-500"
-              style={{ width: `${progress * 100}%` }}
-            />
+        )}
+
+        {/* Consensus dots row — shown for in-review and consensus statuses */}
+        {SHOW_CONSENSUS_DOTS.includes(ticket.status) && (
+          <div
+            className="mt-4 flex items-center gap-2"
+            title={`${ticket.approvals.length} of ${allPersonas.length} approved`}
+            aria-label={`Consensus: ${ticket.approvals.length} of ${allPersonas.length} approved`}
+            data-testid="consensus-dots"
+          >
+            <span className="text-xs text-ink-muted">Consensus</span>
+            <div className="flex items-center gap-1">
+              {allPersonas.map((p) => {
+                const isApproved = ticket.approvals.includes(p.id);
+                return (
+                  <PersonaIcon
+                    key={p.id}
+                    personaId={p.id}
+                    size={14}
+                    className={isApproved ? "text-olive" : "text-ink-muted"}
+                  />
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Due date */}
         {ticket.dueDate && (

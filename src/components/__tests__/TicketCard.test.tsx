@@ -329,4 +329,252 @@ describe("TicketCard", () => {
     const link = screen.getByRole("link");
     expect(link.className).not.toContain("ring-gold/70");
   });
+
+  // === DEV-93: Consensus dots row ===
+
+  describe("Consensus dots row", () => {
+    // ---- Visibility tests ----
+
+    it("shows consensus dots when status is in-review", () => {
+      render(
+        <TicketCard
+          ticket={createTestTicket({ status: "in-review", approvals: [] })}
+        />,
+      );
+      expect(screen.getByTestId("consensus-dots")).toBeInTheDocument();
+    });
+
+    it("shows consensus dots when status is consensus", () => {
+      render(
+        <TicketCard
+          ticket={createTestTicket({ status: "consensus", approvals: [] })}
+        />,
+      );
+      expect(screen.getByTestId("consensus-dots")).toBeInTheDocument();
+    });
+
+    it("does NOT show consensus dots when status is draft", () => {
+      render(
+        <TicketCard
+          ticket={createTestTicket({ status: "draft", approvals: [] })}
+        />,
+      );
+      expect(
+        screen.queryByTestId("consensus-dots"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("does NOT show consensus dots when status is building", () => {
+      render(
+        <TicketCard
+          ticket={createTestTicket({ status: "building", approvals: [] })}
+        />,
+      );
+      expect(
+        screen.queryByTestId("consensus-dots"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("does NOT show consensus dots when status is done", () => {
+      render(
+        <TicketCard
+          ticket={createTestTicket({ status: "done", approvals: [] })}
+        />,
+      );
+      expect(
+        screen.queryByTestId("consensus-dots"),
+      ).not.toBeInTheDocument();
+    });
+
+    // ---- Progress bar visibility ----
+
+    it("hides the progress bar for in-review status", () => {
+      render(
+        <TicketCard
+          ticket={createTestTicket({ status: "in-review", approvals: [] })}
+        />,
+      );
+      // The progress bar track is a div with bg-gray-800 + rounded-full + overflow-hidden.
+      // PersonaBadge spans also have bg-gray-800 + rounded-full, so we must scope to div.
+      const card = document.querySelector("[data-ticket-card]");
+      const progressBars = card?.querySelectorAll(
+        "div.bg-gray-800.rounded-full",
+      );
+      expect(progressBars?.length).toBe(0);
+    });
+
+    it("shows the progress bar for draft status", () => {
+      render(
+        <TicketCard
+          ticket={createTestTicket({ status: "draft", approvals: [] })}
+        />,
+      );
+      const card = document.querySelector("[data-ticket-card]");
+      const progressBars = card?.querySelectorAll(
+        "div.bg-gray-800.rounded-full",
+      );
+      expect(progressBars?.length).toBe(1);
+    });
+
+    // ---- Dot count ----
+
+    it("renders exactly 4 PersonaIcon SVGs in the dots row", () => {
+      render(
+        <TicketCard
+          ticket={createTestTicket({ status: "in-review", approvals: [] })}
+        />,
+      );
+      const dotsRow = screen.getByTestId("consensus-dots");
+      const svgs = dotsRow.querySelectorAll("svg");
+      expect(svgs).toHaveLength(4);
+    });
+
+    // ---- Color states ----
+
+    it("all icons are muted when no personas have approved", () => {
+      render(
+        <TicketCard
+          ticket={createTestTicket({ status: "in-review", approvals: [] })}
+        />,
+      );
+      const dotsRow = screen.getByTestId("consensus-dots");
+      const svgs = dotsRow.querySelectorAll("svg");
+      svgs.forEach((svg) => {
+        expect(svg.className.baseVal).toContain("text-ink-muted");
+        expect(svg.className.baseVal).not.toContain("text-olive");
+      });
+    });
+
+    it("all icons are olive when all personas have approved", () => {
+      render(
+        <TicketCard
+          ticket={createTestTicket({
+            status: "in-review",
+            approvals: ["engineer", "designer", "product-owner", "qa"],
+          })}
+        />,
+      );
+      const dotsRow = screen.getByTestId("consensus-dots");
+      const svgs = dotsRow.querySelectorAll("svg");
+      svgs.forEach((svg) => {
+        expect(svg.className.baseVal).toContain("text-olive");
+        expect(svg.className.baseVal).not.toContain("text-ink-muted");
+      });
+    });
+
+    it("shows a mix of olive and muted icons for partial approvals", () => {
+      render(
+        <TicketCard
+          ticket={createTestTicket({
+            status: "in-review",
+            approvals: ["engineer", "designer"],
+          })}
+        />,
+      );
+      const dotsRow = screen.getByTestId("consensus-dots");
+      const svgs = dotsRow.querySelectorAll("svg");
+      const olive = Array.from(svgs).filter((svg) =>
+        svg.className.baseVal.includes("text-olive"),
+      );
+      const muted = Array.from(svgs).filter((svg) =>
+        svg.className.baseVal.includes("text-ink-muted"),
+      );
+      expect(olive).toHaveLength(2);
+      expect(muted).toHaveLength(2);
+    });
+
+    // ---- Tooltip (title attribute) ----
+
+    it("has tooltip showing 0 of 4 approved", () => {
+      render(
+        <TicketCard
+          ticket={createTestTicket({ status: "in-review", approvals: [] })}
+        />,
+      );
+      expect(screen.getByTestId("consensus-dots")).toHaveAttribute(
+        "title",
+        "0 of 4 approved",
+      );
+    });
+
+    it("has tooltip showing 2 of 4 approved", () => {
+      render(
+        <TicketCard
+          ticket={createTestTicket({
+            status: "in-review",
+            approvals: ["engineer", "designer"],
+          })}
+        />,
+      );
+      expect(screen.getByTestId("consensus-dots")).toHaveAttribute(
+        "title",
+        "2 of 4 approved",
+      );
+    });
+
+    it("has tooltip showing 4 of 4 approved", () => {
+      render(
+        <TicketCard
+          ticket={createTestTicket({
+            status: "in-review",
+            approvals: ["engineer", "designer", "product-owner", "qa"],
+          })}
+        />,
+      );
+      expect(screen.getByTestId("consensus-dots")).toHaveAttribute(
+        "title",
+        "4 of 4 approved",
+      );
+    });
+
+    // ---- ARIA label ----
+
+    it("has correct aria-label with approval count", () => {
+      render(
+        <TicketCard
+          ticket={createTestTicket({
+            status: "consensus",
+            approvals: ["engineer", "qa"],
+          })}
+        />,
+      );
+      expect(screen.getByTestId("consensus-dots")).toHaveAttribute(
+        "aria-label",
+        "Consensus: 2 of 4 approved",
+      );
+    });
+
+    // ---- Label text ----
+
+    it('renders the "Consensus" label text', () => {
+      render(
+        <TicketCard
+          ticket={createTestTicket({ status: "in-review", approvals: [] })}
+        />,
+      );
+      const dotsRow = screen.getByTestId("consensus-dots");
+      expect(dotsRow).toHaveTextContent("Consensus");
+    });
+
+    // ---- Edge case ----
+
+    it("handles empty approvals array with in-review status gracefully", () => {
+      render(
+        <TicketCard
+          ticket={createTestTicket({
+            status: "in-review",
+            approvals: [],
+          })}
+        />,
+      );
+      const dotsRow = screen.getByTestId("consensus-dots");
+      expect(dotsRow).toBeInTheDocument();
+      // All icons should be muted
+      const svgs = dotsRow.querySelectorAll("svg");
+      svgs.forEach((svg) => {
+        expect(svg.className.baseVal).toContain("text-ink-muted");
+      });
+      expect(dotsRow).toHaveAttribute("title", "0 of 4 approved");
+    });
+  });
 });
