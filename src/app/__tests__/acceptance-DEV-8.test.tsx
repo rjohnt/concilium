@@ -29,7 +29,7 @@ vi.mock("qrcode.react", () => ({
 }));
 
 // ── Mock: @/lib/share-store ────────────────────────────────────────────
-const mockFetchShareData = vi.fn<[string], ShareData | null>();
+const mockFetchShareData = vi.fn<(id: string) => ShareData | null>();
 vi.mock("@/lib/share-store", () => ({
   fetchShareData: mockFetchShareData,
 }));
