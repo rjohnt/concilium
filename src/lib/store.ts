@@ -1,4 +1,5 @@
 import { Ticket, FeedbackEntry, PersonaId, TicketStatus, PriorityLevel, BuildReport, Tag } from "./types";
+import { validateTransition } from "./status-machine";
 import { getAllPersonas } from "./personas";
 import { checkConsensusThreshold, getBuildReadiness, buildBuildReport } from "./consensus-threshold";
 import {
@@ -193,6 +194,17 @@ export function updateTicketStatus(
 ): Ticket | null {
   const ticket = tickets.find((t) => t.id === ticketId);
   if (!ticket) return null;
+
+  // Same status is a valid no-op — skip mutation
+  if (ticket.status === status) {
+    return ticket;
+  }
+
+  // Validate the transition against the status machine
+  if (!validateTransition(ticket.status, status)) {
+    return null;
+  }
+
   ticket.status = status;
   ticket.updatedAt = new Date().toISOString();
   persistState(ticketId);
