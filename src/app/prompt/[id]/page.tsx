@@ -12,6 +12,7 @@ import { JoinSessionModal } from "@/components/JoinSessionModal";
 import { PromptSessionSkeleton } from "@/components/Skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { PromptErrorBoundary } from "@/components/PromptErrorBoundary";
+import { NotificationPreferencesPanel } from "@/components/NotificationPreferences";
 import {
   ArrowLeft,
   Clock,
@@ -23,6 +24,7 @@ import {
   Bell,
   BellRing,
   Users,
+  Settings,
 } from "lucide-react";
 import { PersonaIcon } from "@/components/PersonaIcon";
 import { SessionParticipants } from "@/components/SessionParticipants";
@@ -47,6 +49,7 @@ export default function PromptSessionPage() {
   const [showJoinModal, setShowJoinModal] = useState(true);
   const [notifCount, setNotifCount] = useState(0);
   const [notifPermitted, setNotifPermitted] = useState(false);
+  const [showNotificationPrefs, setShowNotificationPrefs] = useState(false);
 
   const loadTicket = useCallback(() => {
     seedData();
@@ -173,6 +176,21 @@ export default function PromptSessionPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Notification preferences gear */}
+            <button
+              onClick={() => setShowNotificationPrefs(true)}
+              className="p-2 rounded-lg hover:bg-elevated transition-colors"
+              title="Notification preferences"
+            >
+              <Settings size={16} className="text-ink-muted hover:text-ink-secondary transition-colors" />
+            </button>
+
+            {/* Notification preferences panel */}
+            <NotificationPreferencesPanel
+              isOpen={showNotificationPrefs}
+              onClose={() => setShowNotificationPrefs(false)}
+            />
+
             {/* Notification bell */}
             <button
               onClick={() => requestNotificationPermission()}

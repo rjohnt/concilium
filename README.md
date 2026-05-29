@@ -28,7 +28,7 @@ Instead of throw-it-over-the-wall ticket workflows, Concilium creates a *living 
 
 ## Status
 
-🏗️ **v0.7** — Real-time feedback streaming in multiplayer prompt sessions. Feedback appears instantly across all session participants.
+🏗️ **v0.8** — Granular notification preferences. Mute notifications by type or by persona. Settings accessible from prompt session header.
 
 ### What Works
 - Ticket dashboard with persona status indicators and consensus progress bars
@@ -57,11 +57,13 @@ Instead of throw-it-over-the-wall ticket workflows, Concilium creates a *living 
 - **🔔 Multiplayer notifications** — in-app notification store with cross-tab sync; browser Notification API integration for feedback submissions, consensus reached, and build completions
 - **Notification bell** — unread badge in prompt session header; persistent across tabs
 - **⚡ Real-time feedback streaming** — when one persona submits feedback, it appears instantly in all other session participants' chat timeline without refreshing. Live indicator badge shows "X just submitted" with pulsing dot. BroadcastChannel-powered, zero infrastructure needed.
+- **🔕 Granular notification preferences** — mute notifications by type (feedback, consensus, build) or by persona (don't notify when Engineer submits). Accessible via gear icon in prompt session header. Cross-tab sync, persisted to localStorage.
 
 ### Next Up
-- Feedback notification preferences (mute certain persona types)
-- Edit history and version diffing for ticket descriptions
-- VIN lookup tool completion
+- Edit history and version diffing for ticket descriptions (VersionHistory, DiffView components exist, need integration into ticket detail page)
+- Add notification preferences UI to the dashboard settings area
+- Notification grouping in the notification bell dropdown
+- Cross-session feedback import (reuse persona feedback from similar tickets)
 
 ## Development
 

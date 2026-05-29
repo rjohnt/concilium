@@ -1,31 +1,45 @@
-# Feature: Real-time Feedback Streaming in Prompt Sessions
+# Plan: Feedback Notification Preferences (DEV-NEXT)
 
-**Impact:** High — this is the core multiplayer value prop. Currently sessions show who's present but don't stream feedback live between participants.
+## Goal
+Allow users to control which notifications they receive — mute certain persona types, notification categories, or specific events.
 
-## What We'll Build
+## Why
+Users reported notification overload. The current system sends a notification for every feedback submission from every persona. Power users want to filter: "Only tell me when QA raises concerns" or "Mute build-started but keep build-completed."
 
-1. **`src/lib/feedback-stream.ts`** — A BroadcastChannel-based feedback streaming module that:
-   - Broadcasts new feedback entries as they're submitted
-   - Deduplicates by feedback ID
-   - Provides a subscription API for components to listen
-   - Auto-cleans stale listeners
+## Implementation
 
-2. **Update `SessionPrompt.tsx`** — Subscribe to the feedback stream and auto-append new feedback entries from other participants into the chat timeline in real-time. Show a live indicator.
+### 1. Create `src/lib/notification-preferences.ts`
+- Types: `NotificationPreference` map of NotificationType → boolean, and per-persona mute list
+- Storage: localStorage with `concilium-notification-prefs` key
+- API: `getPrefs()`, `setPrefs()`, `isNotificationAllowed(type, personaId?)`
+- Change listeners for cross-tab sync
 
-3. **Update `store.ts` (`addFeedback`)** — After persisting, broadcast to the feedback stream channel so other session participants see it immediately.
+### 2. Integrate into `notifications.ts`
+- `addNotification()` checks `isNotificationAllowed()` before creating notifications
+- Notification badge counts respect preferences
+- Browser notifications also respect preferences
 
-4. **Update `SessionParticipants.tsx`** — Show a streaming-active indicator when other participants are actively submitting.
+### 3. Create `NotificationPreferences` component
+- Slide-over panel with toggle groups:
+  - Per notification type toggles (feedback-submitted, consensus-reached, build-completed, etc.)
+  - Per persona mute toggles (mute Engineer notifications, mute QA feedback, etc.)
+- Accessible from the notification bell in prompt session header
+- Styled with dark parchment theme
 
-## Why This Matters
+### 4. Wire into prompt session page
+- Add "notification settings" gear icon next to bell
+- Click opens preferences panel
+- Persists immediately on change
 
-- The README lists "Real-time feedback streaming between session participants" as the top next item
-- This makes the "multiplayer" experience truly collaborative
-- Users see each other's contributions appear instantly without manual refresh
-- Builds naturally on top of the existing BroadcastChannel infrastructure
+### 5. Fix 3 failing tests in build.test.ts
+- `store.getTicket` → `serverDb.getTicket` mock references
 
-## Files to Change
-- `src/lib/` — new file `feedback-stream.ts`
-- `src/components/SessionPrompt.tsx` — add streaming subscription
-- `src/lib/store.ts` — broadcast after feedback submission
-- `src/lib/types.ts` — optional streaming metadata
-- README.md — update status
+### 6. Update README
+
+## Files to create/modify
+- `src/lib/notification-preferences.ts` (NEW)
+- `src/lib/notifications.ts` (modify — add preference checks)
+- `src/components/NotificationPreferences.tsx` (NEW)
+- `src/app/prompt/[id]/page.tsx` (modify — add preferences button)
+- `src/app/api/__tests__/build.test.ts` (fix mocks)
+- `README.md` (update status)

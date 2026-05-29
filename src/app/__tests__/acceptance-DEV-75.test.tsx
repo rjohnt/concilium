@@ -723,10 +723,12 @@ describe("AC10 — No new npm dependencies", () => {
   const expectedDependencies = [
     "@supabase/ssr",
     "@supabase/supabase-js",
+    "@types/better-sqlite3",
     "@types/node",
     "@types/react",
     "@types/react-dom",
     "autoprefixer",
+    "better-sqlite3",
     "framer-motion",
     "lucide-react",
     "next",

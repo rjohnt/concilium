@@ -10,6 +10,8 @@ const NOTIFICATION_STORAGE_KEY = "concilium-notifications";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
+import { isNotificationAllowed } from "./notification-preferences";
+
 export type NotificationType =
   | "feedback-submitted"
   | "consensus-reached"
@@ -117,7 +119,7 @@ function generateId(): string {
 // ── Public API ──────────────────────────────────────────────────────────────
 
 /**
- * Add a notification. Returns the notification object.
+ * Add a notification. Returns the notification object (or null if suppressed by preferences).
  * Broadcasts to other tabs and triggers browser notification if permitted.
  */
 export function addNotification(
@@ -127,7 +129,12 @@ export function addNotification(
   ticketId: string,
   ticketTitle?: string,
   actor?: string,
-): AppNotification {
+): AppNotification | null {
+  // Check notification preferences before creating
+  const actorPersonaId = actor as string | undefined;
+  const allowed = isNotificationAllowed(type, actorPersonaId);
+  if (!allowed) return null;
+
   const notification: AppNotification = {
     id: generateId(),
     type,
@@ -253,7 +260,7 @@ export function notifyFeedbackSubmitted(
   ticketTitle: string,
   personaLabel: string,
   approved: boolean,
-): AppNotification {
+): AppNotification | null {
   const type: NotificationType = "feedback-submitted";
   const status = approved ? "approved" : "raised concerns on";
   return addNotification(
@@ -271,7 +278,7 @@ export function notifyConsensusReached(
   ticketTitle: string,
   approvedCount: number,
   totalCount: number,
-): AppNotification {
+): AppNotification | null {
   return addNotification(
     "consensus-reached",
     "🎯 Consensus Reached!",
@@ -284,7 +291,7 @@ export function notifyConsensusReached(
 export function notifyBuildCompleted(
   ticketId: string,
   ticketTitle: string,
-): AppNotification {
+): AppNotification | null {
   return addNotification(
     "build-completed",
     "✅ Build Complete!",

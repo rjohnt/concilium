@@ -298,7 +298,7 @@ describe("POST /api/build", () => {
 
   it("6th request from same IP returns 429", async () => {
     const mockTicket = makeMockTicket("TIX-001");
-    (store.getTicket as ReturnType<typeof vi.fn>).mockReturnValue(mockTicket);
+    (serverDb.getTicket as ReturnType<typeof vi.fn>).mockReturnValue(mockTicket);
     (callDeepSeek as ReturnType<typeof vi.fn>).mockResolvedValue({
       content: buildLLMResponse(),
       model: "deepseek-v4-pro",
@@ -342,7 +342,7 @@ describe("POST /api/build", () => {
 
   it("rate-limit headers present on 200 response", async () => {
     const mockTicket = makeMockTicket("TIX-001");
-    (store.getTicket as ReturnType<typeof vi.fn>).mockReturnValue(mockTicket);
+    (serverDb.getTicket as ReturnType<typeof vi.fn>).mockReturnValue(mockTicket);
     (callDeepSeek as ReturnType<typeof vi.fn>).mockResolvedValue({
       content: buildLLMResponse(),
       model: "deepseek-v4-pro",
