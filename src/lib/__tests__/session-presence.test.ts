@@ -49,12 +49,12 @@ function createBroadcastMock() {
     postMessage: vi.fn((msg: PresenceMessage) => {
       postedMessages.push(msg);
     }),
-    addEventListener: vi.fn((type: string, handler: any) => {
+    addEventListener: vi.fn((type: string, handler: (event: MessageEvent<{type: string; senderId: string; senderName: string; clientId: string; timestamp: number}>) => void) => {
       if (type === "message") {
         messageHandlers.push(handler);
       }
     }),
-    removeEventListener: vi.fn((type: string, handler: any) => {
+    removeEventListener: vi.fn((type: string, handler: (event: MessageEvent<{type: string; senderId: string; senderName: string; clientId: string; timestamp: number}>) => void) => {
       if (type === "message") {
         messageHandlers = messageHandlers.filter((h) => h !== handler);
       }

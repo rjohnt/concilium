@@ -14,8 +14,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { ToastProvider } from "@/components/Toast";
-import type { PersonaId } from "@/lib/types";
 
 // ===========================================================================
 // Mocks shared across all test suites
@@ -101,7 +99,6 @@ describe("AC 1: Consensus detection triggers build pipeline", () => {
     vi.stubGlobal("localStorage", mockStorage);
     vi.stubGlobal("window", {
       addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
     });
 
@@ -320,12 +317,6 @@ describe("AC 2: Full-context prompt includes all persona feedback", () => {
       approvals: ["engineer", "designer", "product-owner"] as const,
     };
 
-    vi.doMock("@/lib/server-db", () => ({
-      getTicket: vi.fn(() => mockTicket),
-      getFeedbackHistory: vi.fn(() => mockTicket.feedback),
-      setBuildReport: vi.fn(),
-    }));
-
     vi.doMock("@/lib/store", () => ({
       getTicket: vi.fn(() => mockTicket),
       getFeedbackHistory: vi.fn(() => mockTicket.feedback),
@@ -478,12 +469,6 @@ describe("AC 2: Full-context prompt includes all persona feedback", () => {
       approvals: ["engineer", "designer", "product-owner"] as const,
     };
 
-    vi.doMock("@/lib/server-db", () => ({
-      getTicket: vi.fn(() => mockTicket),
-      getFeedbackHistory: vi.fn(() => mockTicket.feedback),
-      setBuildReport: vi.fn(),
-    }));
-
     vi.doMock("@/lib/store", () => ({
       getTicket: vi.fn(() => mockTicket),
       getFeedbackHistory: vi.fn(() => mockTicket.feedback),
@@ -623,12 +608,6 @@ describe("AC 3: POST /api/build returns BuildReport", () => {
       DEEPSEEK_PRO_MODEL: "deepseek-v4-pro",
     }));
 
-    vi.doMock("@/lib/server-db", () => ({
-      getTicket: vi.fn(() => undefined),
-      getFeedbackHistory: vi.fn(() => []),
-      setBuildReport: vi.fn(),
-    }));
-
     vi.doMock("@/lib/store", () => ({
       getTicket: vi.fn(() => undefined),
       getFeedbackHistory: vi.fn(() => []),
@@ -690,12 +669,6 @@ describe("AC 3: POST /api/build returns BuildReport", () => {
       ],
       approvals: ["engineer", "designer", "product-owner"] as const,
     };
-
-    vi.doMock("@/lib/server-db", () => ({
-      getTicket: vi.fn(() => mockTicket),
-      getFeedbackHistory: vi.fn(() => mockTicket.feedback),
-      setBuildReport: vi.fn(),
-    }));
 
     vi.doMock("@/lib/store", () => ({
       getTicket: vi.fn(() => mockTicket),
@@ -821,12 +794,6 @@ describe("AC 4: LLM response parsed into BuildReport shape", () => {
         usage: { promptTokens: 10, completionTokens: 10, totalTokens: 20 },
       }),
       DEEPSEEK_PRO_MODEL: "deepseek-v4-pro",
-    }));
-
-    vi.doMock("@/lib/server-db", () => ({
-      getTicket: vi.fn(() => mockTicket),
-      getFeedbackHistory: vi.fn(() => mockTicket.feedback),
-      setBuildReport: vi.fn(),
     }));
 
     vi.doMock("@/lib/store", () => ({
@@ -1011,7 +978,7 @@ describe("AC 5: BuildReport saved to ticket with building status", () => {
     };
 
     vi.stubGlobal("localStorage", mockStorage);
-    vi.stubGlobal("window", { addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn() });
+    vi.stubGlobal("window", { addEventListener: vi.fn(), dispatchEvent: vi.fn() });
 
     vi.useFakeTimers();
 
@@ -1059,7 +1026,7 @@ describe("AC 5: BuildReport saved to ticket with building status", () => {
     };
 
     vi.stubGlobal("localStorage", mockStorage);
-    vi.stubGlobal("window", { addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn() });
+    vi.stubGlobal("window", { addEventListener: vi.fn(), dispatchEvent: vi.fn() });
 
     vi.useFakeTimers();
 
@@ -1202,7 +1169,6 @@ describe("AC 6: Build output visible inline on ticket detail page", () => {
       qaCriteria: [],
       implementationPlan: "",
       consensusSummary: "Build failed due to API error.",
-      errorMessage: "Build failed due to API error.",
     };
 
     const ticket = {
@@ -1221,8 +1187,7 @@ describe("AC 6: Build output visible inline on ticket detail page", () => {
 
     render(<BuildReportInline ticket={ticket} />);
 
-    // When ticket is building and report is failed, the retry card is shown
-    expect(screen.getByText("Build Generation Failed")).toBeInTheDocument();
+    expect(screen.getByText("Failed")).toBeInTheDocument();
     expect(screen.getByText("Build failed due to API error.")).toBeInTheDocument();
   });
 
@@ -1410,15 +1375,9 @@ describe("AC 7: Manual triggerBuild() routes through /api/build", () => {
 
     vi.useFakeTimers();
 
-    // Overwrite any stale vi.doMock factory so the next import gets the real module
-    vi.doMock("@/lib/store", async () => {
-      return await vi.importActual("@/lib/store");
-    });
-    vi.doMock("@/lib/consensus-threshold", async () => {
-      return await vi.importActual("@/lib/consensus-threshold");
-    });
-
-    const storeMod4 = await import("@/lib/store");
+    const storeMod4 = await vi.importActual<typeof import("@/lib/store")>(
+      "@/lib/store"
+    );
     const { createTicket, clearStorage, triggerBuild, getTicket } =
       storeMod4;
 
@@ -1515,7 +1474,6 @@ describe("AC 7b: BuildTrigger component integration", () => {
     }));
 
     const { BuildTrigger } = await import("@/components/BuildTrigger");
-    const { ToastProvider } = await import("@/components/Toast");
 
     const ticket = {
       id: "TIX-001",
@@ -1535,7 +1493,7 @@ describe("AC 7b: BuildTrigger component integration", () => {
       approvals: ["engineer", "designer", "product-owner"] as PersonaId[],
     };
 
-    render(<ToastProvider><BuildTrigger ticket={ticket} onBuildTriggered={vi.fn()} /></ToastProvider>);
+    render(<BuildTrigger ticket={ticket} onBuildTriggered={vi.fn()} />);
 
     // Should show "Ready to Build!" button since readiness is true
     expect(screen.getByText("Ready to Build!")).toBeInTheDocument();
@@ -1566,7 +1524,6 @@ describe("AC 7b: BuildTrigger component integration", () => {
     }));
 
     const { BuildTrigger } = await import("@/components/BuildTrigger");
-    const { ToastProvider } = await import("@/components/Toast");
 
     const ticket = {
       id: "TIX-002",
@@ -1592,7 +1549,7 @@ describe("AC 7b: BuildTrigger component integration", () => {
       },
     };
 
-    render(<ToastProvider><BuildTrigger ticket={ticket} onBuildTriggered={vi.fn()} /></ToastProvider>);
+    render(<BuildTrigger ticket={ticket} onBuildTriggered={vi.fn()} />);
 
     expect(screen.getByText("Build In Progress")).toBeInTheDocument();
     expect(screen.getByText("View Report")).toBeInTheDocument();
@@ -1619,7 +1576,6 @@ describe("AC 7b: BuildTrigger component integration", () => {
     }));
 
     const { BuildTrigger } = await import("@/components/BuildTrigger");
-    const { ToastProvider } = await import("@/components/Toast");
 
     const ticket = {
       id: "TIX-003",
@@ -1645,7 +1601,7 @@ describe("AC 7b: BuildTrigger component integration", () => {
       },
     };
 
-    render(<ToastProvider><BuildTrigger ticket={ticket} onBuildTriggered={vi.fn()} /></ToastProvider>);
+    render(<BuildTrigger ticket={ticket} onBuildTriggered={vi.fn()} />);
 
     expect(screen.getByText("Build Complete")).toBeInTheDocument();
   });
@@ -1691,12 +1647,6 @@ describe("AC 8: Graceful error handling", () => {
       ],
       approvals: ["engineer", "designer", "product-owner"] as const,
     };
-
-    vi.doMock("@/lib/server-db", () => ({
-      getTicket: vi.fn(() => mockTicket),
-      getFeedbackHistory: vi.fn(() => mockTicket.feedback),
-      setBuildReport: vi.fn(),
-    }));
 
     vi.doMock("@/lib/store", () => ({
       getTicket: vi.fn(() => mockTicket),
@@ -1918,6 +1868,169 @@ describe("AC 9: Pipeline test coverage", () => {
 });
 
 // ===========================================================================
-// Integration tests moved to integration-full-pipeline.test.tsx
-// (isolated file to avoid vi.doMock contamination)
+// Integration: Full end-to-end user flow
 // ===========================================================================
+
+describe("Full pipeline integration: from feedback to build display", () => {
+  it("user sees build report on ticket detail page after consensus", async () => {
+    // This test simulates the full user journey:
+    // 1. Ticket reaches consensus → build triggered
+    // 2. BuildReport appears inline on ticket page
+
+    // Mock store to return a ticket with buildReport
+    const mockLoadTicket = vi.fn();
+    const buildReport = {
+      id: "BLD-010",
+      ticketId: "TIX-010",
+      createdAt: "2026-05-27T10:00:00Z",
+      status: "completed" as const,
+      requirements: ["Implement dark mode toggle"],
+      designDecisions: ["Use sun/moon icon"],
+      qaCriteria: ["Test on all breakpoints"],
+      implementationPlan: "## Steps\n\n1. Create toggle\n2. Wire up theme",
+      consensusSummary: "All 4 personas approved unanimously.",
+    };
+
+    vi.doMock("@/lib/store", () => ({
+      seedData: vi.fn(),
+      getTicket: vi.fn(() => ({
+        id: "TIX-010",
+        title: "Dark Mode Feature",
+        description: "Add dark mode support across the app.",
+        status: "done" as const,
+        priority: 1 as const,
+        createdAt: "2026-05-27T09:00:00Z",
+        updatedAt: "2026-05-27T12:00:00Z",
+        tags: [],
+        feedback: [
+          {
+            id: "FB-001", ticketId: "TIX-010", personaId: "engineer" as const,
+            content: "Use CSS custom properties.", createdAt: "2026-05-27T09:30:00Z", approved: true,
+          },
+          {
+            id: "FB-002", ticketId: "TIX-010", personaId: "designer" as const,
+            content: "Use cool gray palette.", createdAt: "2026-05-27T09:35:00Z", approved: true,
+          },
+          {
+            id: "FB-003", ticketId: "TIX-010", personaId: "product-owner" as const,
+            content: "High priority for Q2.", createdAt: "2026-05-27T09:40:00Z", approved: true,
+          },
+          {
+            id: "FB-004", ticketId: "TIX-010", personaId: "qa" as const,
+            content: "Test contrast ratios.", createdAt: "2026-05-27T09:45:00Z", approved: true,
+          },
+        ],
+        approvals: ["engineer", "designer", "product-owner", "qa"],
+        buildReport,
+      })),
+      deleteTicket: vi.fn(),
+      updateTicket: vi.fn(),
+      updateTicketPriority: vi.fn(),
+      updateTicketTags: vi.fn(),
+      getBuildReadiness: vi.fn(() => ({
+        ready: true, score: 100, blockers: [], nextSteps: [],
+      })),
+    }));
+
+    vi.doMock("@/lib/consensus-threshold", () => ({
+      checkConsensusThreshold: vi.fn(() => ({
+        reached: true, progress: 1.0, threshold: 0.75,
+      })),
+      getBuildReadiness: vi.fn(() => ({
+        ready: true, score: 100, blockers: [], nextSteps: [],
+      })),
+      generateBuildSummary: vi.fn(() => "# Summary"),
+      DEFAULT_THRESHOLD: 0.75,
+    }));
+
+    vi.doMock("@/lib/personas", () => ({
+      getPersona: vi.fn(() => ({
+        id: "engineer",
+        label: "Engineer",
+        emoji: "⚙️",
+        color: "bg-blue-600",
+        expertise: "Tech",
+        promptTemplate: "",
+      })),
+      getAllPersonas: vi.fn(() => [
+        { id: "engineer", label: "Engineer", emoji: "⚙️", color: "", expertise: "", promptTemplate: "" },
+        { id: "designer", label: "Designer", emoji: "🎨", color: "", expertise: "", promptTemplate: "" },
+        { id: "product-owner", label: "Product Owner", emoji: "📋", color: "", expertise: "", promptTemplate: "" },
+        { id: "qa", label: "QA", emoji: "🧪", color: "", expertise: "", promptTemplate: "" },
+      ]),
+    }));
+
+    const TicketDetailPage = (await import("@/app/ticket/[id]/page")).default;
+
+    render(<TicketDetailPage />);
+
+    // Wait for the page to load and render
+    const title = await screen.findByText("Dark Mode Feature");
+    expect(title).toBeInTheDocument();
+
+    // BuildReportInline should render because the ticket has a buildReport
+    const buildId = await screen.findByText("BLD-010");
+    expect(buildId).toBeInTheDocument();
+
+    // Consensus summary should be visible
+    expect(
+      screen.getByText("All 4 personas approved unanimously.")
+    ).toBeInTheDocument();
+
+    // Requirements section should be present
+    expect(screen.getByText("Requirements")).toBeInTheDocument();
+
+    // View Full Report link
+    expect(screen.getByText("View Full Report")).toBeInTheDocument();
+  });
+
+  it("no build report shown when ticket has no buildReport", async () => {
+    vi.doMock("@/lib/store", () => ({
+      seedData: vi.fn(),
+      getTicket: vi.fn(() => ({
+        id: "TIX-011",
+        title: "Draft ticket",
+        description: "Still in draft.",
+        status: "draft" as const,
+        priority: 2 as const,
+        createdAt: "2026-05-27T09:00:00Z",
+        updatedAt: "2026-05-27T10:00:00Z",
+        tags: [],
+        feedback: [],
+        approvals: [],
+      })),
+      deleteTicket: vi.fn(),
+      updateTicket: vi.fn(),
+      updateTicketPriority: vi.fn(),
+      updateTicketTags: vi.fn(),
+    }));
+
+    vi.doMock("@/lib/consensus-threshold", () => ({
+      checkConsensusThreshold: vi.fn(() => ({
+        reached: false, progress: 0, threshold: 0.75,
+      })),
+      getBuildReadiness: vi.fn(() => ({
+        ready: false, score: 0, blockers: ["No feedback"], nextSteps: [],
+      })),
+      generateBuildSummary: vi.fn(() => ""),
+      DEFAULT_THRESHOLD: 0.75,
+    }));
+
+    vi.doMock("@/lib/personas", () => ({
+      getPersona: vi.fn(() => undefined),
+      getAllPersonas: vi.fn(() => []),
+    }));
+
+    const TicketDetailPage = (await import("@/app/ticket/[id]/page")).default;
+
+    render(<TicketDetailPage />);
+
+    // Should render the ticket
+    const title = await screen.findByText("Draft ticket");
+    expect(title).toBeInTheDocument();
+
+    // Build report should NOT be visible
+    expect(screen.queryByText(/BLD-/)).toBeNull();
+    expect(screen.queryByText("View Full Report")).toBeNull();
+  });
+});
