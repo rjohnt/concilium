@@ -14,12 +14,20 @@ import { useState, useRef, useEffect, useCallback } from "react";
 const SHOW_CONSENSUS_DOTS: TicketStatus[] = ["in-review", "consensus"];
 
 const STATUS_CONFIG: Record<TicketStatus, { label: string; color: string; dot: string; bg: string; border: string }> = {
-  draft:        { label: "Draft",     color: "#7a7468", dot: "#7a7468", bg: "rgba(122,116,104,0.08)", border: "rgba(122,116,104,0.2)" },
-  "in-review":  { label: "Review",    color: "#c9a84c", dot: "#c9a84c", bg: "rgba(201,168,76,0.08)",  border: "rgba(201,168,76,0.2)" },
-  consensus:    { label: "Consensus", color: "#6b8f5e", dot: "#6b8f5e", bg: "rgba(107,143,94,0.08)", border: "rgba(107,143,94,0.2)" },
-  building:     { label: "Building",  color: "#6b8fa8", dot: "#6b8fa8", bg: "rgba(107,143,168,0.08)", border: "rgba(107,143,168,0.2)" },
-  done:         { label: "Done",      color: "#6b8f5e", dot: "#6b8f5e", bg: "rgba(107,143,94,0.08)", border: "rgba(107,143,94,0.2)" },
+  draft:        { label: "Draft",     color: "#64748B", dot: "#64748B", bg: "#F1F5F9", border: "#CBD5E1" },
+  "in-review":  { label: "Review",    color: "#D97706", dot: "#D97706", bg: "#FFFBEB", border: "#FCD34D" },
+  consensus:    { label: "Consensus", color: "#059669", dot: "#059669", bg: "#ECFDF5", border: "#6EE7B7" },
+  building:     { label: "Building",  color: "#2563EB", dot: "#2563EB", bg: "#EFF6FF", border: "#93C5FD" },
+  done:         { label: "Done",      color: "#059669", dot: "#059669", bg: "#ECFDF5", border: "#6EE7B7" },
 };
+
+const PRIORITY_CONFIG = [
+  { color: "#DC2626", bg: "#FEF2F2", border: "#FECACA", label: "Urgent" },
+  { color: "#EA580C", bg: "#FFF7ED", border: "#FDBA74", label: "High" },
+  { color: "#2563EB", bg: "#EFF6FF", border: "#93C5FD", label: "Medium" },
+  { color: "#64748B", bg: "#F1F5F9", border: "#CBD5E1", label: "Low" },
+  { color: "#94A3B8", bg: "#F8FAFC", border: "#E2E8F0", label: "Backlog" },
+];
 
 export function TicketCard({
   ticket,
@@ -92,23 +100,23 @@ export function TicketCard({
         href={`/ticket/${ticket.id}`}
         className={`block rounded-xl p-5 transition-all duration-200 border group cursor-pointer ${
           selected
-            ? "ring-2 ring-gold/70 border-gold/40"
-            : "border-transparent hover:border-border-visible"
+            ? "ring-2 ring-brand-500/70 border-brand-300"
+            : "border-border-subtle hover:border-[#CBD5E1]"
         }`}
         style={{
           background: selected ? "var(--color-raised)" : "var(--color-raised)",
-          boxShadow: selected ? "0 4px 12px rgba(201,168,76,0.1)" : "none",
+          boxShadow: selected ? "0 4px 12px rgba(79,70,229,0.12)" : "0 1px 3px 0 rgba(30,41,59,0.05)",
         }}
         onMouseEnter={(e) => {
           if (!selected) {
             e.currentTarget.style.background = "var(--color-elevated)";
-            e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.15)";
+            e.currentTarget.style.boxShadow = "0 2px 12px 0 rgba(30,41,59,0.10)";
           }
         }}
         onMouseLeave={(e) => {
           if (!selected) {
             e.currentTarget.style.background = "var(--color-raised)";
-            e.currentTarget.style.boxShadow = "none";
+            e.currentTarget.style.boxShadow = "0 1px 3px 0 rgba(30,41,59,0.05)";
           }
         }}
       >
@@ -136,15 +144,9 @@ export function TicketCard({
                 <span
                   className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-medium"
                   style={{
-                    background: `${(() => {
-                      const bgColors = ["rgba(184,69,69,0.08)", "rgba(201,168,76,0.08)", "rgba(107,143,168,0.08)", "rgba(122,116,104,0.08)"];
-                      return bgColors[ticket.priority] || bgColors[3];
-                    })()}`,
-                    color: PRIORITY_COLORS[ticket.priority],
-                    border: `1px solid ${(() => {
-                      const borderColors = ["rgba(184,69,69,0.2)", "rgba(201,168,76,0.2)", "rgba(107,143,168,0.2)", "rgba(122,116,104,0.2)"];
-                      return borderColors[ticket.priority] || borderColors[3];
-                    })()}`,
+                    background: PRIORITY_CONFIG[ticket.priority].bg,
+                    color: PRIORITY_CONFIG[ticket.priority].color,
+                    border: `1px solid ${PRIORITY_CONFIG[ticket.priority].border}`,
                   }}
                 >
                   {PRIORITY_LABELS[ticket.priority]}

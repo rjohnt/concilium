@@ -14,9 +14,6 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  Users,
-  CheckCircle,
-  Activity,
   Search,
 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -25,50 +22,52 @@ import { getTickets } from "@/lib/store";
 import { TemplateEditor } from "./TemplateEditor";
 import { ThemeToggle } from "./ThemeToggle";
 
+// MagicPath v2 palette
+const C = {
+  bg: "#ffffff",
+  border: "#E4E7EE",
+  accent: "#3B5BDB",
+  accentLight: "#EEF2FF",
+  accentBorder: "#C7D2FE",
+  text: "#374151",
+  textPrimary: "#0D1117",
+  textMuted: "#9CA3AF",
+  hoverBg: "#F1F3F9",
+  searchBg: "#F7F8FA",
+  navInactive: "#374151",
+};
+
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, signOut } = useAuth();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [showTemplateEditor, setShowTemplateEditor] = useState(false);
   const [isTemplateEditorOpen, setIsTemplateEditorOpen] = useState(false);
   const hamburgerRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const [ticketCounts, setTicketCounts] = useState({ total: 0, active: 0 });
 
   const openSidebar = useCallback(() => setIsMobileOpen(true), []);
   const closeSidebar = useCallback(() => setIsMobileOpen(false), []);
 
-  // Focus management
   useEffect(() => {
-    if (isMobileOpen) {
-      requestAnimationFrame(() => closeButtonRef.current?.focus());
-    } else {
-      hamburgerRef.current?.focus();
-    }
+    if (isMobileOpen) requestAnimationFrame(() => closeButtonRef.current?.focus());
+    else hamburgerRef.current?.focus();
   }, [isMobileOpen]);
 
-  // Escape key
   useEffect(() => {
     if (!isMobileOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeSidebar();
-    };
+    const handleKeyDown = (e: KeyboardEvent) => { if (e.key === "Escape") closeSidebar(); };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isMobileOpen, closeSidebar]);
 
-  // Body scroll lock
   useEffect(() => {
-    if (isMobileOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    if (isMobileOpen) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
     return () => { document.body.style.overflow = ""; };
   }, [isMobileOpen]);
-
-  const [ticketCounts, setTicketCounts] = useState({ total: 0, active: 0 });
 
   const prefersReducedMotion =
     typeof window !== "undefined"
@@ -80,12 +79,7 @@ export function Sidebar() {
       const allTickets = getTickets();
       setTicketCounts({
         total: allTickets.length,
-        active: allTickets.filter(
-          (t) =>
-            t.status === "draft" ||
-            t.status === "in-review" ||
-            t.status === "consensus"
-        ).length,
+        active: allTickets.filter(t => t.status === "draft" || t.status === "in-review" || t.status === "consensus").length,
       });
     };
     refresh();
@@ -99,12 +93,6 @@ export function Sidebar() {
     };
   }, [pathname]);
 
-  const sidebarWidth = isCollapsed ? 60 : 256;
-  const sidebarStyles = {
-    width: isCollapsed ? 60 : 256,
-    transition: "width 0.2s ease",
-  };
-
   const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/new", label: "New Ticket", icon: PlusCircle },
@@ -112,9 +100,9 @@ export function Sidebar() {
   ];
 
   const teamItems = [
-    { label: "Engineering", color: "#6b8fa8" },
-    { label: "Design", color: "#c9a84c" },
-    { label: "Product", color: "#6b8f5e" },
+    { label: "Engineering", color: "#3B5BDB" },
+    { label: "Design", color: "#7C3AED" },
+    { label: "Product", color: "#0EA5E9" },
   ];
 
   const handleSignOut = async () => {
@@ -127,46 +115,40 @@ export function Sidebar() {
     return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
   };
 
-  // Collapsed sidebar
+  // Collapsed mode
   if (isCollapsed) {
     return (
       <>
-        <aside
-          className="fixed left-0 top-0 h-full z-40 bg-base border-r border-border-subtle flex flex-col items-center py-4 gap-1 overflow-hidden"
-          style={{ width: 60 }}
+        <aside className="fixed left-0 top-0 h-full z-40 flex flex-col items-center py-4 gap-1 overflow-hidden"
+          style={{ width: 60, background: C.bg, borderRight: `1px solid ${C.border}` }}
         >
           <Link href="/" className="mb-4">
-            <div className="w-9 h-9 rounded-lg bg-gold flex items-center justify-center text-sm font-bold text-deep">
-              C
-            </div>
+            <div style={{ width: 36, height: 36, borderRadius: 8, background: C.accent, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 700, letterSpacing: "-0.5px" }}>C</div>
           </Link>
-
-          {[{ href: "/", icon: LayoutDashboard, isActive: pathname === "/" }].map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${
-                item.isActive ? "bg-raised" : "hover:bg-raised hover:text-ink-secondary"
-              }`}
+          {[{ href: "/", icon: LayoutDashboard, isActive: pathname === "/" }].map(item => (
+            <Link key={item.href} href={item.href}
               style={{
-                color: item.isActive ? "var(--color-gold)" : "var(--color-ink-muted)",
-                border: item.isActive ? "1px solid var(--color-border-visible)" : "1px solid transparent",
+                width: 40, height: 40, borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center",
+                background: item.isActive ? C.accentLight : "transparent",
+                color: item.isActive ? C.accent : C.textMuted,
+                border: item.isActive ? `1px solid ${C.accentBorder}` : "1px solid transparent",
+                transition: "all 0.12s",
               }}
+              onMouseOver={e => { if (!item.isActive) { e.currentTarget.style.background = C.hoverBg; e.currentTarget.style.color = C.textPrimary; } }}
+              onMouseOut={e => { if (!item.isActive) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.textMuted; } }}
             >
               <item.icon size={16} />
             </Link>
           ))}
-
-          <div className="flex-1" />
-
-          <button
-            onClick={() => setIsCollapsed(false)}
-            className="w-10 h-10 rounded-lg flex items-center justify-center text-ink-muted hover:text-ink-secondary transition-colors"
+          <div style={{ flex: 1 }} />
+          <button onClick={() => setIsCollapsed(false)}
+            style={{ width: 40, height: 40, borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", color: C.textMuted, border: "none", cursor: "pointer", transition: "color 0.12s" }}
+            onMouseOver={e => e.currentTarget.style.color = C.textPrimary}
+            onMouseOut={e => e.currentTarget.style.color = C.textMuted}
           >
             <ChevronRight size={16} />
           </button>
         </aside>
-        {/* Spacer for layout */}
         <div className="w-[60px] shrink-0 hidden md:block" />
       </>
     );
@@ -174,140 +156,126 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Hamburger — mobile only */}
-      <button
-        ref={hamburgerRef}
-        onClick={openSidebar}
-        className="fixed top-4 left-4 z-50 p-2 rounded-lg bg-base border border-border-subtle text-ink-primary hover:bg-raised transition-colors md:hidden shadow-sm"
-        aria-label="Open sidebar"
-        aria-expanded={isMobileOpen}
-        aria-controls="sidebar-navigation"
+      <button ref={hamburgerRef} onClick={openSidebar}
+        className="fixed top-4 left-4 z-50 p-2 rounded-lg md:hidden shadow-sm"
+        style={{ background: C.bg, border: `1px solid ${C.border}`, color: C.text }}
+        aria-label="Open sidebar" aria-expanded={isMobileOpen} aria-controls="sidebar-navigation"
       >
         <Menu size={20} />
       </button>
 
-      {/* Backdrop — mobile only */}
       {isMobileOpen && (
-        <button
-          className="fixed inset-0 bg-black/30 z-40 md:hidden"
-          onClick={closeSidebar}
-          aria-label="Close sidebar"
-        />
+        <button className="fixed inset-0 bg-black/30 z-40 md:hidden" onClick={closeSidebar} aria-label="Close sidebar" />
       )}
 
-      {/* Sidebar */}
-      <aside
-        id="sidebar-navigation"
-        className={`fixed left-0 top-0 h-full z-50 bg-base border-r border-border-subtle flex flex-col overscroll-contain
+      <aside id="sidebar-navigation"
+        className={`fixed left-0 top-0 h-full z-50 flex flex-col overscroll-contain
           ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
-          md:translate-x-0 md:sticky md:top-0
-        `}
-        style={sidebarStyles}
+          md:translate-x-0 md:sticky md:top-0`}
+        style={{ width: 256, background: C.bg, borderRight: `1px solid ${C.border}`, fontFamily: "'Inter', system-ui, sans-serif", color: C.text }}
       >
-        {/* Close button — mobile only */}
-        <button
-          ref={closeButtonRef}
-          onClick={closeSidebar}
-          className="absolute top-4 right-4 p-1 rounded-lg text-ink-secondary hover:text-ink-primary hover:bg-raised transition-colors md:hidden"
+        <button ref={closeButtonRef} onClick={closeSidebar}
+          className="absolute top-4 right-4 p-1 rounded-lg md:hidden"
+          style={{ color: C.textMuted }}
           aria-label="Close sidebar"
         >
           <X size={20} />
         </button>
 
         {/* Header */}
-        <div className="p-5 pb-4 border-b border-border-subtle flex items-center justify-between">
+        <div style={{ padding: "20px 20px 16px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Link href="/" className="flex items-center gap-2.5" onClick={closeSidebar}>
-            <div className="w-8 h-8 rounded-lg bg-gold flex items-center justify-center shrink-0">
-              <GitBranch size={16} className="text-deep" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-sm font-semibold text-ink-primary tracking-tight leading-tight">
-                concilium
-              </h1>
-              <p className="text-[10px] text-ink-muted uppercase tracking-wider leading-tight">
-                firebird
-              </p>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: C.accent, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700 }}>C</div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: C.textPrimary, letterSpacing: "-0.3px" }}>concilium</div>
+              <div style={{ fontSize: 11, color: C.textMuted, marginTop: 1, letterSpacing: "0.02em" }}>firebird</div>
             </div>
           </Link>
-          <button
-            onClick={() => setIsCollapsed(true)}
-            className="p-1 rounded-lg text-ink-muted hover:text-ink-secondary hover:bg-raised transition-colors hidden md:block"
-            aria-label="Collapse sidebar"
+          <button onClick={() => setIsCollapsed(true)}
+            className="hidden md:block"
+            style={{ background: "none", border: "none", color: C.textMuted, cursor: "pointer", padding: 4, borderRadius: 6, display: "flex", alignItems: "center", transition: "color 0.12s" }}
+            onMouseOver={e => e.currentTarget.style.color = C.textPrimary}
+            onMouseOut={e => e.currentTarget.style.color = C.textMuted}
           >
             <ChevronLeft size={16} />
           </button>
         </div>
 
         {/* Search */}
-        <div className="px-4 py-3">
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-deep border border-border-subtle text-ink-muted text-xs">
-            <Search size={13} />
-            <span>Search...</span>
+        <div style={{ padding: "12px 16px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, background: C.searchBg, border: `1px solid ${C.border}` }}>
+            <Search size={13} style={{ color: C.textMuted }} />
+            <span style={{ fontSize: 12, color: C.textMuted }}>Search...</span>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-2 py-1 space-y-0.5">
-          <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-ink-muted">
-            Navigation
-          </p>
+        <nav style={{ flex: 1, padding: "4px 8px" }}>
+          <div style={{ padding: "8px 12px 6px", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: C.textMuted }}>Navigation</div>
           {navItems.map((item) => {
             const isActive = "href" in item && item.href ? pathname === item.href : false;
+            const baseStyle = {
+              display: "flex", alignItems: "center", gap: 10, width: "100%",
+              padding: "8px 12px", borderRadius: 8, cursor: "pointer",
+              fontSize: 13, letterSpacing: "-0.1px", fontFamily: "inherit",
+              background: isActive ? C.accentLight : "transparent",
+              color: isActive ? C.accent : C.navInactive,
+              fontWeight: isActive ? 600 : 500 as any,
+              border: isActive ? `1px solid ${C.accentBorder}` : "1px solid transparent",
+              transition: "all 0.12s",
+            } as React.CSSProperties;
 
-            const linkClass = `flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-xs transition-all ${
-              isActive
-                ? "bg-raised text-ink-primary font-semibold border border-border-visible"
-                : "text-ink-secondary font-medium hover:text-ink-primary hover:bg-raised border border-transparent"
-            }`;
+            const handleMouseOver = (e: React.MouseEvent<HTMLElement>) => {
+              if (!isActive) { e.currentTarget.style.background = C.hoverBg; e.currentTarget.style.color = C.textPrimary; }
+            };
+            const handleMouseOut = (e: React.MouseEvent<HTMLElement>) => {
+              if (!isActive) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.navInactive; }
+            };
 
             if ("onClick" in item && item.onClick) {
               return (
-                <button
-                  key={item.label}
+                <button key={item.label}
                   onClick={() => { item.onClick?.(); closeSidebar(); }}
-                  className={linkClass + " text-left cursor-pointer"}
+                  style={baseStyle}
+                  onMouseOver={handleMouseOver}
+                  onMouseOut={handleMouseOut}
                 >
                   <item.icon size={16} />
-                  <span className="flex-1">{item.label}</span>
+                  <span style={{ flex: 1, textAlign: "left" as any }}>{item.label}</span>
                 </button>
               );
             }
 
             return (
-              <Link
-                key={item.href}
-                href={item.href ?? "/"}
-                onClick={closeSidebar}
-                className={linkClass}
+              <Link key={item.href} href={item.href ?? "/"} onClick={closeSidebar}
+                style={baseStyle}
+                onMouseOver={handleMouseOver}
+                onMouseOut={handleMouseOut}
               >
                 <item.icon size={16} />
-                <span className="flex-1">{item.label}</span>
+                <span style={{ flex: 1, textAlign: "left" as any }}>{item.label}</span>
                 {"href" in item && item.href === "/" && ticketCounts.total > 0 && (
                   <span className="flex items-center gap-1.5">
                     {ticketCounts.active > 0 && (
-                      <motion.span
-                        className="relative flex h-2 w-2"
-                        animate={
-                          prefersReducedMotion
-                            ? { opacity: 1 }
-                            : { opacity: [1, 0.3, 1] }
-                        }
+                      <motion.span className="relative flex h-2 w-2"
+                        animate={prefersReducedMotion ? { opacity: 1 } : { opacity: [1, 0.3, 1] }}
                         transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
                       >
-                        <span className="absolute inline-flex h-full w-full rounded-full bg-gold opacity-75" />
-                        <motion.span
-                          className="absolute inline-flex h-full w-full rounded-full bg-gold"
-                          animate={
-                            prefersReducedMotion
-                              ? { scale: 1 }
-                              : { scale: [1, 1.8, 1] }
-                          }
+                        <span className="absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: C.accent }} />
+                        <motion.span className="absolute inline-flex h-full w-full rounded-full"
+                          style={{ background: C.accent, transformOrigin: "50% 50%" }}
+                          animate={prefersReducedMotion ? { scale: 1 } : { scale: [1, 1.8, 1] }}
                           transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-                          style={{ transformOrigin: "50% 50%" }}
                         />
                       </motion.span>
                     )}
-                    <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-semibold leading-none rounded-full bg-gold/15 text-gold border border-gold/20">
+                    <span style={{
+                      display: "inline-flex", alignItems: "center", justifyContent: "center",
+                      minWidth: 20, height: 20, padding: "0 6px", borderRadius: 20,
+                      fontSize: 11, fontWeight: 600, letterSpacing: "0.01em",
+                      background: isActive ? C.accentBorder : C.hoverBg,
+                      color: isActive ? C.accent : C.textMuted,
+                    }}>
                       {ticketCounts.total}
                     </span>
                   </span>
@@ -318,57 +286,43 @@ export function Sidebar() {
         </nav>
 
         {/* Teams */}
-        <div className="px-2 py-1 border-t border-border-subtle">
-          <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-ink-muted">
-            Teams
-          </p>
-          {teamItems.map((team) => (
-            <div
-              key={team.label}
-              className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-ink-secondary hover:bg-raised hover:text-ink-primary transition-colors cursor-pointer"
+        <div style={{ padding: "4px 8px", borderTop: `1px solid ${C.border}` }}>
+          <div style={{ padding: "8px 12px 6px", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: C.textMuted }}>Teams</div>
+          {teamItems.map(team => (
+            <div key={team.label}
+              style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 8, fontSize: 13, fontWeight: 500, letterSpacing: "-0.1px", color: C.text, cursor: "pointer", fontFamily: "inherit", transition: "background 0.12s" }}
+              onMouseOver={e => e.currentTarget.style.background = C.hoverBg}
+              onMouseOut={e => e.currentTarget.style.background = "transparent"}
             >
-              <span
-                className="w-2 h-2 rounded-full shrink-0"
-                style={{ background: team.color }}
-              />
-              {team.label}
+              <div style={{ width: 7, height: 7, borderRadius: "50%", background: team.color, flexShrink: 0 }} />
+              <span>{team.label}</span>
             </div>
           ))}
         </div>
 
         {/* User */}
-        <div className="p-4 border-t border-border-subtle">
+        <div style={{ padding: "12px 16px", borderTop: `1px solid ${C.border}` }}>
           {user ? (
             <div className="space-y-2">
               <div className="flex items-center gap-2.5 px-1">
                 {user.user_metadata?.avatar_url ? (
-                  <img
-                    src={user.user_metadata.avatar_url}
-                    alt="Avatar"
-                    className="w-7 h-7 rounded-full ring-2 ring-border-visible shrink-0"
-                  />
+                  <img src={user.user_metadata.avatar_url} alt="Avatar" className="w-7 h-7 rounded-full shrink-0" style={{ border: `1.5px solid ${C.accentBorder}` }} />
                 ) : (
-                  <div className="w-7 h-7 rounded-full bg-overlay flex items-center justify-center shrink-0">
-                    <span className="text-[11px] font-semibold text-gold">
-                      {getInitials(user.user_metadata?.full_name || user.user_metadata?.name || user.email)}
-                    </span>
+                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: C.accentLight, border: `1.5px solid ${C.accentBorder}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: C.accent, flexShrink: 0 }}>
+                    {getInitials(user.user_metadata?.full_name || user.user_metadata?.name || user.email)}
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-ink-primary truncate">
-                    {user.user_metadata?.full_name ||
-                      user.user_metadata?.name ||
-                      user.email?.split("@")[0]}
-                  </p>
-                  <p className="text-[10px] text-ink-muted">Free plan</p>
+                  <p className="text-xs font-semibold truncate" style={{ color: C.textPrimary }}>{user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0]}</p>
+                  <p className="text-[10px]" style={{ color: C.textMuted }}>Free plan</p>
                 </div>
               </div>
-
               <ThemeToggle />
-
-              <button
-                onClick={handleSignOut}
-                className="flex items-center gap-2 w-full px-3 py-1.5 rounded-lg text-xs text-ink-secondary hover:text-ink-primary hover:bg-raised transition-colors"
+              <button onClick={handleSignOut}
+                className="flex items-center gap-2 w-full px-3 py-1.5 rounded-lg text-xs"
+                style={{ color: C.textMuted }}
+                onMouseOver={e => { e.currentTarget.style.background = C.hoverBg; e.currentTarget.style.color = C.textPrimary; }}
+                onMouseOut={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.textMuted; }}
               >
                 <LogOut size={14} />
                 Sign out
@@ -376,23 +330,16 @@ export function Sidebar() {
             </div>
           ) : (
             <div className="text-center">
-              <p className="text-xs text-ink-muted mb-2">Not signed in</p>
-              <Link
-                href="/login"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gold/10 text-gold hover:bg-gold/20 transition-colors"
-              >
-                Sign in
-              </Link>
+              <p className="text-xs mb-2" style={{ color: C.textMuted }}>Not signed in</p>
+              <Link href="/login" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+                style={{ background: `${C.accent}15`, color: C.accent }}
+              >Sign in</Link>
             </div>
           )}
         </div>
       </aside>
 
-      {/* Template Editor */}
-      <TemplateEditor
-        isOpen={isTemplateEditorOpen}
-        onClose={() => setIsTemplateEditorOpen(false)}
-      />
+      <TemplateEditor isOpen={isTemplateEditorOpen} onClose={() => setIsTemplateEditorOpen(false)} />
     </>
   );
 }
