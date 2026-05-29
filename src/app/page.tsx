@@ -28,10 +28,13 @@ export default function DashboardPage() {
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [personaFilter, setPersonaFilter] = useState<PersonaId[]>([]);
-  const [personaFilterMode, setPersonaFilterMode] = useState<"reviewed-by" | "awaiting-review">("reviewed-by");
+  const [personaFilterMode, setPersonaFilterMode] = useState<"reviewed-by" | "awaitring-review">("reviewed-by");
   const [displayCount, setDisplayCount] = useState(BATCH_SIZE);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [hasActiveFilters, setHasActiveFilters] = useState(false);
   const ticketListRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     seedData();
@@ -39,7 +42,6 @@ export default function DashboardPage() {
     setLoading(false);
   }, []);
 
-  // Listen for store-driven ticket changes (e.g. inline title edit dispatches "tickets-changed")
   useEffect(() => {
     const handler = () => {
       setTickets(getTickets());
@@ -49,91 +51,17 @@ export default function DashboardPage() {
     return () => window.removeEventListener?.("tickets-changed", handler);
   }, []);
 
-  // Reset display count when filters change (AC7)
   useEffect(() => {
-    setDisplayCount(BATCH_SIZE);
-  }, [activeFilter, priorityFilter, tagFilter, personaFilter, personaFilterMode, debouncedSearchQuery]);
-
-  // Debounce search input by 300ms
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-    }, 300);
+    const timer = setTimeout(() => setDebouncedSearchQuery(searchQuery), 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const filteredTickets = useMemo(() => {
-    let result = tickets;
-    if (activeFilter !== "all") {
-      result = result.filter((t) => t.status === activeFilter);
-    }
-    if (priorityFilter !== null) {
-      result = result.filter((t) => t.priority === priorityFilter);
-    }
-    if (tagFilter.length > 0) {
-      result = result.filter((t) =>
-        t.tags.some((tag) => tagFilter.includes(tag.id))
-      );
-    }
-    if (debouncedSearchQuery.trim()) {
-      const q = debouncedSearchQuery.toLowerCase().trim();
-      result = result.filter(
-        (t) =>
-          t.title.toLowerCase().includes(q) ||
-          (t.description ?? "").toLowerCase().includes(q)
-      );
-    }
-    if (personaFilter.length > 0) {
-      result = result.filter((t) => {
-        const hasFeedback = personaFilter.some((pid) =>
-          t.feedback.some((f) => f.personaId === pid)
-        );
-        return personaFilterMode === "reviewed-by" ? hasFeedback : !hasFeedback;
-      });
-    }
-    return result;
-  }, [tickets, activeFilter, priorityFilter, tagFilter, debouncedSearchQuery, personaFilter, personaFilterMode]);
+  useEffect(() => setDisplayCount(BATCH_SIZE), [
+    activeFilter, priorityFilter, tagFilter, personaFilter, personaFilterMode, debouncedSearchQuery
+  ]);
 
-  const statusCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const t of tickets) {
-      counts[t.status] = (counts[t.status] ?? 0) + 1;
-    }
-    return counts;
-  }, [tickets]);
-
-  const draftCount = statusCounts["draft"] ?? 0;
-  const inReviewCount = statusCounts["in-review"] ?? 0;
-
-  const personaCounts = useMemo(() => {
-    // Count feedback from each persona, scoped to the tickets that pass
-    // all other active filters (status, priority, search).
-    let scoped = tickets;
-    if (activeFilter !== "all") {
-      scoped = scoped.filter((t) => t.status === activeFilter);
-    }
-    if (priorityFilter !== null) {
-      scoped = scoped.filter((t) => t.priority === priorityFilter);
-    }
-    if (debouncedSearchQuery.trim()) {
-      const q = debouncedSearchQuery.toLowerCase().trim();
-      scoped = scoped.filter(
-        (t) =>
-          t.title.toLowerCase().includes(q) ||
-          (t.description ?? "").toLowerCase().includes(q)
-      );
-    }
-    const counts: Record<string, number> = {};
-    for (const t of scoped) {
-      for (const f of t.feedback) {
-        counts[f.personaId] = (counts[f.personaId] ?? 0) + 1;
-      }
-    }
-    return counts;
-  }, [tickets, activeFilter, priorityFilter, debouncedSearchQuery]);
-
-  const hasActiveFilters = useMemo(() => {
-    return (
+  useEffect(() => {
+    setHasActiveFilters(
       activeFilter !== "all" ||
       searchQuery !== "" ||
       priorityFilter !== null ||
@@ -142,28 +70,55 @@ export default function DashboardPage() {
     );
   }, [activeFilter, searchQuery, priorityFilter, tagFilter, personaFilter]);
 
+  const filteredTickets = useMemo(() => {
+    let result = tickets;
+    if (activeFilter !== "all") result = result.filter((t) => t.status === activeFilter);
+    if (priorityFilter !== null) result = result.filter((t) => t.priority === priorityFilter);
+    if (tagFilter.length > 0) result = result.filter((t) => t.tags.some((tag) => tagFilter.includes(tag.id)));
+    if (debouncedSearchQuery.trim()) {
+      const q = debouncedSearchQuery.toLowerCase().trim();
+      result = result.filter((t) => t.title.toLowerCase().includes(q) || (t.description ?? "").toLowerCase().includes(q));
+    }
+    if (personaFilter.length > 0) {
+      result = result.filter((t) => {
+        const hasFeedback = personaFilter.some((pid) => t.feedback.some((f) => f.personaId === pid));
+        return personaFilterMode === "reviewed-by" ? hasFeedback : !hasFeedback;
+      });
+    }
+    return result;
+  }, [tickets, activeFilter, priorityFilter, tagFilter, debouncedSearchQuery, personaFilter, personaFilterMode]);
+
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const t of tickets) counts[t.status] = (counts[t.status] ?? 0) + 1;
+    return counts;
+  }, [tickets]);
+
+  const personaCounts = useMemo(() => {
+    let scoped = tickets;
+    if (activeFilter !== "all") scoped = scoped.filter((t) => t.status === activeFilter);
+    if (priorityFilter !== null) scoped = scoped.filter((t) => t.priority === priorityFilter);
+    if (debouncedSearchQuery.trim()) {
+      const q = debouncedSearchQuery.toLowerCase().trim();
+      scoped = scoped.filter((t) => t.title.toLowerCase().includes(q) || (t.description ?? "").toLowerCase().includes(q));
+    }
+    const counts: Record<string, number> = {};
+    for (const t of scoped) for (const f of t.feedback) counts[f.personaId] = (counts[f.personaId] ?? 0) + 1;
+    return counts;
+  }, [tickets, activeFilter, priorityFilter, debouncedSearchQuery]);
+
   const clearAllFilters = () => {
     setActiveFilter("all");
     setSearchQuery("");
     setPriorityFilter(null);
     setTagFilter([]);
     setPersonaFilter([]);
-    // TODO: Reset sort when sort controls are added
   };
 
-  // --- Pagination (DEV-58) ---
-  const displayedTickets = useMemo(
-    () => filteredTickets.slice(0, displayCount),
-    [filteredTickets, displayCount]
-  );
+  const displayedTickets = useMemo(() => filteredTickets.slice(0, displayCount), [filteredTickets, displayCount]);
   const hasMore = displayCount < filteredTickets.length;
   const remaining = filteredTickets.length - displayCount;
 
-  // ── Keyboard shortcut refs ────────────────────────────────────────────
-  const router = useRouter();
-  const searchInputRef = useRef<HTMLInputElement>(null);
-
-  // ── Keyboard shortcuts for power-user navigation (DEV-78) ─────────────
   const { selectedIndex } = useKeyboardShortcuts({
     ticketCount: displayedTickets.length,
     ticketIds: displayedTickets.map((t) => t.id),
@@ -175,14 +130,12 @@ export default function DashboardPage() {
   const handleLoadMore = useCallback(() => {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
-    // Brief delay to show skeleton cards (AC5)
     setTimeout(() => {
       setDisplayCount((prev) => prev + BATCH_SIZE);
       setLoadingMore(false);
     }, 100);
   }, [loadingMore, hasMore]);
 
-  // Smooth scroll to top of newly loaded batch after cards render (AC6)
   useEffect(() => {
     if (displayCount <= BATCH_SIZE || !ticketListRef.current) return;
     const cards = ticketListRef.current.querySelectorAll("[data-ticket-card]");
@@ -192,59 +145,54 @@ export default function DashboardPage() {
     }
   }, [displayCount]);
 
-  if (loading) {
-    return <DashboardSkeleton />;
-  }
+  const draftCount = statusCounts["draft"] ?? 0;
+  const inReviewCount = statusCounts["in-review"] ?? 0;
+
+  if (loading) return <DashboardSkeleton />;
 
   return (
     <div className="max-w-5xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-ink-primary">Tickets</h2>
-          <p className="text-sm text-ink-muted mt-1">
-            Multiplayer stakeholder collaboration
-          </p>
+          <h2 className="text-xl font-bold text-ink-primary tracking-tight">Tickets</h2>
+          <p className="text-xs text-ink-muted mt-0.5">Multiplayer stakeholder collaboration</p>
         </div>
-        <Link href="/new" className="btn-primary">
-          <PlusCircle size={18} />
+        <Link href="/new" className="btn-primary text-xs">
+          <PlusCircle size={16} />
           New Ticket
         </Link>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="card flex items-center gap-4">
-          <div className="w-10 h-10 rounded-lg bg-elevated flex items-center justify-center">
-            <Users size={20} className="text-ink-muted" />
+        {[
+          { label: "Total Tickets", value: tickets.length, icon: Users },
+          { label: "In Review", value: inReviewCount, color: "bg-gold/15 text-gold" },
+          { label: "Drafts", value: draftCount, color: "bg-ink-muted/10 text-ink-muted" },
+        ].map((stat) => (
+          <div
+            key={stat.label}
+            className="rounded-xl p-5 transition-all duration-200 border border-transparent hover:border-border-visible cursor-default"
+            style={{ background: "var(--color-raised)" }}
+          >
+            <div className="flex items-center gap-4">
+              {"icon" in stat && stat.icon ? (
+                <div className="w-9 h-9 rounded-lg bg-elevated flex items-center justify-center shrink-0">
+                  <stat.icon size={18} className="text-ink-muted" />
+                </div>
+              ) : stat.color ? (
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${stat.color}`}>
+                  <span className="text-sm font-bold">{stat.value}</span>
+                </div>
+              ) : null}
+              <div>
+                <div className="text-xs text-ink-muted font-medium">{stat.label}</div>
+                <div className="text-2xl font-bold text-ink-primary tracking-tight">{stat.value}</div>
+              </div>
+            </div>
           </div>
-          <div>
-            <p className="text-2xl font-bold text-ink-primary">{tickets.length}</p>
-            <p className="text-xs text-ink-secondary">Total Tickets</p>
-          </div>
-        </div>
-        <div className="card flex items-center gap-4">
-          <div className="w-10 h-10 rounded-lg bg-yellow-900/30 flex items-center justify-center">
-            <span className="text-yellow-400 font-bold text-lg">
-              {inReviewCount}
-            </span>
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-ink-primary">{inReviewCount}</p>
-            <p className="text-xs text-ink-secondary">In Review</p>
-          </div>
-        </div>
-        <div className="card flex items-center gap-4">
-          <div className="w-10 h-10 rounded-lg bg-elevated flex items-center justify-center">
-            <span className="text-ink-muted font-bold text-lg">
-              {draftCount}
-            </span>
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-ink-primary">{draftCount}</p>
-            <p className="text-xs text-ink-secondary">Drafts</p>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Clear all filters */}
@@ -264,10 +212,7 @@ export default function DashboardPage() {
       {/* Search bar */}
       <div className="mb-6">
         <div className="relative">
-          <Search
-            size={18}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none"
-          />
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none" />
           <input
             ref={searchInputRef}
             type="text"
@@ -275,7 +220,7 @@ export default function DashboardPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search tickets by title or description..."
             aria-label="Search tickets"
-            className="w-full pl-10 pr-10 py-2.5 rounded-lg text-sm bg-elevated border border-border-visible/30 text-ink-primary placeholder:text-ink-muted/60 outline-none transition-all duration-150 focus:border-gold/50 focus:ring-1 focus:ring-gold/30 focus:bg-elevated/80"
+            className="w-full pl-10 pr-10 py-2.5 rounded-lg text-xs bg-elevated border border-border-visible/30 text-ink-primary placeholder:text-ink-muted/60 outline-none transition-all duration-150 focus:border-gold/50 focus:ring-1 focus:ring-gold/30 focus:bg-elevated/80"
           />
           {searchQuery && (
             <button
@@ -298,14 +243,14 @@ export default function DashboardPage() {
 
       {/* Priority filter */}
       <div className="flex items-center gap-2 mb-6">
-        <Filter size={14} className="text-ink-muted" />
-        <span className="text-xs text-ink-muted mr-1">Priority:</span>
+        <Filter size={13} className="text-ink-muted" />
+        <span className="text-[11px] text-ink-muted mr-1 font-medium">Priority:</span>
         <button
           onClick={() => setPriorityFilter(null)}
-          className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
+          className={`px-2.5 py-1 rounded-md text-[11px] font-medium border transition-colors ${
             priorityFilter === null
               ? "bg-brand-900/50 text-brand-400 border-brand-800"
-              : "border-border-subtle text-ink-muted hover:text-ink-primary hover:border-border-default"
+              : "border-border-subtle text-ink-muted hover:text-ink-primary hover:border-border-visible"
           }`}
         >
           All
@@ -314,10 +259,10 @@ export default function DashboardPage() {
           <button
             key={p}
             onClick={() => setPriorityFilter(p)}
-            className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
+            className={`px-2.5 py-1 rounded-md text-[11px] font-medium border transition-colors ${
               priorityFilter === p
                 ? PRIORITY_COLORS[p]
-                : "border-border-subtle text-ink-muted hover:text-ink-primary hover:border-border-default"
+                : "border-border-subtle text-ink-muted hover:text-ink-primary hover:border-border-visible"
             }`}
           >
             {PRIORITY_LABELS[p]}
@@ -327,14 +272,14 @@ export default function DashboardPage() {
 
       {/* Tag filter */}
       <div className="flex items-center gap-2 mb-6">
-        <Filter size={14} className="text-ink-muted" />
-        <span className="text-xs text-ink-muted mr-1">Tags:</span>
+        <Filter size={13} className="text-ink-muted" />
+        <span className="text-[11px] text-ink-muted mr-1 font-medium">Tags:</span>
         <button
           onClick={() => setTagFilter([])}
-          className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
+          className={`px-2.5 py-1 rounded-md text-[11px] font-medium border transition-colors ${
             tagFilter.length === 0
               ? "bg-brand-900/50 text-brand-400 border-brand-800"
-              : "border-border-subtle text-ink-muted hover:text-ink-primary hover:border-border-default"
+              : "border-border-subtle text-ink-muted hover:text-ink-primary hover:border-border-visible"
           }`}
         >
           All
@@ -347,9 +292,7 @@ export default function DashboardPage() {
             selected={tagFilter.includes(tag.id)}
             onToggle={(id) =>
               setTagFilter((prev) =>
-                prev.includes(id)
-                  ? prev.filter((t) => t !== id)
-                  : [...prev, id]
+                prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
               )
             }
           />
@@ -359,12 +302,11 @@ export default function DashboardPage() {
       {/* Persona filter */}
       {getAllPersonas().length > 0 && (
         <div className="flex items-center gap-2 mb-6 flex-wrap">
-          <Filter size={14} className="text-ink-muted" />
-          <span className="text-xs text-ink-muted mr-1">Persona:</span>
-          {/* Mode toggles */}
+          <Filter size={13} className="text-ink-muted" />
+          <span className="text-[11px] text-ink-muted mr-1 font-medium">Persona:</span>
           <button
             onClick={() => setPersonaFilterMode("reviewed-by")}
-            className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
+            className={`px-2.5 py-1 rounded-md text-[11px] font-medium border transition-colors ${
               personaFilterMode === "reviewed-by"
                 ? "bg-brand-900/50 text-brand-400 border-brand-800"
                 : "border-border-subtle text-ink-muted hover:text-ink-primary"
@@ -373,17 +315,16 @@ export default function DashboardPage() {
             Reviewed by
           </button>
           <button
-            onClick={() => setPersonaFilterMode("awaiting-review")}
-            className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
-              personaFilterMode === "awaiting-review"
+            onClick={() => setPersonaFilterMode("awaitring-review")}
+            className={`px-2.5 py-1 rounded-md text-[11px] font-medium border transition-colors ${
+              personaFilterMode === "awaitring-review"
                 ? "bg-brand-900/50 text-brand-400 border-brand-800"
                 : "border-border-subtle text-ink-muted hover:text-ink-primary"
             }`}
           >
             Awaiting review
           </button>
-          <span className="w-px h-5 bg-border-visible/30 mx-0.5" />
-          {/* Persona buttons */}
+          <span className="w-px h-4 bg-border-visible/30 mx-0.5" />
           {getAllPersonas().map((persona) => {
             const isActive = personaFilter.includes(persona.id);
             const count = personaCounts[persona.id] ?? 0;
@@ -392,24 +333,20 @@ export default function DashboardPage() {
                 key={persona.id}
                 onClick={() =>
                   setPersonaFilter((prev) =>
-                    prev.includes(persona.id)
-                      ? prev.filter((id) => id !== persona.id)
-                      : [...prev, persona.id]
+                    prev.includes(persona.id) ? prev.filter((id) => id !== persona.id) : [...prev, persona.id]
                   )
                 }
-                className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
+                className={`px-2.5 py-1 rounded-md text-[11px] font-medium border transition-colors ${
                   isActive
                     ? `${persona.color} text-white border-transparent`
                     : "bg-elevated border border-border-visible/30 text-ink-muted"
                 }`}
               >
-                <PersonaIcon personaId={persona.id} size={14} className="mr-1 inline-block align-text-bottom" /> {persona.label}
+                <PersonaIcon personaId={persona.id} size={13} className="mr-1 inline-block align-text-bottom" /> {persona.label}
                 {count > 0 && (
                   <span
                     className={`ml-1 px-1 py-0.5 rounded text-[10px] font-bold ${
-                      isActive
-                        ? "bg-white/20 text-white"
-                        : "bg-elevated/60 text-ink-muted"
+                      isActive ? "bg-white/20 text-white" : "bg-elevated/60 text-ink-muted"
                     }`}
                   >
                     {count}
@@ -422,7 +359,7 @@ export default function DashboardPage() {
       )}
 
       {/* Ticket list */}
-      <div className="space-y-4" ref={ticketListRef}>
+      <div className="space-y-3" ref={ticketListRef}>
         {filteredTickets.length === 0 ? (
           <EmptyState
             icon={
@@ -476,13 +413,11 @@ export default function DashboardPage() {
               />
             ))}
 
-            {/* Skeleton cards while loading more (AC5) */}
             {loadingMore &&
               Array.from({ length: Math.min(BATCH_SIZE, remaining) }).map((_, i) => (
                 <SkeletonCard key={`skeleton-${i}`} />
               ))}
 
-            {/* Load More button (AC2, AC4) */}
             {hasMore && !loadingMore && (
               <div className="flex justify-center pt-4 pb-2">
                 <button

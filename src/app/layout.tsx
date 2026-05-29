@@ -32,7 +32,7 @@ export default function RootLayout({
               <AuthGuard>
               <div className="flex min-h-screen">
                 <Sidebar />
-                <main className="flex-1 md:ml-64 pt-14 p-8 md:pt-8">
+                <main className="flex-1 p-8 md:pt-8 pt-14 min-w-0">
                   <Breadcrumb className="mb-4" />
                   <PageTransition>{children}</PageTransition>
                 </main>

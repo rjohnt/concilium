@@ -13,6 +13,14 @@ import { useState, useRef, useEffect, useCallback } from "react";
 
 const SHOW_CONSENSUS_DOTS: TicketStatus[] = ["in-review", "consensus"];
 
+const STATUS_CONFIG: Record<TicketStatus, { label: string; color: string; dot: string }> = {
+  draft:        { label: "Draft",     color: "#7a7468", dot: "#7a7468" },
+  "in-review":  { label: "Review",    color: "#c9a84c", dot: "#c9a84c" },
+  consensus:    { label: "Consensus", color: "#6b8f5e", dot: "#6b8f5e" },
+  building:     { label: "Building",  color: "#6b8fa8", dot: "#6b8fa8" },
+  done:         { label: "Done",      color: "#6b8f5e", dot: "#6b8f5e" },
+};
+
 export function TicketCard({
   ticket,
   selected = false,
@@ -28,7 +36,6 @@ export function TicketCard({
   const [draft, setDraft] = useState(ticket.title);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-focus and select input when editing starts
   useEffect(() => {
     if (editing && inputRef.current) {
       inputRef.current.focus();
@@ -49,7 +56,6 @@ export function TicketCard({
   const saveTitle = useCallback(() => {
     const trimmed = draft.trim();
     if (!trimmed) {
-      // Empty or whitespace-only: revert to original, no save
       setDraft(ticket.title);
       setEditing(false);
       return;
@@ -78,34 +84,58 @@ export function TicketCard({
     [saveTitle, cancelEditing],
   );
 
+  const sc = STATUS_CONFIG[ticket.status];
+
   return (
     <div className="relative" data-ticket-card>
       <Link
         href={`/ticket/${ticket.id}`}
-        className={`card block group cursor-pointer ${selected ? "ring-2 ring-gold/70" : ""}`}
+        className={`block rounded-xl p-5 transition-all duration-200 border group cursor-pointer ${
+          selected
+            ? "ring-2 ring-gold/70 border-gold/40"
+            : "border-transparent hover:border-border-visible"
+        }`}
+        style={{
+          background: selected ? "var(--color-raised)" : "var(--color-raised)",
+        }}
+        onMouseEnter={(e) => {
+          if (!selected) {
+            e.currentTarget.style.background = "var(--color-elevated)";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!selected) {
+            e.currentTarget.style.background = "var(--color-raised)";
+          }
+        }}
       >
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs font-mono text-gray-500">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-[11px] font-medium text-ink-muted tracking-tight">
                 {ticket.id}
               </span>
               <span
-                className={`badge ${
-                  ticket.status === "draft"
-                    ? "bg-gray-800 text-gray-400"
-                    : ticket.status === "in-review"
-                      ? "bg-yellow-900/50 text-yellow-400"
-                      : ticket.status === "consensus"
-                        ? "bg-emerald-900/50 text-emerald-400"
-                        : "bg-blue-900/50 text-blue-400"
-                }`}
+                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-medium leading-relaxed"
+                style={{
+                  background: `${sc.dot}15`,
+                  color: sc.dot,
+                  border: `1px solid ${sc.dot}25`,
+                }}
               >
-                {ticket.status}
+                <span
+                  className="w-[5px] h-[5px] rounded-full shrink-0"
+                  style={{ background: sc.dot }}
+                />
+                {sc.label}
               </span>
               {ticket.priority !== 4 && (
                 <span
-                  className={`badge border ${PRIORITY_COLORS[ticket.priority]}`}
+                  className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-medium"
+                  style={{
+                    background: `${PRIORITY_COLORS[ticket.priority]}15`,
+                    color: PRIORITY_COLORS[ticket.priority],
+                  }}
                 >
                   {PRIORITY_LABELS[ticket.priority]}
                 </span>
@@ -124,12 +154,12 @@ export function TicketCard({
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={handleKeyDown}
                 onBlur={saveTitle}
-                className="bg-deep border border-gold/40 rounded px-2 py-0.5 text-lg font-bold text-ink-primary focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold/30 w-full"
+                className="bg-deep border border-gold/40 rounded-md px-2 py-1 text-sm font-semibold text-ink-primary focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold/30 w-full"
                 aria-label="Edit ticket title"
               />
             ) : (
               <h3
-                className="text-lg font-semibold text-ink-primary group-hover:text-brand-400 transition-colors truncate cursor-text focus:outline-none focus:ring-2 focus:ring-gold/50"
+                className="text-sm font-semibold text-ink-primary group-hover:text-brand-400 transition-colors truncate cursor-text focus:outline-none focus:ring-2 focus:ring-gold/50 rounded"
                 onClick={startEditing}
                 tabIndex={0}
                 onKeyDown={(e) => {
@@ -145,39 +175,42 @@ export function TicketCard({
               </h3>
             )}
 
-            <p className="text-sm text-gray-400 mt-1 line-clamp-2">
+            <p className="text-xs text-ink-muted mt-1.5 line-clamp-2 leading-relaxed">
               {ticket.description}
             </p>
           </div>
         </div>
 
-        {/* Progress bar — hidden for in-review and consensus (shown as dots instead) */}
+        {/* Progress bar — hidden for in-review and consensus */}
         {!SHOW_CONSENSUS_DOTS.includes(ticket.status) && (
           <div className="mt-4">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs text-gray-500">Consensus</span>
-              <span className="text-xs text-gray-400">
+              <span className="text-[11px] text-ink-muted font-medium">Consensus</span>
+              <span className="text-[11px] text-ink-muted">
                 {ticket.approvals.length}/{allPersonas.length}
               </span>
             </div>
-            <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+            <div className="h-1.5 bg-deep rounded-full overflow-hidden">
               <div
-                className="h-full bg-brand-500 rounded-full transition-all duration-500"
-                style={{ width: `${progress * 100}%` }}
+                className="h-full rounded-full transition-all duration-500"
+                style={{
+                  width: `${progress * 100}%`,
+                  background: "var(--color-gold)",
+                }}
               />
             </div>
           </div>
         )}
 
-        {/* Consensus dots row — shown for in-review and consensus statuses */}
+        {/* Consensus dots */}
         {SHOW_CONSENSUS_DOTS.includes(ticket.status) && (
           <div
-            className="mt-4 flex items-center gap-2"
+            className="mt-3 flex items-center gap-2"
             title={`${ticket.approvals.length} of ${allPersonas.length} approved`}
             aria-label={`Consensus: ${ticket.approvals.length} of ${allPersonas.length} approved`}
             data-testid="consensus-dots"
           >
-            <span className="text-xs text-ink-muted">Consensus</span>
+            <span className="text-[11px] text-ink-muted font-medium">Consensus</span>
             <div className="flex items-center gap-1">
               {allPersonas.map((p) => {
                 const isApproved = ticket.approvals.includes(p.id);
@@ -185,7 +218,7 @@ export function TicketCard({
                   <PersonaIcon
                     key={p.id}
                     personaId={p.id}
-                    size={14}
+                    size={13}
                     className={isApproved ? "text-olive" : "text-ink-muted"}
                   />
                 );
@@ -201,11 +234,11 @@ export function TicketCard({
               const dl = formatDueDate(ticket.dueDate);
               return (
                 <span
-                  className={`inline-flex items-center gap-1.5 text-xs ${
+                  className={`inline-flex items-center gap-1.5 text-[11px] ${
                     dl.className
-                  } ${dl.isOverdue ? "bg-cardinal/10 border border-cardinal/30 rounded px-2 py-0.5" : ""}`}
+                  } ${dl.isOverdue ? "bg-cardinal/10 border border-cardinal/30 rounded-md px-2 py-0.5" : ""}`}
                 >
-                  <Calendar size={12} />
+                  <Calendar size={11} />
                   {dl.label}
                 </span>
               );
@@ -214,10 +247,10 @@ export function TicketCard({
         )}
 
         {/* Personas row */}
-        <div className="flex items-center justify-between mt-3">
+        <div className="flex items-center justify-between mt-3 pt-3 border-t border-border-subtle">
           <div className="flex -space-x-1">
             {allPersonas.map((p) => (
-              <div key={p.id} className="ring-2 ring-gray-900 rounded-full">
+              <div key={p.id} className="ring-2 ring-deep rounded-full">
                 <PersonaBadge
                   personaId={p.id}
                   approved={ticket.approvals.includes(p.id)}
@@ -225,23 +258,22 @@ export function TicketCard({
               </div>
             ))}
           </div>
-          <div className="flex items-center gap-3 text-xs text-gray-500">
+          <div className="flex items-center gap-3 text-[11px] text-ink-muted">
             <span className="flex items-center gap-1">
-              <MessageSquare size={12} />
+              <MessageSquare size={11} />
               {ticket.feedback.length}
             </span>
             <span
               className="flex items-center gap-1"
               title={formatAbsoluteDate(ticket.updatedAt)}
             >
-              <Clock size={12} />
+              <Clock size={11} />
               {formatRelativeTime(ticket.updatedAt)}
             </span>
           </div>
         </div>
       </Link>
 
-      {/* CopyButton positioned absolutely outside the <a> tag to avoid invalid HTML nesting */}
       <div className="absolute top-3 right-3">
         <CopyButton text={ticket.id} label={ticket.id} />
       </div>

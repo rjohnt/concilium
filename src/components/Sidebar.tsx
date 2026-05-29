@@ -3,7 +3,22 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, PlusCircle, GitBranch, LogOut, User, Car, Menu, X, Settings } from "lucide-react";
+import {
+  LayoutDashboard,
+  PlusCircle,
+  GitBranch,
+  LogOut,
+  User,
+  Settings,
+  Menu,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Users,
+  CheckCircle,
+  Activity,
+  Search,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/lib/auth-context";
 import { getTickets } from "@/lib/store";
@@ -15,53 +30,42 @@ export function Sidebar() {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [showTemplateEditor, setShowTemplateEditor] = useState(false);
+  const [isTemplateEditorOpen, setIsTemplateEditorOpen] = useState(false);
   const hamburgerRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const [isTemplateEditorOpen, setIsTemplateEditorOpen] = useState(false);
 
-  const openSidebar = useCallback(() => {
-    setIsMobileOpen(true);
-  }, []);
+  const openSidebar = useCallback(() => setIsMobileOpen(true), []);
+  const closeSidebar = useCallback(() => setIsMobileOpen(false), []);
 
-  const closeSidebar = useCallback(() => {
-    setIsMobileOpen(false);
-  }, []);
-
-  // Focus management: focus close button when sidebar opens, hamburger when it closes
+  // Focus management
   useEffect(() => {
     if (isMobileOpen) {
-      // Small delay to allow the close button to render
-      requestAnimationFrame(() => {
-        closeButtonRef.current?.focus();
-      });
+      requestAnimationFrame(() => closeButtonRef.current?.focus());
     } else {
       hamburgerRef.current?.focus();
     }
   }, [isMobileOpen]);
 
-  // Escape key handler
+  // Escape key
   useEffect(() => {
     if (!isMobileOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        closeSidebar();
-      }
+      if (e.key === "Escape") closeSidebar();
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isMobileOpen, closeSidebar]);
 
-  // Body scroll lock when sidebar is open on mobile
+  // Body scroll lock
   useEffect(() => {
     if (isMobileOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
     }
-    return () => {
-      document.body.style.overflow = "";
-    };
+    return () => { document.body.style.overflow = ""; };
   }, [isMobileOpen]);
 
   const [ticketCounts, setTicketCounts] = useState({ total: 0, active: 0 });
@@ -71,8 +75,6 @@ export function Sidebar() {
       ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
       : false;
 
-  // Refresh ticket counts on mount, navigation, window focus, storage changes,
-  // and when tickets change in the same tab via the tickets-changed event.
   useEffect(() => {
     const refresh = () => {
       const allTickets = getTickets();
@@ -97,11 +99,22 @@ export function Sidebar() {
     };
   }, [pathname]);
 
+  const sidebarWidth = isCollapsed ? 60 : 256;
+  const sidebarStyles = {
+    width: isCollapsed ? 60 : 256,
+    transition: "width 0.2s ease",
+  };
+
   const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/new", label: "New Ticket", icon: PlusCircle },
-    { href: "/vin", label: "VIN Decoder", icon: Car },
     { label: "Templates", icon: Settings, onClick: () => setIsTemplateEditorOpen(true) },
+  ];
+
+  const teamItems = [
+    { label: "Engineering", color: "#6b8fa8" },
+    { label: "Design", color: "#c9a84c" },
+    { label: "Product", color: "#6b8f5e" },
   ];
 
   const handleSignOut = async () => {
@@ -109,9 +122,58 @@ export function Sidebar() {
     router.push("/login");
   };
 
+  const getInitials = (name?: string) => {
+    if (!name) return "?";
+    return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+  };
+
+  // Collapsed sidebar
+  if (isCollapsed) {
+    return (
+      <>
+        <aside
+          className="fixed left-0 top-0 h-full z-40 bg-base border-r border-border-subtle flex flex-col items-center py-4 gap-1 overflow-hidden"
+          style={{ width: 60 }}
+        >
+          <Link href="/" className="mb-4">
+            <div className="w-9 h-9 rounded-lg bg-gold flex items-center justify-center text-sm font-bold text-deep">
+              C
+            </div>
+          </Link>
+
+          {[{ href: "/", icon: LayoutDashboard, isActive: pathname === "/" }].map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="w-10 h-10 rounded-lg flex items-center justify-center transition-all"
+              style={{
+                background: item.isActive ? "var(--color-raised)" : "transparent",
+                color: item.isActive ? "var(--color-gold)" : "var(--color-ink-muted)",
+                border: item.isActive ? "1px solid var(--color-border-visible)" : "1px solid transparent",
+              }}
+            >
+              <item.icon size={16} />
+            </Link>
+          ))}
+
+          <div className="flex-1" />
+
+          <button
+            onClick={() => setIsCollapsed(false)}
+            className="w-10 h-10 rounded-lg flex items-center justify-center text-ink-muted hover:text-ink-secondary transition-colors"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </aside>
+        {/* Spacer for layout */}
+        <div className="w-[60px] shrink-0 hidden md:block" />
+      </>
+    );
+  }
+
   return (
     <>
-      {/* Hamburger button — only visible on mobile */}
+      {/* Hamburger — mobile only */}
       <button
         ref={hamburgerRef}
         onClick={openSidebar}
@@ -123,7 +185,7 @@ export function Sidebar() {
         <Menu size={20} />
       </button>
 
-      {/* Backdrop overlay — only visible on mobile when sidebar is open */}
+      {/* Backdrop — mobile only */}
       {isMobileOpen && (
         <button
           className="fixed inset-0 bg-black/30 z-40 md:hidden"
@@ -135,12 +197,13 @@ export function Sidebar() {
       {/* Sidebar */}
       <aside
         id="sidebar-navigation"
-        className={`fixed left-0 top-0 h-full w-64 bg-base border-r border-border-subtle flex flex-col z-50 transition-transform duration-300 ease-in-out overscroll-contain
+        className={`fixed left-0 top-0 h-full z-50 bg-base border-r border-border-subtle flex flex-col overscroll-contain
           ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
-          md:translate-x-0
+          md:translate-x-0 md:sticky md:top-0
         `}
+        style={sidebarStyles}
       >
-        {/* Close button — only visible on mobile */}
+        {/* Close button — mobile only */}
         <button
           ref={closeButtonRef}
           onClick={closeSidebar}
@@ -150,46 +213,60 @@ export function Sidebar() {
           <X size={20} />
         </button>
 
-        {/* Logo */}
-        <div className="p-6 border-b border-border-subtle">
-          <Link href="/" className="flex items-center gap-3" onClick={closeSidebar}>
-            <div className="w-8 h-8 rounded-lg bg-gold flex items-center justify-center">
-            <GitBranch size={18} className="text-white" />
+        {/* Header */}
+        <div className="p-5 pb-4 border-b border-border-subtle flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5" onClick={closeSidebar}>
+            <div className="w-8 h-8 rounded-lg bg-gold flex items-center justify-center shrink-0">
+              <GitBranch size={16} className="text-deep" />
             </div>
-            <div>
-              <h1 className="text-lg font-bold text-ink-primary tracking-tight font-sans">
-                Concilium
+            <div className="min-w-0">
+              <h1 className="text-sm font-semibold text-ink-primary tracking-tight leading-tight">
+                concilium
               </h1>
-              <p className="text-[10px] text-ink-muted uppercase tracking-wider">
-                Multiplayer Tickets
+              <p className="text-[10px] text-ink-muted uppercase tracking-wider leading-tight">
+                firebird
               </p>
             </div>
           </Link>
+          <button
+            onClick={() => setIsCollapsed(true)}
+            className="p-1 rounded-lg text-ink-muted hover:text-ink-secondary hover:bg-raised transition-colors hidden md:block"
+            aria-label="Collapse sidebar"
+          >
+            <ChevronLeft size={16} />
+          </button>
+        </div>
+
+        {/* Search */}
+        <div className="px-4 py-3">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-deep border border-border-subtle text-ink-muted text-xs">
+            <Search size={13} />
+            <span>Search...</span>
+          </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 px-2 py-1 space-y-0.5">
+          <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-ink-muted">
+            Navigation
+          </p>
           {navItems.map((item) => {
             const isActive = "href" in item && item.href ? pathname === item.href : false;
-            const isDashboard = "href" in item && item.href === "/";
-            const className = `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+
+            const linkClass = `flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-xs font-medium transition-all ${
               isActive
-                ? "bg-gold/10 text-gold"
-                : "text-ink-secondary hover:text-ink-primary hover:bg-raised"
+                ? "bg-raised text-ink-primary border border-border-visible"
+                : "text-ink-secondary hover:text-ink-primary hover:bg-raised border border-transparent"
             }`;
 
-            // Button-style nav item (no href, e.g. Templates)
             if ("onClick" in item && item.onClick) {
               return (
                 <button
                   key={item.label}
-                  onClick={() => {
-                    item.onClick?.();
-                    closeSidebar();
-                  }}
-                  className={className + " w-full text-left cursor-pointer"}
+                  onClick={() => { item.onClick?.(); closeSidebar(); }}
+                  className={linkClass + " text-left cursor-pointer"}
                 >
-                  <item.icon size={18} />
+                  <item.icon size={16} />
                   <span className="flex-1">{item.label}</span>
                 </button>
               );
@@ -200,25 +277,21 @@ export function Sidebar() {
                 key={item.href}
                 href={item.href ?? "/"}
                 onClick={closeSidebar}
-                className={className}
+                className={linkClass}
               >
-                <item.icon size={18} />
+                <item.icon size={16} />
                 <span className="flex-1">{item.label}</span>
-                {isDashboard && ticketCounts.total > 0 && (
-                  <span className="flex items-center gap-1.5 ml-auto">
+                {"href" in item && item.href === "/" && ticketCounts.total > 0 && (
+                  <span className="flex items-center gap-1.5">
                     {ticketCounts.active > 0 && (
                       <motion.span
-                        className="relative flex h-2.5 w-2.5"
+                        className="relative flex h-2 w-2"
                         animate={
                           prefersReducedMotion
                             ? { opacity: 1 }
                             : { opacity: [1, 0.3, 1] }
                         }
-                        transition={{
-                          duration: 1.8,
-                          repeat: Infinity,
-                          ease: "easeInOut",
-                        }}
+                        transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
                       >
                         <span className="absolute inline-flex h-full w-full rounded-full bg-gold opacity-75" />
                         <motion.span
@@ -228,16 +301,12 @@ export function Sidebar() {
                               ? { scale: 1 }
                               : { scale: [1, 1.8, 1] }
                           }
-                          transition={{
-                            duration: 1.8,
-                            repeat: Infinity,
-                            ease: "easeInOut",
-                          }}
+                          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
                           style={{ transformOrigin: "50% 50%" }}
                         />
                       </motion.span>
                     )}
-                    <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-semibold leading-none rounded-full bg-gold/20 text-gold">
+                    <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-semibold leading-none rounded-md bg-gold/15 text-gold border border-gold/20">
                       {ticketCounts.total}
                     </span>
                   </span>
@@ -247,41 +316,60 @@ export function Sidebar() {
           })}
         </nav>
 
-        {/* User Section */}
+        {/* Teams */}
+        <div className="px-2 py-1 border-t border-border-subtle">
+          <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-ink-muted">
+            Teams
+          </p>
+          {teamItems.map((team) => (
+            <div
+              key={team.label}
+              className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-ink-secondary hover:bg-raised hover:text-ink-primary transition-colors cursor-pointer"
+            >
+              <span
+                className="w-2 h-2 rounded-full shrink-0"
+                style={{ background: team.color }}
+              />
+              {team.label}
+            </div>
+          ))}
+        </div>
+
+        {/* User */}
         <div className="p-4 border-t border-border-subtle">
           {user ? (
-            <div className="space-y-3">
-              {/* User Info */}
-              <div className="flex items-center gap-3 px-1">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2.5 px-1">
                 {user.user_metadata?.avatar_url ? (
                   <img
                     src={user.user_metadata.avatar_url}
                     alt="Avatar"
-                    className="w-8 h-8 rounded-full ring-2 ring-border-visible"
+                    className="w-7 h-7 rounded-full ring-2 ring-border-visible shrink-0"
                   />
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-gold flex items-center justify-center">
-                    <User size={16} className="text-white" />
+                  <div className="w-7 h-7 rounded-full bg-overlay flex items-center justify-center shrink-0">
+                    <span className="text-[11px] font-semibold text-gold">
+                      {getInitials(user.user_metadata?.full_name || user.user_metadata?.name || user.email)}
+                    </span>
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-ink-primary truncate">
+                  <p className="text-xs font-medium text-ink-primary truncate">
                     {user.user_metadata?.full_name ||
                       user.user_metadata?.name ||
                       user.email?.split("@")[0]}
                   </p>
-                  <p className="text-xs text-ink-muted truncate">{user.email}</p>
+                  <p className="text-[10px] text-ink-muted">Free plan</p>
                 </div>
               </div>
 
               <ThemeToggle />
 
-              {/* Logout */}
               <button
                 onClick={handleSignOut}
-                className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-ink-secondary hover:text-ink-primary hover:bg-raised transition-colors"
+                className="flex items-center gap-2 w-full px-3 py-1.5 rounded-lg text-xs text-ink-secondary hover:text-ink-primary hover:bg-raised transition-colors"
               >
-                <LogOut size={16} />
+                <LogOut size={14} />
                 Sign out
               </button>
             </div>
@@ -299,7 +387,7 @@ export function Sidebar() {
         </div>
       </aside>
 
-      {/* Template Editor Modal */}
+      {/* Template Editor */}
       <TemplateEditor
         isOpen={isTemplateEditorOpen}
         onClose={() => setIsTemplateEditorOpen(false)}
