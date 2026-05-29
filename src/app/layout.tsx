@@ -8,6 +8,7 @@ import { AuthGuard } from "@/components/AuthGuard";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import PageTransition from "@/components/PageTransition";
 import { ThemeProvider } from "@/lib/theme";
+import { OfflineBanner } from "@/components/OfflineBanner";
 import { ToastProvider } from "@/components/Toast";
 
 export const metadata: Metadata = {
@@ -25,6 +26,7 @@ export default function RootLayout({
     <html lang="en" className="dark" suppressHydrationWarning>
       <body className="min-h-screen bg-[#1a1714]">
         <ThemeProvider>
+          <OfflineBanner />
           <ToastProvider>
             <AuthProvider>
               <AuthGuard>
