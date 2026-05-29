@@ -193,10 +193,10 @@ export function TicketCard({
         })()}
 
         {/* Bottom row: personas + metadata */}
-        <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: "1px solid #E2E8F0" }}>
-          <div className="flex -space-x-1">
+        <div className="mt-3 flex flex-col gap-2 pt-3 sm:flex-row sm:items-center sm:justify-between" style={{ borderTop: "1px solid #E2E8F0" }}>
+          <div className="flex flex-wrap items-center gap-1.5" data-testid="ticket-persona-badges">
             {allPersonas.map((p) => (
-              <div key={p.id} className="ring-2 ring-white rounded-full">
+              <div key={p.id} className="shrink-0">
                 <PersonaBadge personaId={p.id} approved={ticket.approvals.includes(p.id)} />
               </div>
             ))}

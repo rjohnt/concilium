@@ -330,6 +330,13 @@ describe("TicketCard", () => {
     expect(link.className).not.toContain("ring-gold/70");
   });
 
+  it("wraps persona badges instead of overlapping them", () => {
+    render(<TicketCard ticket={createTestTicket()} />);
+    const badgesRow = screen.getByTestId("ticket-persona-badges");
+    expect(badgesRow.className).toContain("flex-wrap");
+    expect(badgesRow.className).not.toContain("-space-x-1");
+  });
+
   // === DEV-93: Consensus dots row ===
 
   describe("Consensus dots row", () => {

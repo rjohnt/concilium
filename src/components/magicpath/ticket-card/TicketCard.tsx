@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-type TicketStatus = "draft" | "in-review" | "consensus" | "building" | "done";
+import { TicketStatus } from "@/lib/types";
+
 interface TicketCardProps {
   id: string;
   title: string;

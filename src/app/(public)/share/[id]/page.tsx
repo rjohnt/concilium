@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { FileQuestion } from "lucide-react";
 import { VehicleHero } from "@/components/VehicleHero";
@@ -25,6 +25,7 @@ export default function SharePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<LightboxState | null>(null);
+  const [origin, setOrigin] = useState("");
 
   useEffect(() => {
     if (!id) {
@@ -76,10 +77,14 @@ export default function SharePage() {
     setLightbox(null);
   }, []);
 
-  const shareUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/share/${id}`
-      : "";
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
+  const shareUrl = useMemo(() => {
+    if (!origin || !id) return "";
+    return `${origin}/share/${id}`;
+  }, [origin, id]);
 
   // --- Loading state ---
   if (loading) {
@@ -103,13 +108,11 @@ export default function SharePage() {
   }
 
   // --- Loaded state ---
-  const categories = data.timeline
-    .map((e) => e.category)
-    .filter((v, i, a) => a.indexOf(v) === i);
+  const categories = Array.from(new Set(data.timeline.map((e) => e.category)));
 
   return (
     <>
-      <div className="md:-ml-64">
+      <div>
         {/* Hero */}
         <VehicleHero
           vehicle={data.vehicle}
@@ -128,7 +131,7 @@ export default function SharePage() {
 
       {/* Sticky share bar */}
       <div className="sticky bottom-0 z-20 bg-gradient-to-t from-[#1a1714] via-[#1a1714]/95 to-transparent pt-6 pb-4">
-        <div className="max-w-3xl mx-auto px-4 md:px-0 md:-ml-64">
+        <div className="max-w-3xl mx-auto px-4 md:px-0">
           <ShareLinkBar shareUrl={shareUrl} />
         </div>
       </div>

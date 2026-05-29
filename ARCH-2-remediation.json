@@ -1,0 +1,63 @@
+{
+  "problem_summary": "store.ts (client, localStorage) and server-db.ts (Node, SQLite) contain near-identical copies of business logic: (1) ID generation (TIX-XXX, FB-XXX, BLD-XXX patterns with counters), (2) status auto-transitions on feedback (draft→in-review, in-review→consensus, consensus→building), (3) approval-tracking and consensus-threshold checks, (4) build-report stubbing with identical defaults, (5) completeBuild() status=done logic, and (6) seed data with duplicate ticket/feedback content. The only legitimate divergence is the persistence layer (debounced localStorage + BroadcastChannel vs. SQLite WAL + transactions). The duplication creates risk: a bug fix or rule change to status transitions in one module can be silently missed in the other.",
+
+  "phased_plan": [
+    {
+      "phase": 1,
+      "goal": "Extract ID generation into a shared pure module, eliminating the duplicate TIX-/FB-/BLD- prefix logic and counter management between store.ts and server-db.ts.",
+      "file_changes": [
+        "NEW: src/lib/id-generator.ts — functions generateTicketId(counter), generateFeedbackId(counter), generateBuildReportId(counter)",
+        "MODIFY: src/lib/store.ts — replace inline generateId() + nextTicketId/nextFeedbackId/nextBuildReportId counters with imports from id-generator.ts (behavior preserved, no API change)",
+        "MODIFY: src/lib/server-db.ts — replace inline `TIX-${String(nextTicketId())...}` and `FB-${String(nextFeedbackId())...}` patterns with imports from id-generator.ts"
+      ],
+      "risk": "low",
+      "tests": "Existing unit tests in src/lib/__tests__/store.test.ts verify ID generation indirectly. Add a dedicated src/lib/__tests__/id-generator.test.ts for the new module. Run npm test to confirm no regressions."
+    },
+    {
+      "phase": 2,
+      "goal": "Extract status auto-transition rules into a single pure-workflow module so both store.ts (client) and server-db.ts (server) apply the same transitions deterministically.",
+      "file_changes": [
+        "NEW: src/lib/ticket-workflow.ts — pure functions: applyFeedbackWorkflow(ticket, personaId, approved, allPersonaIds) returning {ticket, statusChanged, reachedConsensus, reachedBuilding}; also exports a shared shouldAutoTransition(ticket) predicate.",
+        "MODIFY: src/lib/store.ts — addFeedback() delegates status-transition logic to ticket-workflow.ts instead of inline if-blocks; keeps only browser-specific side effects (notifications, BroadcastChannel, localStorage).",
+        "MODIFY: src/lib/server-db.ts — addFeedback() delegates status-transition logic to ticket-workflow.ts instead of inline SQL UPDATEs for status; keeps only SQLite persistence calls."
+      ],
+      "risk": "low",
+      "tests": "Add src/lib/__tests__/ticket-workflow.test.ts covering all transition edges (draft→in-review, in-review→consensus when threshold met, consensus/in-review→building when all approved, no transition when disapprovals exist). Existing store.test.ts and consensus-threshold.test.ts remain as regression guards."
+    },
+    {
+      "phase": 3,
+      "goal": "Extract duplicated seed data into a single module. Both store.ts and server-db.ts currently hard-code the same two seed tickets and five feedback entries verbatim.",
+      "file_changes": [
+        "NEW: src/lib/seed-data.ts — exports DEFAULT_SEED_TICKETS array and DEFAULT_SEED_FEEDBACK map keyed by ticket title.",
+        "MODIFY: src/lib/store.ts — seedData() imports from seed-data.ts instead of inline createTicket/addFeedback calls.",
+        "MODIFY: src/lib/server-db.ts — maybeSeedData() imports from seed-data.ts instead of inline INSERT statements."
+      ],
+      "risk": "low",
+      "tests": "Add src/lib/__tests__/seed-data.test.ts to verify seed payload shape matches Ticket/FeedbackEntry types. Existing store test confirms seedData() still produces expected state."
+    },
+    {
+      "phase": 4,
+      "goal": "Extract build-report construction logic into a shared module. Both store.ts (autoTransitionToBuilding + triggerBuild) and server-db.ts (setBuildReport) duplicate the stub-BuildReport shape, build→done transition, and completedAt timestamping.",
+      "file_changes": [
+        "NEW: src/lib/build-workflow.ts — functions: createBuildStub(ticketId, approvalCount, personaCount) returning BuildReport; completeBuildOnTicket(ticket) mutating status='done' + completedAt on the buildReport.",
+        "MODIFY: src/lib/store.ts — autoTransitionToBuilding() and completeBuild() import from build-workflow.ts instead of inline object construction.",
+        "MODIFY: src/lib/server-db.ts — setBuildReport() and completeBuild() import status-transition logic from build-workflow.ts; keeps only SQL UPDATE persistence."
+      ],
+      "risk": "medium",
+      "tests": "Add src/lib/__tests__/build-workflow.test.ts for the new module. Existing store.test.ts and any API route integration tests (e.g., api/__tests__/build.test.ts) act as regression guards."
+    },
+    {
+      "phase": 5,
+      "goal": "Unify updateTicket/updateTicketStatus field-merge logic. Both store.ts and server-db.ts duplicate the pattern of conditionally applying title/description/dueDate/status/priority/tags updates with updatedAt timestamp bump.",
+      "file_changes": [
+        "MODIFY: src/lib/ticket-workflow.ts — add applyTicketUpdates(ticket, updates) pure function that merges allowed fields and returns the mutated ticket + a Set<string> of changed field names.",
+        "MODIFY: src/lib/store.ts — updateTicket() and updateTicketStatus() delegate field-merge to ticket-workflow.ts; keep only persistence + side-effect wrapper.",
+        "MODIFY: src/lib/server-db.ts — updateTicket() delegates field-merge to ticket-workflow.ts; keep only dynamic SQL SET clause construction from the returned changed-fields set."
+      ],
+      "risk": "medium",
+      "tests": "Extend src/lib/__tests__/ticket-workflow.test.ts with test cases for applyTicketUpdates. Existing store.test.ts covers updateTicket paths. Add an API-level test that hits PATCH /api/tickets and verifies only the specified fields changed."
+    }
+  ],
+
+  "first_cut_recommendation": "Phase 1: Extract ID generation into src/lib/id-generator.ts. This is the single safest first refactor because (a) the logic is purely functional with zero side effects, (b) both store.ts and server-db.ts use the same prefix/counter pattern but with tiny implementation differences (inline string concat vs template literal), (c) it introduces no coupling to persistence, notifications, or any browser/Node APIs, and (d) the existing test suite provides complete coverage over the ID-dependent flows — if IDs change format, tests fail immediately."
+}

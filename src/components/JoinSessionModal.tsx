@@ -76,7 +76,7 @@ export function JoinSessionModal({
       : "Join this ticket session as a stakeholder persona. Your perspective will shape the review — weigh in with the lens of your chosen role.";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 overflow-y-auto p-4 sm:flex sm:items-center sm:justify-center">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-deep"
@@ -84,9 +84,10 @@ export function JoinSessionModal({
       />
 
       {/* Modal content */}
-      <div className="relative w-full max-w-3xl animate-in fade-in zoom-in-95 duration-300">
+      <div className="relative mx-auto w-full max-w-3xl max-h-[calc(100dvh-2rem)] overflow-hidden rounded-2xl animate-in fade-in zoom-in-95 duration-300">
+        <div className="h-full overflow-y-auto bg-base p-2 sm:p-4">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6 sm:mb-8">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold/10 border border-gold/20 text-gold text-xs font-medium mb-4">
             <Sparkles size={14} />
             {mode === "switch" ? "Switch Role" : "Session Join"}
@@ -100,13 +101,13 @@ export function JoinSessionModal({
         </div>
 
         {/* Persona cards grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
           {personas.map((persona, i) => (
             <button
               key={persona.id}
               onClick={() => handleSelect(persona.id)}
               disabled={joining}
-              className={`group relative text-left p-5 rounded-xl border transition-all duration-300 cursor-pointer
+              className={`group relative text-left p-4 sm:p-5 rounded-xl border transition-all duration-300 cursor-pointer
                 bg-elevated hover:bg-elevated
                 ${
                   selectedId === persona.id
@@ -205,6 +206,7 @@ export function JoinSessionModal({
             ? "Your current feedback will be preserved when switching."
             : "You can switch your persona at any time during the session."}
         </p>
+        </div>
       </div>
     </div>
   );

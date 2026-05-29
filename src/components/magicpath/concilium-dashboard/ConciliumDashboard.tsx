@@ -1,9 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-type TicketStatus = "draft" | "in-review" | "consensus" | "building" | "done";
+import { TicketStatus } from "@/lib/types";
+
 type FilterTab = "all" | TicketStatus;
-interface Ticket {
+
+/** Lightweight dashboard view model — a subset of the canonical Ticket with display-only extras. */
+interface DashboardTicket {
   id: string;
   title: string;
   status: TicketStatus;
@@ -51,7 +54,7 @@ const STATUS_CONFIG: Record<TicketStatus, {
 const PRIORITY_LABELS = ["Urgent", "High", "Medium", "Low", "Backlog"];
 const PRIORITY_COLORS = ["#dc2626", "#d97706", "#4f46e5", "#6b7280", "#a8adc4"];
 const PRIORITY_BG = ["rgba(220,38,38,0.07)", "rgba(217,119,6,0.07)", "rgba(79,70,229,0.07)", "rgba(107,114,128,0.07)", "rgba(168,173,196,0.07)"];
-const SAMPLE_TICKETS: Ticket[] = [{
+const SAMPLE_TICKETS: DashboardTicket[] = [{
   id: "CON-001",
   title: "Dark mode persona feedback",
   status: "in-review",
@@ -535,7 +538,7 @@ export function ConciliumDashboard() {
           fontSize: 13,
           color: "#9ca3af"
         }}>
-              Try adjusting your search or filter to find what you're looking for.
+              Try adjusting your search or filter to find what you&apos;re looking for.
             </div>
           </div>}
       </div>

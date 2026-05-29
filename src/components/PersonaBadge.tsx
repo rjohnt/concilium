@@ -18,12 +18,16 @@ export function PersonaBadge({
   const personaExpertise = persona?.expertise ?? "";
   const iconSize = size === "lg" ? 16 : 14;
   const sizeClasses =
-    size === "lg" ? "px-3 py-1 text-sm gap-2" : "px-2 py-0.5 text-xs gap-1";
+    size === "lg"
+      ? "h-8 px-3 text-sm gap-2 whitespace-nowrap"
+      : "h-7 px-2.5 text-xs gap-1.5 whitespace-nowrap";
 
   return (
     <span
       className={`inline-flex items-center rounded-full ${sizeClasses} ${
-        approved ? `${personaColor} text-white` : "bg-gray-800 text-gray-400"
+        approved
+          ? `${personaColor} text-white`
+          : "bg-elevated text-ink-secondary border border-border-subtle"
       } transition-colors`}
       title={`${personaLabel}: ${personaExpertise}`}
     >

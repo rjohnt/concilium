@@ -12,6 +12,7 @@ import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
 import { Ticket, FeedbackEntry, BuildReport, PersonaId, TicketStatus, PriorityLevel, Tag } from "./types";
+import { checkConsensusThreshold } from "./consensus-threshold";
 
 // ─── Database Path ───────────────────────────────────────────────────────────
 
@@ -399,7 +400,6 @@ export function addFeedback(
   // Check consensus and auto-transition
   const updatedTicket = getTicket(ticketId);
   if (updatedTicket) {
-    const { checkConsensusThreshold } = require("./consensus-threshold");
     const threshold = checkConsensusThreshold(updatedTicket);
     if (threshold.reached && updatedTicket.status === "in-review") {
       d.prepare("UPDATE tickets SET status = 'consensus', updated_at = ? WHERE id = ?").run(now, ticketId);
