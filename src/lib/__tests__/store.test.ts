@@ -615,6 +615,9 @@ describe("retryBuild", () => {
   /** Helper: create a ticket in "building" state with a stub build report. */
   function setupBuildingTicket(title = "Build Test") {
     const ticket = createTicket(title, "Description");
+    // Use valid step-by-step transitions: draft → in-review → consensus → building
+    updateTicketStatus(ticket.id, "in-review");
+    updateTicketStatus(ticket.id, "consensus");
     updateTicketStatus(ticket.id, "building");
     setBuildReport(ticket.id, {
       id: "BLD-001",
@@ -662,6 +665,9 @@ describe("retryBuild", () => {
 
   it("returns null when ticket is in 'done' status", async () => {
     const ticket = createTicket("Done Ticket", "Already done");
+    updateTicketStatus(ticket.id, "in-review");
+    updateTicketStatus(ticket.id, "consensus");
+    updateTicketStatus(ticket.id, "building");
     updateTicketStatus(ticket.id, "done");
     const result = await retryBuild(ticket.id);
     expect(result).toBeNull();
@@ -829,5 +835,309 @@ describe("retryBuild", () => {
     expect(persistedTicket.buildReport.errorMessage).toBe(
       "Build generation failed after 3 attempts."
     );
+  });
+});
+
+// ========================================================================
+// updateTicketStatus validation tests (new tests for DEV-102)
+// ========================================================================
+
+describe("updateTicketStatus validation", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    mockStorage.clear();
+    clearStorage();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  // --- Valid forward transitions ---
+
+  it("allows draft → in-review (valid forward)", () => {
+    const ticket = createTicket("Test", "Description");
+    expect(ticket.status).toBe("draft");
+
+    const result = updateTicketStatus(ticket.id, "in-review");
+    expect(result).not.toBeNull();
+    expect(result!.status).toBe("in-review");
+    expect(result!.id).toBe(ticket.id);
+  });
+
+  it("allows in-review → consensus (valid forward)", () => {
+    const ticket = createTicket("Test", "Description");
+    updateTicketStatus(ticket.id, "in-review");
+
+    const result = updateTicketStatus(ticket.id, "consensus");
+    expect(result).not.toBeNull();
+    expect(result!.status).toBe("consensus");
+  });
+
+  it("allows consensus → building (valid forward)", () => {
+    const ticket = createTicket("Test", "Description");
+    updateTicketStatus(ticket.id, "in-review");
+    updateTicketStatus(ticket.id, "consensus");
+
+    const result = updateTicketStatus(ticket.id, "building");
+    expect(result).not.toBeNull();
+    expect(result!.status).toBe("building");
+  });
+
+  it("allows building → done (valid forward)", () => {
+    const ticket = createTicket("Test", "Description");
+    updateTicketStatus(ticket.id, "in-review");
+    updateTicketStatus(ticket.id, "consensus");
+    updateTicketStatus(ticket.id, "building");
+
+    const result = updateTicketStatus(ticket.id, "done");
+    expect(result).not.toBeNull();
+    expect(result!.status).toBe("done");
+  });
+
+  // --- Valid backward transitions ---
+
+  it("allows done → building (valid backward)", () => {
+    const ticket = createTicket("Test", "Description");
+    updateTicketStatus(ticket.id, "in-review");
+    updateTicketStatus(ticket.id, "consensus");
+    updateTicketStatus(ticket.id, "building");
+    updateTicketStatus(ticket.id, "done");
+
+    const result = updateTicketStatus(ticket.id, "building");
+    expect(result).not.toBeNull();
+    expect(result!.status).toBe("building");
+  });
+
+  it("allows building → consensus (valid backward)", () => {
+    const ticket = createTicket("Test", "Description");
+    updateTicketStatus(ticket.id, "in-review");
+    updateTicketStatus(ticket.id, "consensus");
+    updateTicketStatus(ticket.id, "building");
+
+    const result = updateTicketStatus(ticket.id, "consensus");
+    expect(result).not.toBeNull();
+    expect(result!.status).toBe("consensus");
+  });
+
+  it("allows consensus → in-review (valid backward)", () => {
+    const ticket = createTicket("Test", "Description");
+    updateTicketStatus(ticket.id, "in-review");
+    updateTicketStatus(ticket.id, "consensus");
+
+    const result = updateTicketStatus(ticket.id, "in-review");
+    expect(result).not.toBeNull();
+    expect(result!.status).toBe("in-review");
+  });
+
+  it("allows in-review → draft (valid backward)", () => {
+    const ticket = createTicket("Test", "Description");
+    updateTicketStatus(ticket.id, "in-review");
+
+    const result = updateTicketStatus(ticket.id, "draft");
+    expect(result).not.toBeNull();
+    expect(result!.status).toBe("draft");
+  });
+
+  // --- Invalid transitions ---
+
+  it("rejects draft → consensus (skipping a step)", () => {
+    const ticket = createTicket("Test", "Description");
+
+    const result = updateTicketStatus(ticket.id, "consensus");
+    expect(result).toBeNull();
+    expect(ticket.status).toBe("draft"); // unchanged
+  });
+
+  it("rejects draft → building (skipping two steps)", () => {
+    const ticket = createTicket("Test", "Description");
+
+    const result = updateTicketStatus(ticket.id, "building");
+    expect(result).toBeNull();
+    expect(ticket.status).toBe("draft");
+  });
+
+  it("rejects draft → done (skipping all steps)", () => {
+    const ticket = createTicket("Test", "Description");
+
+    const result = updateTicketStatus(ticket.id, "done");
+    expect(result).toBeNull();
+    expect(ticket.status).toBe("draft");
+  });
+
+  it("rejects in-review → building (skipping consensus)", () => {
+    const ticket = createTicket("Test", "Description");
+    updateTicketStatus(ticket.id, "in-review");
+
+    const result = updateTicketStatus(ticket.id, "building");
+    expect(result).toBeNull();
+    expect(ticket.status).toBe("in-review");
+  });
+
+  it("rejects in-review → done (skipping two steps)", () => {
+    const ticket = createTicket("Test", "Description");
+    updateTicketStatus(ticket.id, "in-review");
+
+    const result = updateTicketStatus(ticket.id, "done");
+    expect(result).toBeNull();
+    expect(ticket.status).toBe("in-review");
+  });
+
+  it("rejects consensus → done (skipping building)", () => {
+    const ticket = createTicket("Test", "Description");
+    updateTicketStatus(ticket.id, "in-review");
+    updateTicketStatus(ticket.id, "consensus");
+
+    const result = updateTicketStatus(ticket.id, "done");
+    expect(result).toBeNull();
+    expect(ticket.status).toBe("consensus");
+  });
+
+  it("rejects consensus → draft (backward two steps)", () => {
+    const ticket = createTicket("Test", "Description");
+    updateTicketStatus(ticket.id, "in-review");
+    updateTicketStatus(ticket.id, "consensus");
+
+    const result = updateTicketStatus(ticket.id, "draft");
+    expect(result).toBeNull();
+    expect(ticket.status).toBe("consensus");
+  });
+
+  it("rejects building → draft (backward three steps)", () => {
+    const ticket = createTicket("Test", "Description");
+    updateTicketStatus(ticket.id, "in-review");
+    updateTicketStatus(ticket.id, "consensus");
+    updateTicketStatus(ticket.id, "building");
+
+    const result = updateTicketStatus(ticket.id, "draft");
+    expect(result).toBeNull();
+    expect(ticket.status).toBe("building");
+  });
+
+  it("rejects building → in-review (backward two steps)", () => {
+    const ticket = createTicket("Test", "Description");
+    updateTicketStatus(ticket.id, "in-review");
+    updateTicketStatus(ticket.id, "consensus");
+    updateTicketStatus(ticket.id, "building");
+
+    const result = updateTicketStatus(ticket.id, "in-review");
+    expect(result).toBeNull();
+    expect(ticket.status).toBe("building");
+  });
+
+  it("rejects done → consensus (backward two steps)", () => {
+    const ticket = createTicket("Test", "Description");
+    updateTicketStatus(ticket.id, "in-review");
+    updateTicketStatus(ticket.id, "consensus");
+    updateTicketStatus(ticket.id, "building");
+    updateTicketStatus(ticket.id, "done");
+
+    const result = updateTicketStatus(ticket.id, "consensus");
+    expect(result).toBeNull();
+    expect(ticket.status).toBe("done");
+  });
+
+  it("rejects done → in-review (backward three steps)", () => {
+    const ticket = createTicket("Test", "Description");
+    updateTicketStatus(ticket.id, "in-review");
+    updateTicketStatus(ticket.id, "consensus");
+    updateTicketStatus(ticket.id, "building");
+    updateTicketStatus(ticket.id, "done");
+
+    const result = updateTicketStatus(ticket.id, "in-review");
+    expect(result).toBeNull();
+    expect(ticket.status).toBe("done");
+  });
+
+  it("rejects done → draft (backward four steps)", () => {
+    const ticket = createTicket("Test", "Description");
+    updateTicketStatus(ticket.id, "in-review");
+    updateTicketStatus(ticket.id, "consensus");
+    updateTicketStatus(ticket.id, "building");
+    updateTicketStatus(ticket.id, "done");
+
+    const result = updateTicketStatus(ticket.id, "draft");
+    expect(result).toBeNull();
+    expect(ticket.status).toBe("done");
+  });
+
+  // --- Same-status no-ops ---
+
+  it("allows same-status transition (draft → draft)", () => {
+    const ticket = createTicket("Test", "Description");
+    const originalUpdatedAt = ticket.updatedAt;
+
+    vi.advanceTimersByTime(1000);
+
+    const result = updateTicketStatus(ticket.id, "draft");
+    expect(result).not.toBeNull();
+    expect(result!.status).toBe("draft");
+    // Same-status should NOT mutate updatedAt (no-op)
+    expect(result!.updatedAt).toBe(originalUpdatedAt);
+  });
+
+  it("allows same-status transition (in-review → in-review)", () => {
+    const ticket = createTicket("Test", "Description");
+    updateTicketStatus(ticket.id, "in-review");
+    const originalUpdatedAt = ticket.updatedAt;
+
+    vi.advanceTimersByTime(1000);
+
+    const result = updateTicketStatus(ticket.id, "in-review");
+    expect(result).not.toBeNull();
+    expect(result!.status).toBe("in-review");
+    expect(result!.updatedAt).toBe(originalUpdatedAt);
+  });
+
+  it("allows same-status transition (consensus → consensus)", () => {
+    const ticket = createTicket("Test", "Description");
+    updateTicketStatus(ticket.id, "in-review");
+    updateTicketStatus(ticket.id, "consensus");
+    const originalUpdatedAt = ticket.updatedAt;
+
+    vi.advanceTimersByTime(1000);
+
+    const result = updateTicketStatus(ticket.id, "consensus");
+    expect(result).not.toBeNull();
+    expect(result!.status).toBe("consensus");
+    expect(result!.updatedAt).toBe(originalUpdatedAt);
+  });
+
+  it("allows same-status transition (building → building)", () => {
+    const ticket = createTicket("Test", "Description");
+    updateTicketStatus(ticket.id, "in-review");
+    updateTicketStatus(ticket.id, "consensus");
+    updateTicketStatus(ticket.id, "building");
+    const originalUpdatedAt = ticket.updatedAt;
+
+    vi.advanceTimersByTime(1000);
+
+    const result = updateTicketStatus(ticket.id, "building");
+    expect(result).not.toBeNull();
+    expect(result!.status).toBe("building");
+    expect(result!.updatedAt).toBe(originalUpdatedAt);
+  });
+
+  it("allows same-status transition (done → done)", () => {
+    const ticket = createTicket("Test", "Description");
+    updateTicketStatus(ticket.id, "in-review");
+    updateTicketStatus(ticket.id, "consensus");
+    updateTicketStatus(ticket.id, "building");
+    updateTicketStatus(ticket.id, "done");
+    const originalUpdatedAt = ticket.updatedAt;
+
+    vi.advanceTimersByTime(1000);
+
+    const result = updateTicketStatus(ticket.id, "done");
+    expect(result).not.toBeNull();
+    expect(result!.status).toBe("done");
+    expect(result!.updatedAt).toBe(originalUpdatedAt);
+  });
+
+  // --- Missing ticket ---
+
+  it("returns null for non-existent ticket ID", () => {
+    const result = updateTicketStatus("NONEXISTENT-999", "in-review");
+    expect(result).toBeNull();
   });
 });

@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Ticket, PersonaId, PRIORITY_LABELS, PRIORITY_COLORS, PriorityLevel, PREDEFINED_TAGS } from "@/lib/types";
-import { seedData, getTicket, deleteTicket, updateTicket, updateTicketPriority, updateTicketTags, retryBuild, createTicket } from "@/lib/store";
+import { Ticket, PersonaId, PRIORITY_LABELS, PRIORITY_COLORS, PriorityLevel, PREDEFINED_TAGS, TicketStatus } from "@/lib/types";
+import { seedData, getTicket, deleteTicket, updateTicket, updateTicketPriority, updateTicketTags, updateTicketStatus, retryBuild, createTicket } from "@/lib/store";
+import { validateTransition } from "@/lib/status-machine";
 import { formatDueDate } from "@/lib/date-utils";
 import { getPersona } from "@/lib/personas";
 import { formatRelativeTime, formatAbsoluteDate } from "@/lib/timeAgo";
@@ -20,7 +21,7 @@ import { ActivityFeed } from "@/components/ActivityFeed";
 import { EditableField } from "@/components/EditableField";
 import { TagChip } from "@/components/TagChip";
 import { EmptyState } from "@/components/EmptyState";
-import { Clock, GitBranch, RefreshCw, Sparkles, ExternalLink, Trash2, FileQuestion, Calendar, Users } from "lucide-react";
+import { Clock, GitBranch, RefreshCw, Sparkles, ExternalLink, Trash2, FileQuestion, Calendar, Users, ChevronDown, Check } from "lucide-react";
 import { PersonaIcon } from "@/components/PersonaIcon";
 import Link from "next/link";
 import { useToast } from "@/components/Toast";
@@ -38,6 +39,38 @@ export default function TicketDetailPage() {
 
   // Delete dialog state
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  // Status dropdown state
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+  const statusDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Click outside to close status dropdown
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (statusDropdownRef.current && !statusDropdownRef.current.contains(e.target as Node)) {
+        setShowStatusDropdown(false);
+      }
+    };
+    if (showStatusDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showStatusDropdown]);
+
+  const handleStatusChange = (newStatus: TicketStatus) => {
+    if (!ticket) return;
+    const updated = updateTicketStatus(ticket.id, newStatus);
+    if (updated) {
+      setTicket({ ...updated });
+      setShowStatusDropdown(false);
+    } else {
+      addToast({
+        variant: "error",
+        title: "Invalid transition",
+        description: `Cannot move from "${ticket.status}" to "${newStatus}".`,
+      });
+    }
+  };
 
   const loadTicket = useCallback(() => {
     seedData();
@@ -202,19 +235,56 @@ export default function TicketDetailPage() {
                 {ticket.id}
               </span>
               <CopyButton text={ticket.id} label={ticket.id} />
-              <span
-                className={`badge ${
-                  ticket.status === "draft"
-                    ? "bg-elevated text-ink-secondary"
-                    : ticket.status === "in-review"
-                    ? "bg-yellow-900/50 text-yellow-400"
-                    : ticket.status === "consensus"
-                    ? "bg-emerald-900/50 text-emerald-400"
-                    : "bg-blue-900/50 text-blue-400"
-                }`}
-              >
-                {ticket.status}
-              </span>
+              {/* Status dropdown */}
+              <div className="relative" ref={statusDropdownRef}>
+                <button
+                  onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+                  className={`badge inline-flex items-center gap-1.5 cursor-pointer ${
+                    ticket.status === "draft" ? "bg-cardinal/20 text-cardinal" :
+                    ticket.status === "in-review" ? "bg-blue-steel/20 text-blue-steel" :
+                    ticket.status === "consensus" ? "bg-gold/20 text-gold-light" :
+                    ticket.status === "building" ? "bg-olive/20 text-olive" :
+                    "bg-raised text-ink-primary"
+                  }`}
+                >
+                  {ticket.status === "draft" ? "Draft" :
+                   ticket.status === "in-review" ? "In Review" :
+                   ticket.status === "consensus" ? "Consensus" :
+                   ticket.status === "building" ? "Building" :
+                   "Done"}
+                  <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+                </button>
+
+                {showStatusDropdown && (
+                  <div className="absolute top-full mt-1 left-0 z-50 bg-elevated border border-border-visible rounded-lg shadow-lg py-1 min-w-[160px]">
+                    {(["draft", "in-review", "consensus", "building", "done"] as TicketStatus[]).map((s) => {
+                      const isValid = validateTransition(ticket.status, s);
+                      const isCurrent = ticket.status === s;
+                      return (
+                        <button
+                          key={s}
+                          disabled={!isValid && !isCurrent}
+                          onClick={() => isValid && handleStatusChange(s)}
+                          className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between ${
+                            isCurrent ? "bg-gold/10 text-gold-light" :
+                            isValid ? "text-ink-primary hover:bg-raised cursor-pointer" :
+                            "text-ink-muted opacity-40 cursor-not-allowed"
+                          }`}
+                        >
+                          <span>
+                            {s === "draft" ? "Draft" :
+                             s === "in-review" ? "In Review" :
+                             s === "consensus" ? "Consensus" :
+                             s === "building" ? "Building" :
+                             "Done"}
+                          </span>
+                          {isCurrent && <Check className="w-3.5 h-3.5" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
               {/* Priority badge */}
               {ticket.priority !== 4 && (
                 <span className={`badge border ${PRIORITY_COLORS[ticket.priority]}`}>
