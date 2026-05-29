@@ -79,7 +79,7 @@ export function JoinSessionModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-deep/95 backdrop-blur-sm"
+        className="absolute inset-0 bg-deep"
         aria-hidden
       />
 
@@ -107,7 +107,7 @@ export function JoinSessionModal({
               onClick={() => handleSelect(persona.id)}
               disabled={joining}
               className={`group relative text-left p-5 rounded-xl border transition-all duration-300 cursor-pointer
-                bg-elevated/80 hover:bg-elevated
+                bg-elevated hover:bg-elevated
                 ${
                   selectedId === persona.id
                     ? `border-2 ${PERSONA_BORDER_COLORS[persona.id].split(" ")[0]} ring-2 ${PERSONA_RING_COLORS[persona.id]} ${PERSONA_GLOW_COLORS[persona.id]} shadow-xl scale-[1.02]`
@@ -154,7 +154,7 @@ export function JoinSessionModal({
                 </div>
 
                 {/* Prompt preview */}
-                <div className="mt-3 p-3 rounded-lg bg-deep/80 border border-border-subtle/60">
+                <div className="mt-3 p-3 rounded-lg bg-deep border border-border-subtle/60">
                   <p className="text-xs text-ink-muted leading-relaxed line-clamp-3 font-mono">
                     {persona.promptTemplate}
                   </p>
