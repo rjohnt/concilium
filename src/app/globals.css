@@ -4,22 +4,93 @@
 
 @layer base {
   :root {
-    --color-deep: #ffffff;
-    --color-base: #ffffff;
-    --color-raised: #f8f9ff;
-    --color-elevated: #f1f3f9;
-    --color-overlay: #e8eaf6;
-    --color-ink-primary: #0d0f1a;
-    --color-ink-secondary: #374151;
-    --color-ink-muted: #6b7280;
+    /* ===== MagicPath Design System: Indigo/White (v2) ===== */
+    /* Pulled from MagicPath theme 410956815262711808 */
+
+    /* Core surfaces */
+    --background: #ffffff;
+    --foreground: #111827;
+    --card: #ffffff;
+    --card-foreground: #111827;
+    --popover: #ffffff;
+    --popover-foreground: #111827;
+
+    /* Primary / accent */
+    --primary: #4f46e5;
+    --primary-foreground: #ffffff;
+
+    /* Secondary / muted surfaces */
+    --secondary: #f3f4f6;
+    --secondary-foreground: #374151;
+    --muted: #f3f4f6;
+    --muted-foreground: #6b7280;
+
+    /* Accent */
+    --accent: #eef2ff;
+    --accent-foreground: #4f46e5;
+
+    /* Destructive */
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+
+    /* Borders & inputs */
+    --border: #e5e7eb;
+    --input: #f8f9ff;
+    --ring: #4f46e5;
+
+    /* Sidebar */
+    --sidebar: #f9fafb;
+    --sidebar-foreground: #111827;
+    --sidebar-primary: #4f46e5;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #eef2ff;
+    --sidebar-accent-foreground: #4f46e5;
+    --sidebar-border: #e5e7eb;
+    --sidebar-ring: #4f46e5;
+
+    /* Chart colors */
+    --chart-1: #4f46e5;
+    --chart-2: #7c3aed;
+    --chart-3: #10b981;
+    --chart-4: #f59e0b;
+    --chart-5: #06b6d4;
+
+    /* Radius tokens */
+    --radius: 0.5rem;
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+
+    /* Shadow tokens */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+
+    /* Font families */
+    --font-body: Inter;
+    --font-heading: Inter;
+
+    /* ===== Backward-compatible aliases (old --color-* names) ===== */
+    --color-deep: var(--background);
+    --color-base: var(--card);
+    --color-raised: var(--muted);
+    --color-elevated: var(--secondary);
+    --color-overlay: var(--accent);
+    --color-ink-primary: var(--foreground);
+    --color-ink-secondary: var(--secondary-foreground);
+    --color-ink-muted: var(--muted-foreground);
     --color-ink-ghost: #9ca3af;
-    --color-gold: #4f46e5;
+    --color-gold: var(--primary);
     --color-gold-light: #6366f1;
     --color-gold-dim: #818cf4;
     --color-cardinal: #dc2626;
     --color-olive: #059669;
     --color-blue-steel: #2563eb;
-    --color-border-subtle: #e8eaf6;
+    --color-border-subtle: var(--border);
     --color-border-visible: #d0d4f0;
     --color-brand-50: #eef2ff;
     --color-brand-100: #e0e7ff;
@@ -34,37 +105,108 @@
   }
 
   [data-theme="dark"] {
-    --color-deep: #1a1714;
-    --color-base: #211e1a;
-    --color-raised: #29251f;
-    --color-elevated: #302b24;
-    --color-overlay: #3a352d;
-    --color-ink-primary: #e8e4db;
-    --color-ink-secondary: #b8b2a6;
-    --color-ink-muted: #7a7468;
-    --color-ink-ghost: #4a4540;
-    --color-gold: #c9a84c;
-    --color-gold-light: #e0c86a;
-    --color-gold-dim: #8a7030;
-    --color-cardinal: #b84545;
-    --color-olive: #6b8f5e;
-    --color-blue-steel: #6b8fa8;
-    --color-border-subtle: #2e2a24;
-    --color-border-visible: #3d3830;
-    --color-brand-50: #fdf8ed;
-    --color-brand-100: #f9edc5;
-    --color-brand-200: #f2db8a;
-    --color-brand-300: #e0c86a;
-    --color-brand-400: #d4b75a;
-    --color-brand-500: #c9a84c;
-    --color-brand-600: #b3943e;
-    --color-brand-700: #8a7030;
-    --color-brand-800: #6b5624;
-    --color-brand-900: #4a3b18;
+    /* ===== MagicPath Design System: Indigo/Slate (Dark) ===== */
+    /* Pulled from MagicPath theme 410956815262711808 dark values */
+
+    /* Core surfaces */
+    --background: #0f172a;
+    --foreground: #f8fafc;
+    --card: #1e293b;
+    --card-foreground: #f8fafc;
+    --popover: #1e293b;
+    --popover-foreground: #f8fafc;
+
+    /* Primary / accent */
+    --primary: #6366f1;
+    --primary-foreground: #ffffff;
+
+    /* Secondary / muted surfaces */
+    --secondary: #334155;
+    --secondary-foreground: #f8fafc;
+    --muted: #334155;
+    --muted-foreground: #94a3b8;
+
+    /* Accent */
+    --accent: #334155;
+    --accent-foreground: #f8fafc;
+
+    /* Destructive */
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+
+    /* Borders & inputs */
+    --border: #334155;
+    --input: #334155;
+    --ring: #6366f1;
+
+    /* Sidebar */
+    --sidebar: #0f172a;
+    --sidebar-foreground: #f8fafc;
+    --sidebar-primary: #6366f1;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #334155;
+    --sidebar-accent-foreground: #f8fafc;
+    --sidebar-border: #334155;
+    --sidebar-ring: #6366f1;
+
+    /* Chart colors */
+    --chart-1: #6366f1;
+    --chart-2: #8b5cf6;
+    --chart-3: #10b981;
+    --chart-4: #f59e0b;
+    --chart-5: #06b6d4;
+
+    /* Radius tokens (same as light) */
+    --radius: 0.5rem;
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+
+    /* Shadow tokens (same as light) */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+
+    /* Font families */
+    --font-body: Inter;
+    --font-heading: Inter;
+
+    /* ===== Backward-compatible aliases (old --color-* names) ===== */
+    --color-deep: var(--background);
+    --color-base: var(--card);
+    --color-raised: #1e293b;
+    --color-elevated: var(--secondary);
+    --color-overlay: var(--accent);
+    --color-ink-primary: var(--foreground);
+    --color-ink-secondary: #cbd5e1;
+    --color-ink-muted: var(--muted-foreground);
+    --color-ink-ghost: #64748b;
+    --color-gold: var(--primary);
+    --color-gold-light: #818cf8;
+    --color-gold-dim: #4f46e5;
+    --color-cardinal: #dc2626;
+    --color-olive: #059669;
+    --color-blue-steel: #60a5fa;
+    --color-border-subtle: var(--border);
+    --color-border-visible: #475569;
+    --color-brand-50: #eef2ff;
+    --color-brand-100: #e0e7ff;
+    --color-brand-200: #c7d2fe;
+    --color-brand-300: #a5b4fc;
+    --color-brand-400: #818cf8;
+    --color-brand-500: #6366f1;
+    --color-brand-600: #4f46e5;
+    --color-brand-700: #4338ca;
+    --color-brand-800: #3730a3;
+    --color-brand-900: #312e81;
   }
 
   body {
-    @apply bg-deep text-ink-secondary antialiased;
+    @apply bg-background text-secondary-foreground antialiased;
   }
 
   /* Badge utilities */
@@ -109,28 +251,28 @@
   }
 
   .surface-card {
-    background-color: var(--color-raised);
+    background-color: var(--muted);
     border: 1px solid transparent;
     border-radius: 0.75rem;
     padding: 1.25rem;
     transition: all 0.2s ease;
   }
   .surface-card:hover {
-    border-color: var(--color-border-visible);
-    background-color: var(--color-elevated);
+    border-color: var(--border);
+    background-color: var(--secondary);
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   }
 }
 
 @layer components {
   .card {
-    @apply bg-raised border border-border-subtle rounded-xl p-6 hover:border-border-visible transition-colors;
+    @apply bg-muted border border-border-subtle rounded-xl p-6 hover:border-border-visible transition-colors;
   }
   .badge {
     @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium;
   }
   .btn {
-    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-raised;
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2;
   }
   .btn-primary {
     @apply btn bg-gold hover:bg-gold-light text-white focus:ring-gold;
@@ -139,6 +281,6 @@
     @apply btn bg-elevated hover:bg-overlay text-ink-primary focus:ring-ink-muted border border-border-visible;
   }
   .btn-ghost {
-    @apply btn bg-transparent hover:bg-raised text-ink-muted hover:text-ink-primary;
+    @apply btn bg-transparent hover:bg-muted text-muted-foreground hover:text-foreground;
   }
 }
