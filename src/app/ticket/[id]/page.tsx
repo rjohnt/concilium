@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Ticket, PersonaId, PRIORITY_LABELS, PRIORITY_COLORS, PriorityLevel, PREDEFINED_TAGS, TicketStatus } from "@/lib/types";
 import { seedData, getTicket, deleteTicket, updateTicket, updateTicketPriority, updateTicketTags, updateTicketStatus, retryBuild, createTicket } from "@/lib/store";
-import { VALID_TRANSITIONS, validateTransition } from "@/lib/status-machine";
+import { validateTransition } from "@/lib/status-machine";
 import { formatDueDate } from "@/lib/date-utils";
 import { getPersona } from "@/lib/personas";
 import { formatRelativeTime, formatAbsoluteDate } from "@/lib/timeAgo";
