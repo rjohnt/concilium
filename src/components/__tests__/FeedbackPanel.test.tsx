@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { FeedbackPanel } from '../FeedbackPanel'
+import { ToastProvider } from '../Toast'
 import type { Ticket, FeedbackEntry } from '@/lib/types'
 
 const mockFeedback: FeedbackEntry[] = [
@@ -57,30 +58,30 @@ describe('FeedbackPanel', () => {
 
   it('renders the stakeholder feedback heading', () => {
     render(
-      <FeedbackPanel
+      <ToastProvider><FeedbackPanel
         ticket={mockTicket}
         onFeedbackAdded={vi.fn()}
-      />
+      /></ToastProvider>
     )
     expect(screen.getByText('Stakeholder Feedback')).toBeInTheDocument()
   })
 
   it('shows the contribution count', () => {
     render(
-      <FeedbackPanel
+      <ToastProvider><FeedbackPanel
         ticket={mockTicket}
         onFeedbackAdded={vi.fn()}
-      />
+      /></ToastProvider>
     )
     expect(screen.getByText('2 contributions')).toBeInTheDocument()
   })
 
   it('renders persona filter buttons when feedback exists', () => {
     render(
-      <FeedbackPanel
+      <ToastProvider><FeedbackPanel
         ticket={mockTicket}
         onFeedbackAdded={vi.fn()}
-      />
+      /></ToastProvider>
     )
     expect(screen.getByRole('button', { name: /All \(2\)/ })).toBeInTheDocument()
 
@@ -92,20 +93,20 @@ describe('FeedbackPanel', () => {
   it('hides the filter bar when there is no feedback', () => {
     const emptyTicket = { ...mockTicket, feedback: [] }
     render(
-      <FeedbackPanel
+      <ToastProvider><FeedbackPanel
         ticket={emptyTicket}
         onFeedbackAdded={vi.fn()}
-      />
+      /></ToastProvider>
     )
     expect(screen.queryByText('Feedback History')).not.toBeInTheDocument()
   })
 
   it('marks the "All" filter button as pressed by default', () => {
     render(
-      <FeedbackPanel
+      <ToastProvider><FeedbackPanel
         ticket={mockTicket}
         onFeedbackAdded={vi.fn()}
-      />
+      /></ToastProvider>
     )
     const allButton = screen.getByRole('button', { name: /All \(2\)/ })
     expect(allButton.getAttribute('aria-pressed')).toBe('true')
@@ -113,10 +114,10 @@ describe('FeedbackPanel', () => {
 
   it('filters history to show only entries for selected persona', () => {
     render(
-      <FeedbackPanel
+      <ToastProvider><FeedbackPanel
         ticket={mockTicket}
         onFeedbackAdded={vi.fn()}
-      />
+      /></ToastProvider>
     )
 
     // Initially shows all feedback
@@ -137,10 +138,10 @@ describe('FeedbackPanel', () => {
 
   it('updates aria-pressed when switching filters', () => {
     render(
-      <FeedbackPanel
+      <ToastProvider><FeedbackPanel
         ticket={mockTicket}
         onFeedbackAdded={vi.fn()}
-      />
+      /></ToastProvider>
     )
 
     const allButton = screen.getByRole('button', { name: /All \(2\)/ })
@@ -160,10 +161,10 @@ describe('FeedbackPanel', () => {
 
   it('shows empty state when selected persona has no feedback', () => {
     render(
-      <FeedbackPanel
+      <ToastProvider><FeedbackPanel
         ticket={mockTicket}
         onFeedbackAdded={vi.fn()}
-      />
+      /></ToastProvider>
     )
 
     // Click QA filter (has no feedback)  — use pressed:false to get the filter button
@@ -178,10 +179,10 @@ describe('FeedbackPanel', () => {
 
   it('shows the keyboard shortcut hint text', () => {
     render(
-      <FeedbackPanel
+      <ToastProvider><FeedbackPanel
         ticket={mockTicket}
         onFeedbackAdded={vi.fn()}
-      />
+      /></ToastProvider>
     )
     // Should show Cmd+Enter or Ctrl+Enter depending on platform
     expect(screen.getByText(/Enter to submit/)).toBeInTheDocument()
@@ -189,11 +190,11 @@ describe('FeedbackPanel', () => {
 
   it('submits feedback on Cmd+Enter when content is entered', async () => {
     render(
-      <FeedbackPanel
+      <ToastProvider><FeedbackPanel
         ticket={{...mockTicket, feedback: []}}
         onFeedbackAdded={vi.fn()}
         initialPersona="engineer"
-      />
+      /></ToastProvider>
     )
 
     // Type content
@@ -212,11 +213,11 @@ describe('FeedbackPanel', () => {
   it('does not submit on Cmd+Enter with empty content', () => {
     const onFeedbackAdded = vi.fn()
     render(
-      <FeedbackPanel
+      <ToastProvider><FeedbackPanel
         ticket={{...mockTicket, feedback: []}}
         onFeedbackAdded={onFeedbackAdded}
         initialPersona="engineer"
-      />
+      /></ToastProvider>
     )
 
     const textarea = screen.getByPlaceholderText(/weighing in as the Engineer/i)
@@ -229,11 +230,11 @@ describe('FeedbackPanel', () => {
 
   it('submits on Ctrl+Enter as well (Windows compat)', async () => {
     render(
-      <FeedbackPanel
+      <ToastProvider><FeedbackPanel
         ticket={{...mockTicket, feedback: []}}
         onFeedbackAdded={vi.fn()}
         initialPersona="engineer"
-      />
+      /></ToastProvider>
     )
 
     const textarea = screen.getByPlaceholderText(/weighing in as the Engineer/i)
@@ -251,11 +252,11 @@ describe('FeedbackPanel', () => {
   it('does not submit on plain Enter (newline only)', () => {
     const onFeedbackAdded = vi.fn()
     render(
-      <FeedbackPanel
+      <ToastProvider><FeedbackPanel
         ticket={{...mockTicket, feedback: []}}
         onFeedbackAdded={onFeedbackAdded}
         initialPersona="engineer"
-      />
+      /></ToastProvider>
     )
 
     const textarea = screen.getByPlaceholderText(/weighing in as the Engineer/i)

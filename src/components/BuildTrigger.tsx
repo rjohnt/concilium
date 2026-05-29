@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Ticket } from "@/lib/types";
 import { getBuildReadiness, generateBuildSummary, DEFAULT_THRESHOLD } from "@/lib/consensus-threshold";
 import { triggerBuild } from "@/lib/store";
 import { getAllPersonas } from "@/lib/personas";
 import { AlertTriangle, CheckCircle2, Clock, Play, Rocket, X, XCircle, FileText, Wrench, Palette, FlaskConical, CheckCircle, ArrowRight, Loader2, RefreshCw } from "lucide-react";
+import { useToast } from "@/components/Toast";
 
 interface BuildTriggerProps {
   ticket: Ticket;
@@ -17,6 +18,12 @@ export function BuildTrigger({ ticket, onBuildTriggered }: BuildTriggerProps) {
   const [summary, setSummary] = useState("");
   const [isBuilding, setIsBuilding] = useState(false);
   const [buildError, setBuildError] = useState<string | null>(null);
+  const { addToast } = useToast();
+  const toastFiredRef = useRef<{ start: boolean; complete: boolean; error: boolean }>({
+    start: false,
+    complete: false,
+    error: false,
+  });
 
   const readiness = getBuildReadiness(ticket);
   const scoreColor =
@@ -36,14 +43,52 @@ export function BuildTrigger({ ticket, onBuildTriggered }: BuildTriggerProps) {
     setShowModal(false);
     setIsBuilding(true);
     setBuildError(null);
+    // Info toast on build start
+    if (!toastFiredRef.current.start) {
+      toastFiredRef.current.start = true;
+      toastFiredRef.current.complete = false;
+      toastFiredRef.current.error = false;
+      addToast({
+        variant: "info",
+        title: "Build started",
+        description: `Build triggered for "${ticket.title}".`,
+      });
+    }
     try {
       const report = await triggerBuild(ticket.id);
       if (report) {
+        // Success toast
+        if (!toastFiredRef.current.complete) {
+          toastFiredRef.current.complete = true;
+          addToast({
+            variant: "success",
+            title: "Build complete",
+            description: `"${ticket.title}" built successfully.`,
+          });
+        }
         onBuildTriggered();
       } else {
+        // Error toast
+        if (!toastFiredRef.current.error) {
+          toastFiredRef.current.error = true;
+          addToast({
+            variant: "error",
+            title: "Build failed",
+            description: "The API may be unavailable or the ticket is not ready.",
+          });
+        }
         setBuildError("Build failed. The API may be unavailable or the ticket is not ready.");
       }
     } catch (err) {
+      // Error toast
+      if (!toastFiredRef.current.error) {
+        toastFiredRef.current.error = true;
+        addToast({
+          variant: "error",
+          title: "Build failed",
+          description: err instanceof Error ? err.message : "An unexpected error occurred.",
+        });
+      }
       setBuildError(
         err instanceof Error ? err.message : "An unexpected error occurred."
       );

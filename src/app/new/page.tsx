@@ -7,9 +7,11 @@ import { PRIORITY_LABELS, PRIORITY_COLORS, PriorityLevel, PREDEFINED_TAGS, Tag }
 import { TagChip } from "@/components/TagChip";
 import { ArrowLeft } from "lucide-react";
 import { useUnsavedChangesWarning } from "@/hooks/useUnsavedChangesWarning";
+import { useToast } from "@/components/Toast";
 
 export default function NewTicketPage() {
   const router = useRouter();
+  const { addToast } = useToast();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<PriorityLevel>(2);
@@ -79,6 +81,11 @@ export default function NewTicketPage() {
     );
 
     // Navigate to the new ticket
+    addToast({
+      variant: "success",
+      title: "Ticket created",
+      description: `"${ticket.title}" has been created.`,
+    });
     router.push(`/ticket/${ticket.id}`);
   };
 

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import type { ReactNode } from "react";
+import { ToastProvider } from "@/components/Toast";
 
 // ── Mocks ──────────────────────────────────────────────────────────────
 
@@ -46,7 +47,7 @@ vi.mock("@/lib/store", () => ({
 
 async function renderPage() {
   const NewTicketPage = (await import("@/app/new/page")).default;
-  return render(<NewTicketPage />);
+  return render(<ToastProvider><NewTicketPage /></ToastProvider>);
 }
 
 /** Get the title input */

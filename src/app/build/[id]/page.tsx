@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Ticket } from "@/lib/types";
 import { seedData, getTicket, retryBuild } from "@/lib/store";
@@ -10,6 +10,7 @@ import { BuildCompleteCelebration } from "@/components/BuildCompleteCelebration"
 import { EmptyState } from "@/components/EmptyState";
 import { Clock, CheckCircle2, RefreshCw, Rocket, FileText, FileQuestion } from "lucide-react";
 import Link from "next/link";
+import { useToast } from "@/components/Toast";
 
 export default function BuildPage() {
   const params = useParams();
@@ -18,6 +19,11 @@ export default function BuildPage() {
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState("");
   const [isRetrying, setIsRetrying] = useState(false);
+  const { addToast } = useToast();
+  const toastFiredRef = useRef<{ completed: boolean; failed: boolean }>({
+    completed: false,
+    failed: false,
+  });
 
   const loadTicket = useCallback(() => {
     seedData();
@@ -40,12 +46,30 @@ export default function BuildPage() {
       seedData();
       const t = getTicket(params.id as string);
       if (t && t.status !== ticket.status) {
+        // Toast on completion
+        if (t.status === "done" && !toastFiredRef.current.completed) {
+          toastFiredRef.current.completed = true;
+          addToast({
+            variant: "success",
+            title: "Build complete",
+            description: `"${t.title}" built successfully.`,
+          });
+        }
         setTicket(t);
         setSummary(generateBuildSummary(t));
       }
+      // Check for build failure via buildReport flag
+      if (t && t.buildReport && t.buildReport.status === "failed" && !toastFiredRef.current.failed) {
+        toastFiredRef.current.failed = true;
+        addToast({
+          variant: "error",
+          title: "Build failed",
+          description: t.buildReport.errorMessage || "Build did not complete successfully.",
+        });
+      }
     }, 1000);
     return () => clearInterval(interval);
-  }, [ticket, params.id]);
+  }, [ticket, params.id, addToast]);
 
   if (loading) {
     return (
