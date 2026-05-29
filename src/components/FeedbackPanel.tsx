@@ -91,7 +91,7 @@ export function FeedbackPanel({
     setApproved(false);
     setSubmitting(false);
     onFeedbackAdded();
-  }, [activePersona, content, approved, ticket.id, onFeedbackAdded]);
+  }, [activePersona, content, approved, ticket.id, ticket.title, addToast, persona, onFeedbackAdded]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {

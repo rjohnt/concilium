@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
+import type { Ticket } from "@/lib/types";
 
 // ── Mocks ──────────────────────────────────────────────────────────────
 
@@ -65,9 +66,8 @@ const mockAddFeedback = vi.fn(() => ({
   approved: false,
 }));
 const mockGetFeedbackHistory = vi.fn(() => []);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mockTriggerBuild: any = vi.fn();
-const mockRetryBuild: any = vi.fn();
+const mockTriggerBuild: ReturnType<typeof vi.fn> = vi.fn();
+const mockRetryBuild: ReturnType<typeof vi.fn> = vi.fn();
 const mockUpdateTicket = vi.fn(() => ({ ...mockTicket }));
 const mockUpdateTicketPriority = vi.fn(() => ({ ...mockTicket }));
 const mockUpdateTicketTags = vi.fn(() => ({ ...mockTicket }));
@@ -547,7 +547,7 @@ describe("DEV-77: Toast notification system (acceptance)", () => {
 
     renderWithToast(
       <FeedbackPanel
-        ticket={ticketWithFeedback as any}
+        ticket={ticketWithFeedback as unknown as Ticket}
         onFeedbackAdded={vi.fn()}
         initialPersona="engineer"
       />
@@ -585,7 +585,7 @@ describe("DEV-77: Toast notification system (acceptance)", () => {
 
     renderWithToast(
       <BuildTrigger
-        ticket={buildTicket as any}
+        ticket={buildTicket as unknown as Ticket}
         onBuildTriggered={vi.fn()}
       />
     );
@@ -629,7 +629,7 @@ describe("DEV-77: Toast notification system (acceptance)", () => {
 
     renderWithToast(
       <BuildTrigger
-        ticket={buildTicket as any}
+        ticket={buildTicket as unknown as Ticket}
         onBuildTriggered={vi.fn()}
       />
     );
@@ -671,7 +671,7 @@ describe("DEV-77: Toast notification system (acceptance)", () => {
     // First render and trigger
     const { unmount } = renderWithToast(
       <BuildTrigger
-        ticket={buildTicket as any}
+        ticket={buildTicket as unknown as Ticket}
         onBuildTriggered={vi.fn()}
       />
     );
