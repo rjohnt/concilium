@@ -145,9 +145,10 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className="w-10 h-10 rounded-lg flex items-center justify-center transition-all"
+              className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${
+                item.isActive ? "bg-raised" : "hover:bg-raised hover:text-ink-secondary"
+              }`}
               style={{
-                background: item.isActive ? "var(--color-raised)" : "transparent",
                 color: item.isActive ? "var(--color-gold)" : "var(--color-ink-muted)",
                 border: item.isActive ? "1px solid var(--color-border-visible)" : "1px solid transparent",
               }}
@@ -253,10 +254,10 @@ export function Sidebar() {
           {navItems.map((item) => {
             const isActive = "href" in item && item.href ? pathname === item.href : false;
 
-            const linkClass = `flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+            const linkClass = `flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-xs transition-all ${
               isActive
-                ? "bg-raised text-ink-primary border border-border-visible"
-                : "text-ink-secondary hover:text-ink-primary hover:bg-raised border border-transparent"
+                ? "bg-raised text-ink-primary font-semibold border border-border-visible"
+                : "text-ink-secondary font-medium hover:text-ink-primary hover:bg-raised border border-transparent"
             }`;
 
             if ("onClick" in item && item.onClick) {
@@ -306,7 +307,7 @@ export function Sidebar() {
                         />
                       </motion.span>
                     )}
-                    <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-semibold leading-none rounded-md bg-gold/15 text-gold border border-gold/20">
+                    <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-semibold leading-none rounded-full bg-gold/15 text-gold border border-gold/20">
                       {ticketCounts.total}
                     </span>
                   </span>

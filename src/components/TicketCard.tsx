@@ -13,12 +13,12 @@ import { useState, useRef, useEffect, useCallback } from "react";
 
 const SHOW_CONSENSUS_DOTS: TicketStatus[] = ["in-review", "consensus"];
 
-const STATUS_CONFIG: Record<TicketStatus, { label: string; color: string; dot: string }> = {
-  draft:        { label: "Draft",     color: "#7a7468", dot: "#7a7468" },
-  "in-review":  { label: "Review",    color: "#c9a84c", dot: "#c9a84c" },
-  consensus:    { label: "Consensus", color: "#6b8f5e", dot: "#6b8f5e" },
-  building:     { label: "Building",  color: "#6b8fa8", dot: "#6b8fa8" },
-  done:         { label: "Done",      color: "#6b8f5e", dot: "#6b8f5e" },
+const STATUS_CONFIG: Record<TicketStatus, { label: string; color: string; dot: string; bg: string; border: string }> = {
+  draft:        { label: "Draft",     color: "#7a7468", dot: "#7a7468", bg: "rgba(122,116,104,0.08)", border: "rgba(122,116,104,0.2)" },
+  "in-review":  { label: "Review",    color: "#c9a84c", dot: "#c9a84c", bg: "rgba(201,168,76,0.08)",  border: "rgba(201,168,76,0.2)" },
+  consensus:    { label: "Consensus", color: "#6b8f5e", dot: "#6b8f5e", bg: "rgba(107,143,94,0.08)", border: "rgba(107,143,94,0.2)" },
+  building:     { label: "Building",  color: "#6b8fa8", dot: "#6b8fa8", bg: "rgba(107,143,168,0.08)", border: "rgba(107,143,168,0.2)" },
+  done:         { label: "Done",      color: "#6b8f5e", dot: "#6b8f5e", bg: "rgba(107,143,94,0.08)", border: "rgba(107,143,94,0.2)" },
 };
 
 export function TicketCard({
@@ -97,15 +97,18 @@ export function TicketCard({
         }`}
         style={{
           background: selected ? "var(--color-raised)" : "var(--color-raised)",
+          boxShadow: selected ? "0 4px 12px rgba(201,168,76,0.1)" : "none",
         }}
         onMouseEnter={(e) => {
           if (!selected) {
             e.currentTarget.style.background = "var(--color-elevated)";
+            e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.15)";
           }
         }}
         onMouseLeave={(e) => {
           if (!selected) {
             e.currentTarget.style.background = "var(--color-raised)";
+            e.currentTarget.style.boxShadow = "none";
           }
         }}
       >
@@ -118,9 +121,9 @@ export function TicketCard({
               <span
                 className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-medium leading-relaxed"
                 style={{
-                  background: `${sc.dot}15`,
-                  color: sc.dot,
-                  border: `1px solid ${sc.dot}25`,
+                  background: `${sc.bg}`,
+                  color: sc.color,
+                  border: `1px solid ${sc.border}`,
                 }}
               >
                 <span
@@ -133,8 +136,15 @@ export function TicketCard({
                 <span
                   className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-medium"
                   style={{
-                    background: `${PRIORITY_COLORS[ticket.priority]}15`,
+                    background: `${(() => {
+                      const bgColors = ["rgba(184,69,69,0.08)", "rgba(201,168,76,0.08)", "rgba(107,143,168,0.08)", "rgba(122,116,104,0.08)"];
+                      return bgColors[ticket.priority] || bgColors[3];
+                    })()}`,
                     color: PRIORITY_COLORS[ticket.priority],
+                    border: `1px solid ${(() => {
+                      const borderColors = ["rgba(184,69,69,0.2)", "rgba(201,168,76,0.2)", "rgba(107,143,168,0.2)", "rgba(122,116,104,0.2)"];
+                      return borderColors[ticket.priority] || borderColors[3];
+                    })()}`,
                   }}
                 >
                   {PRIORITY_LABELS[ticket.priority]}

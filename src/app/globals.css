@@ -105,6 +105,29 @@
     font-size: 0.6875rem;
     font-weight: 500;
   }
+
+  .badge-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    font-weight: 600;
+    font-size: 0.625rem;
+    line-height: 1;
+  }
+
+  .surface-card {
+    background-color: var(--color-raised);
+    border: 1px solid transparent;
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    transition: all 0.2s ease;
+  }
+  .surface-card:hover {
+    border-color: var(--color-border-visible);
+    background-color: var(--color-elevated);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
 }
 
 @layer components {
