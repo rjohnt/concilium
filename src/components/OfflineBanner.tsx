@@ -61,7 +61,7 @@ export function OfflineBanner() {
   // ── Determine state ───────────────────────────────────────────────────
 
   // Hidden: online and no reconnect to show
-  if (isOnline && !wasOffline) return null;
+  const show = !(isOnline && !wasOffline);
 
   const isOffline = !isOnline;
   const variant = isOffline ? "offline" : "reconnected";
@@ -93,13 +93,14 @@ export function OfflineBanner() {
   return (
     <div className="fixed inset-x-0 top-0 z-50 flex justify-center pointer-events-none pt-2">
       <AnimatePresence>
-        <motion.div
-          {...animationProps}
-          role="status"
-          aria-live="polite"
-          className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border shadow-2xl backdrop-blur-sm ${styles.bg} ${styles.border}`}
-          style={{ backgroundColor: "#211e1a" }}
-        >
+        {show && (
+          <motion.div
+            key="offline-banner"
+            {...animationProps}
+            role="status"
+            aria-live="polite"
+            className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border shadow-2xl backdrop-blur-sm ${styles.bg} ${styles.border} bg-base`}
+          >
           {isOffline ? (
             <WifiOff size={18} className={`flex-shrink-0 ${styles.text}`} />
           ) : (
@@ -119,6 +120,7 @@ export function OfflineBanner() {
             <X size={14} />
           </button>
         </motion.div>
+        )}
       </AnimatePresence>
     </div>
   );

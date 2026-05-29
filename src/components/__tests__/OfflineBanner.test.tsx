@@ -70,11 +70,11 @@ describe("OfflineBanner", () => {
     expect(icons.length).toBeGreaterThanOrEqual(2);
   });
 
-  it("offline banner has #211e1a background", () => {
+  it("offline banner has bg-base background class", () => {
     setOnlineState(false, false);
     render(<OfflineBanner />);
     const banner = screen.getByRole("status");
-    expect(banner.style.backgroundColor).toBe("rgb(33, 30, 26)");
+    expect(banner.classList.contains("bg-base")).toBe(true);
   });
 
   // ── Reconnected state ────────────────────────────────────────────────
