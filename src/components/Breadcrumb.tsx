@@ -9,7 +9,9 @@ interface BreadcrumbProps {
   className?: string;
 }
 
-const SHALLOW_PAGES = new Set(["/", "/new", "/login", "/signup", "/vin"]);
+const SHALLOW_PAGES = new Set(["/", "/new", "/login", "/signup", "/vin", "/share"]);
+
+const SHALLOW_PREFIXES = ["/share/"];
 
 function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
@@ -60,6 +62,9 @@ export function Breadcrumb({
 
   // Auto-hide on shallow pages
   if (SHALLOW_PAGES.has(pathname)) return null;
+
+  // Auto-hide on shallow prefix matches (e.g. /share/abc-123)
+  if (SHALLOW_PREFIXES.some((prefix) => pathname.startsWith(prefix))) return null;
 
   const segments = pathname.split("/").filter(Boolean);
 
