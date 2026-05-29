@@ -777,7 +777,7 @@ describe("notifications", () => {
       const NotificationMock = vi
         .fn()
         .mockImplementation(createMockNotification);
-      NotificationMock.permission = "denied";
+      Object.assign(NotificationMock, { permission: "denied" });
       (window as any).Notification = NotificationMock;
 
       vi.resetModules();
@@ -799,7 +799,7 @@ describe("notifications", () => {
       const NotificationMock = vi
         .fn()
         .mockImplementation(createMockNotification);
-      NotificationMock.permission = "granted";
+      Object.assign(NotificationMock, { permission: "granted" });
       (window as any).Notification = NotificationMock;
 
       vi.resetModules();
