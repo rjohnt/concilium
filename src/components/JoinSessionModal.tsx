@@ -76,7 +76,7 @@ export function JoinSessionModal({
       : "Join this ticket session as a stakeholder persona. Your perspective will shape the review — weigh in with the lens of your chosen role.";
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto p-4 sm:flex sm:items-center sm:justify-center">
+    <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain p-4 sm:flex sm:items-center sm:justify-center">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-deep"
@@ -84,8 +84,7 @@ export function JoinSessionModal({
       />
 
       {/* Modal content */}
-      <div className="relative mx-auto w-full max-w-3xl max-h-[calc(100dvh-2rem)] overflow-hidden rounded-2xl animate-in fade-in zoom-in-95 duration-300">
-        <div className="h-full overflow-y-auto bg-base p-2 sm:p-4">
+      <div className="relative mx-auto w-full max-w-3xl max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl bg-base p-2 sm:p-4 animate-in fade-in zoom-in-95 duration-300 [scrollbar-gutter:stable] [-webkit-overflow-scrolling:touch]">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold/10 border border-gold/20 text-gold text-xs font-medium mb-4">
@@ -206,7 +205,6 @@ export function JoinSessionModal({
             ? "Your current feedback will be preserved when switching."
             : "You can switch your persona at any time during the session."}
         </p>
-        </div>
       </div>
     </div>
   );
