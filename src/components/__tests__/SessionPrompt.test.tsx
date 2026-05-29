@@ -17,7 +17,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
 import { SessionPrompt } from "../SessionPrompt";
@@ -32,9 +32,9 @@ vi.mock("framer-motion", async () => {
     ...actual,
     AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
     motion: {
-      div: ({ children, ...props }: Record<string, unknown>) =>
+      div: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) =>
         React.createElement("div", props, children),
-      textarea: ({ children, ...props }: Record<string, unknown>) =>
+      textarea: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) =>
         React.createElement("textarea", props, children),
     },
   };
@@ -46,7 +46,7 @@ vi.mock("framer-motion", async () => {
 const mockAddFeedback = vi.fn();
 
 vi.mock("@/lib/store", () => ({
-  addFeedback: (...args: unknown[]) => mockAddFeedback(...args),
+  addFeedback: (...args: Parameters<typeof mockAddFeedback>) => mockAddFeedback(...args),
 }));
 
 // ============================================================================
@@ -55,17 +55,17 @@ vi.mock("@/lib/store", () => ({
 const mockCalculateConsensus = vi.fn();
 
 vi.mock("@/lib/consensus-engine", () => ({
-  calculateConsensus: (...args: unknown[]) => mockCalculateConsensus(...args),
+  calculateConsensus: (...args: Parameters<typeof mockCalculateConsensus>) => mockCalculateConsensus(...args),
 }));
 
 // ============================================================================
 // Mock feedback-stream — onFeedbackStream
 // ============================================================================
 const mockUnsubscribe = vi.fn();
-const mockOnFeedbackStream = vi.fn(() => mockUnsubscribe);
+const mockOnFeedbackStream = vi.fn<(...args: any[]) => any>(() => mockUnsubscribe);
 
 vi.mock("@/lib/feedback-stream", () => ({
-  onFeedbackStream: (...args: unknown[]) => mockOnFeedbackStream(...args),
+  onFeedbackStream: (...args: Parameters<typeof mockOnFeedbackStream>) => mockOnFeedbackStream(...args),
 }));
 
 // ============================================================================
