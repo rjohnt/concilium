@@ -1,4 +1,8 @@
-import { Ticket, PRIORITY_LABELS, PRIORITY_COLORS, TicketStatus } from "@/lib/types";
+"use client";
+
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import Link from "next/link";
+import { Ticket, PRIORITY_LABELS, TicketStatus } from "@/lib/types";
 import { formatDueDate } from "@/lib/date-utils";
 import { getAllPersonas } from "@/lib/personas";
 import { PersonaBadge } from "./PersonaBadge";
@@ -8,27 +12,31 @@ import { CopyButton } from "@/components/CopyButton";
 import { formatRelativeTime, formatAbsoluteDate } from "@/lib/timeAgo";
 import { updateTicket } from "@/lib/store";
 import { Clock, MessageSquare, Calendar } from "lucide-react";
-import Link from "next/link";
-import { useState, useRef, useEffect, useCallback } from "react";
 
-const SHOW_CONSENSUS_DOTS: TicketStatus[] = ["in-review", "consensus"];
+// ── MagicPath v2 authoritative config ──────────────────────────────
+type MPStatus = "draft" | "in-review" | "consensus" | "building" | "done";
 
-const STATUS_CONFIG: Record<TicketStatus, { label: string; color: string; dot: string; bg: string; border: string }> = {
-  draft:        { label: "Draft",     color: "#64748B", dot: "#64748B", bg: "#F1F5F9", border: "#CBD5E1" },
-  "in-review":  { label: "Review",    color: "#D97706", dot: "#D97706", bg: "#FFFBEB", border: "#FCD34D" },
-  consensus:    { label: "Consensus", color: "#059669", dot: "#059669", bg: "#ECFDF5", border: "#6EE7B7" },
-  building:     { label: "Building",  color: "#2563EB", dot: "#2563EB", bg: "#EFF6FF", border: "#93C5FD" },
-  done:         { label: "Done",      color: "#059669", dot: "#059669", bg: "#ECFDF5", border: "#6EE7B7" },
+const STATUS_CONFIG: Record<MPStatus, { label: string; color: string; bg: string; border: string }> = {
+  draft:       { label: "Draft",     color: "#64748B", bg: "#F1F5F9", border: "#CBD5E1" },
+  "in-review": { label: "Review",    color: "#D97706", bg: "#FFFBEB", border: "#FCD34D" },
+  consensus:   { label: "Consensus", color: "#059669", bg: "#ECFDF5", border: "#6EE7B7" },
+  building:    { label: "Building",  color: "#2563EB", bg: "#EFF6FF", border: "#93C5FD" },
+  done:        { label: "Done",      color: "#059669", bg: "#ECFDF5", border: "#6EE7B7" },
 };
 
-const PRIORITY_CONFIG = [
-  { color: "#DC2626", bg: "#FEF2F2", border: "#FECACA", label: "Urgent" },
-  { color: "#EA580C", bg: "#FFF7ED", border: "#FDBA74", label: "High" },
-  { color: "#2563EB", bg: "#EFF6FF", border: "#93C5FD", label: "Medium" },
-  { color: "#64748B", bg: "#F1F5F9", border: "#CBD5E1", label: "Low" },
-  { color: "#94A3B8", bg: "#F8FAFC", border: "#E2E8F0", label: "Backlog" },
-];
+const PRIORITY_CONFIG: Record<number, { color: string; bg: string; border: string }> = {
+  0: { color: "#DC2626", bg: "#FEF2F2", border: "#FECACA" },
+  1: { color: "#EA580C", bg: "#FFF7ED", border: "#FDBA74" },
+  2: { color: "#2563EB", bg: "#EFF6FF", border: "#93C5FD" },
+  3: { color: "#64748B", bg: "#F1F5F9", border: "#CBD5E1" },
+  4: { color: "#94A3B8", bg: "#F8FAFC", border: "#E2E8F0" },
+};
 
+const ASSIGNEE_COLORS = ["#2563EB", "#7C3AED", "#0891B2", "#059669", "#DC2626"];
+
+const SHOW_CONSENSUS_DOTS: MPStatus[] = ["in-review", "consensus"];
+
+// ── Component ──────────────────────────────────────────────────────
 export function TicketCard({
   ticket,
   selected = false,
@@ -38,247 +46,167 @@ export function TicketCard({
 }) {
   const allPersonas = getAllPersonas();
   const progress = ticket.approvals.length / allPersonas.length;
+  const sc = STATUS_CONFIG[ticket.status as MPStatus] ?? STATUS_CONFIG.draft;
+  const pc = PRIORITY_CONFIG[ticket.priority] ?? PRIORITY_CONFIG[3];
+  const avatarColor = ASSIGNEE_COLORS[ticket.id.charCodeAt(0) % ASSIGNEE_COLORS.length];
 
-  // --- Inline title editing state ---
+  // Inline editing
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(ticket.title);
+  const [isHovered, setIsHovered] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (editing && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
-    }
+    if (editing && inputRef.current) { inputRef.current.focus(); inputRef.current.select(); }
   }, [editing]);
 
-  const startEditing = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      e.preventDefault();
-      setDraft(ticket.title);
-      setEditing(true);
-    },
-    [ticket.title],
-  );
+  const startEditing = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation(); e.preventDefault();
+    setDraft(ticket.title); setEditing(true);
+  }, [ticket.title]);
 
   const saveTitle = useCallback(() => {
     const trimmed = draft.trim();
-    if (!trimmed) {
-      setDraft(ticket.title);
-      setEditing(false);
-      return;
-    }
-    if (trimmed !== ticket.title) {
-      updateTicket(ticket.id, { title: trimmed });
-    }
+    if (!trimmed) { setDraft(ticket.title); setEditing(false); return; }
+    if (trimmed !== ticket.title) updateTicket(ticket.id, { title: trimmed });
     setEditing(false);
   }, [draft, ticket.title, ticket.id]);
 
-  const cancelEditing = useCallback(() => {
-    setDraft(ticket.title);
-    setEditing(false);
-  }, [ticket.title]);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        saveTitle();
-      } else if (e.key === "Escape") {
-        e.preventDefault();
-        cancelEditing();
-      }
-    },
-    [saveTitle, cancelEditing],
-  );
-
-  const sc = STATUS_CONFIG[ticket.status];
+  const cancelEditing = useCallback(() => { setDraft(ticket.title); setEditing(false); }, [ticket.title]);
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === "Enter") { e.preventDefault(); saveTitle(); }
+    else if (e.key === "Escape") { e.preventDefault(); cancelEditing(); }
+  }, [saveTitle, cancelEditing]);
 
   return (
     <div className="relative" data-ticket-card>
       <Link
         href={`/ticket/${ticket.id}`}
         className={`block rounded-xl p-5 transition-all duration-200 border group cursor-pointer ${
-          selected
-            ? "ring-2 ring-brand-500/70 border-brand-300"
-            : "border-border-subtle hover:border-[#CBD5E1]"
+          selected ? "ring-2 ring-brand-500/70 border-brand-300" : "border-border-subtle hover:border-[#CBD5E1]"
         }`}
         style={{
-          background: selected ? "var(--color-raised)" : "var(--color-raised)",
-          boxShadow: selected ? "0 4px 12px rgba(79,70,229,0.12)" : "0 1px 3px 0 rgba(30,41,59,0.05)",
+          background: isHovered && !selected ? "var(--color-elevated)" : "var(--color-raised)",
+          boxShadow: selected
+            ? "0 4px 12px rgba(79,70,229,0.12)"
+            : isHovered
+              ? "0 2px 12px 0 rgba(30,41,59,0.10)"
+              : "0 1px 3px 0 rgba(30,41,59,0.05)",
         }}
-        onMouseEnter={(e) => {
-          if (!selected) {
-            e.currentTarget.style.background = "var(--color-elevated)";
-            e.currentTarget.style.boxShadow = "0 2px 12px 0 rgba(30,41,59,0.10)";
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!selected) {
-            e.currentTarget.style.background = "var(--color-raised)";
-            e.currentTarget.style.boxShadow = "0 1px 3px 0 rgba(30,41,59,0.05)";
-          }
-        }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-[11px] font-medium text-ink-muted tracking-tight">
-                {ticket.id}
-              </span>
-              <span
-                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-medium leading-relaxed"
-                style={{
-                  background: `${sc.bg}`,
-                  color: sc.color,
-                  border: `1px solid ${sc.border}`,
-                }}
-              >
-                <span
-                  className="w-[5px] h-[5px] rounded-full shrink-0"
-                  style={{ background: sc.dot }}
-                />
-                {sc.label}
-              </span>
-              {ticket.priority !== 4 && (
-                <span
-                  className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-medium"
-                  style={{
-                    background: PRIORITY_CONFIG[ticket.priority].bg,
-                    color: PRIORITY_CONFIG[ticket.priority].color,
-                    border: `1px solid ${PRIORITY_CONFIG[ticket.priority].border}`,
-                  }}
-                >
-                  {PRIORITY_LABELS[ticket.priority]}
-                </span>
-              )}
-              {ticket.tags.map((tag) => (
-                <TagChip key={tag.id} tag={tag} mode="display" />
-              ))}
-            </div>
-
-            {/* Inline-editable title */}
-            {editing ? (
-              <input
-                ref={inputRef}
-                type="text"
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={handleKeyDown}
-                onBlur={saveTitle}
-                className="bg-deep border border-gold/40 rounded-md px-2 py-1 text-sm font-semibold text-ink-primary focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold/30 w-full"
-                aria-label="Edit ticket title"
-              />
-            ) : (
-              <h3
-                className="text-sm font-semibold text-ink-primary group-hover:text-brand-400 transition-colors truncate cursor-text focus:outline-none focus:ring-2 focus:ring-gold/50 rounded"
-                onClick={startEditing}
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setDraft(ticket.title);
-                    setEditing(true);
-                  }
-                }}
-              >
-                {ticket.title}
-              </h3>
-            )}
-
-            <p className="text-xs text-ink-muted mt-1.5 line-clamp-2 leading-relaxed">
-              {ticket.description}
-            </p>
-          </div>
+        {/* Row 1: ID + Badges */}
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-[11px] font-semibold tracking-[0.08em] uppercase" style={{ color: "#94A3B8" }}>
+            {ticket.id}
+          </span>
+          {/* Status badge — exact MagicPath v2 styling */}
+          <span
+            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold leading-relaxed"
+            style={{ background: sc.bg, color: sc.color, border: `1px solid ${sc.border}`, letterSpacing: "-0.01em" }}
+          >
+            <span className="w-[5px] h-[5px] rounded-full shrink-0" style={{ background: sc.color }} />
+            {sc.label}
+          </span>
+          {/* Priority badge — exact MagicPath v2 styling */}
+          {ticket.priority !== 4 && (
+            <span
+              className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold"
+              style={{ background: pc.bg, color: pc.color, border: `1px solid ${pc.border}`, letterSpacing: "-0.01em" }}
+            >
+              {PRIORITY_LABELS[ticket.priority]}
+            </span>
+          )}
+          {ticket.tags.map((tag) => (
+            <TagChip key={tag.id} tag={tag} mode="display" />
+          ))}
         </div>
 
-        {/* Progress bar — hidden for in-review and consensus */}
-        {!SHOW_CONSENSUS_DOTS.includes(ticket.status) && (
-          <div className="mt-4">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] text-ink-muted font-medium">Consensus</span>
-              <span className="text-[11px] text-ink-muted">
-                {ticket.approvals.length}/{allPersonas.length}
-              </span>
+        {/* Title — inline editable */}
+        {editing ? (
+          <input
+            ref={inputRef}
+            type="text"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onBlur={saveTitle}
+            className="w-full bg-deep border border-brand-300/40 rounded-md px-2 py-1 text-sm font-semibold text-ink-primary focus:outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/30"
+            aria-label="Edit ticket title"
+          />
+        ) : (
+          <h3
+            className="text-sm font-semibold tracking-[-0.01em] text-[#0F172A] group-hover:text-brand-600 transition-colors truncate cursor-text focus:outline-none focus:ring-2 focus:ring-brand-500/50 rounded"
+            onClick={startEditing}
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); setDraft(ticket.title); setEditing(true); }
+            }}
+          >
+            {ticket.title}
+          </h3>
+        )}
+
+        {/* Description */}
+        {ticket.description && (
+          <p className="text-xs mt-1.5 leading-relaxed line-clamp-2" style={{ color: "#64748B" }}>
+            {ticket.description}
+          </p>
+        )}
+
+        {/* Progress bar or consensus dots */}
+        {!SHOW_CONSENSUS_DOTS.includes(ticket.status as MPStatus) && (
+          <div className="mt-3">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] font-medium" style={{ color: "#94A3B8" }}>Consensus</span>
+              <span className="text-[11px]" style={{ color: "#94A3B8" }}>{ticket.approvals.length}/{allPersonas.length}</span>
             </div>
-            <div className="h-1.5 bg-deep rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-500"
-                style={{
-                  width: `${progress * 100}%`,
-                  background: "var(--color-gold)",
-                }}
-              />
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "#E2E8F0" }}>
+              <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progress * 100}%`, background: "#6366F1" }} />
             </div>
           </div>
         )}
 
-        {/* Consensus dots */}
-        {SHOW_CONSENSUS_DOTS.includes(ticket.status) && (
-          <div
-            className="mt-3 flex items-center gap-2"
-            title={`${ticket.approvals.length} of ${allPersonas.length} approved`}
-            aria-label={`Consensus: ${ticket.approvals.length} of ${allPersonas.length} approved`}
-            data-testid="consensus-dots"
-          >
-            <span className="text-[11px] text-ink-muted font-medium">Consensus</span>
+        {SHOW_CONSENSUS_DOTS.includes(ticket.status as MPStatus) && (
+          <div className="mt-2.5 flex items-center gap-2" title={`${ticket.approvals.length} of ${allPersonas.length} approved`}>
+            <span className="text-[11px] font-medium" style={{ color: "#94A3B8" }}>Consensus</span>
             <div className="flex items-center gap-1">
-              {allPersonas.map((p) => {
-                const isApproved = ticket.approvals.includes(p.id);
-                return (
-                  <PersonaIcon
-                    key={p.id}
-                    personaId={p.id}
-                    size={13}
-                    className={isApproved ? "text-olive" : "text-ink-muted"}
-                  />
-                );
-              })}
+              {allPersonas.map((p) => (
+                <PersonaIcon key={p.id} personaId={p.id} size={13} className={ticket.approvals.includes(p.id) ? "text-[#059669]" : "text-[#CBD5E1]"} />
+              ))}
             </div>
           </div>
         )}
 
         {/* Due date */}
-        {ticket.dueDate && (
-          <div className="mt-3">
-            {(() => {
-              const dl = formatDueDate(ticket.dueDate);
-              return (
-                <span
-                  className={`inline-flex items-center gap-1.5 text-[11px] ${
-                    dl.className
-                  } ${dl.isOverdue ? "bg-cardinal/10 border border-cardinal/30 rounded-md px-2 py-0.5" : ""}`}
-                >
-                  <Calendar size={11} />
-                  {dl.label}
-                </span>
-              );
-            })()}
-          </div>
-        )}
+        {ticket.dueDate && (() => {
+          const dl = formatDueDate(ticket.dueDate);
+          return (
+            <div className="mt-2">
+              <span className={`inline-flex items-center gap-1 text-[11px] ${dl.className} ${dl.isOverdue ? "bg-[#FEF2F2] border border-[#FECACA] rounded-md px-2 py-0.5" : ""}`}>
+                <Calendar size={11} />
+                {dl.label}
+              </span>
+            </div>
+          );
+        })()}
 
-        {/* Personas row */}
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-border-subtle">
+        {/* Bottom row: personas + metadata */}
+        <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: "1px solid #E2E8F0" }}>
           <div className="flex -space-x-1">
             {allPersonas.map((p) => (
-              <div key={p.id} className="ring-2 ring-deep rounded-full">
-                <PersonaBadge
-                  personaId={p.id}
-                  approved={ticket.approvals.includes(p.id)}
-                />
+              <div key={p.id} className="ring-2 ring-white rounded-full">
+                <PersonaBadge personaId={p.id} approved={ticket.approvals.includes(p.id)} />
               </div>
             ))}
           </div>
-          <div className="flex items-center gap-3 text-[11px] text-ink-muted">
+          <div className="flex items-center gap-3 text-[11px]" style={{ color: "#94A3B8" }}>
             <span className="flex items-center gap-1">
               <MessageSquare size={11} />
               {ticket.feedback.length}
             </span>
-            <span
-              className="flex items-center gap-1"
-              title={formatAbsoluteDate(ticket.updatedAt)}
-            >
+            <span className="flex items-center gap-1" title={formatAbsoluteDate(ticket.updatedAt)}>
               <Clock size={11} />
               {formatRelativeTime(ticket.updatedAt)}
             </span>
