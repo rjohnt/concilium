@@ -204,7 +204,7 @@ describe("callDeepSeek", () => {
 
   it("falls back model to deepseek-v4-flash when API response has no model field", async () => {
     const payload = mockSuccessPayload();
-    delete (payload as any).model;
+    delete (payload as any).model; // any cast needed to test missing-field fallback behavior
 
     mockFetch.mockResolvedValue(mockResponse(200, payload));
 
@@ -220,7 +220,7 @@ describe("callDeepSeek", () => {
   // ── Ticket item 10: Usage field fallback ───────────────────────
   it("falls back usage to 0/0/0 when API returns no usage data", async () => {
     const payload = mockSuccessPayload();
-    delete (payload as any).usage;
+    delete (payload as any).usage; // any cast needed to test missing-field fallback behavior
 
     mockFetch.mockResolvedValue(mockResponse(200, payload));
 
