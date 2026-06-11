@@ -8,11 +8,14 @@ import { Loader2 } from "lucide-react";
 const PUBLIC_PATHS = ["/login", "/signup", "/auth/callback", "/welcome", "/share", "/compare"];
 const PUBLIC_EXACT_PATHS = ["/"];
 
-// In development without Supabase credentials, bypass auth entirely
+// In development without Supabase credentials, bypass auth entirely.
+// NEXT_PUBLIC_* is inlined on both server and client, so this resolves to
+// the same value on the server render and the first client render — gating
+// it behind `typeof window` instead made the two diverge and produced a
+// hydration mismatch on every authed page.
 const isDevBypass =
-  typeof window !== "undefined" &&
-  (!process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder"));
+  !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder");
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -41,9 +44,9 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   // Show loading spinner while checking auth
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#1a1714] flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--bg-app)] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 size={32} className="animate-spin text-gold" />
+          <Loader2 size={32} className="animate-spin text-coral-500" />
           <p className="text-sm text-ink-muted">Loading...</p>
         </div>
       </div>
