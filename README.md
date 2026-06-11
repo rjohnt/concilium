@@ -51,6 +51,11 @@ draft → in-review → consensus → building → done
 5. **Review loop** — stakeholders file role-scoped **change requests**
    against the completed build; a rebuild consumes them as delta context.
 
+## Brand
+
+Brand strategy, voice & tone, visual identity, and logo concepts live in
+[docs/brand/](docs/brand/README.md). Tagline: **"Software by consensus."**
+
 ## Stack
 
 - **Framework**: Next.js 16 (App Router) + React 19 + TypeScript 6

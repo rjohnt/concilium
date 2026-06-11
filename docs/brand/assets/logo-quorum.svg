@@ -1,0 +1,10 @@
+<svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <title>Concilium — Quorum Mark (a C of four voices, gap closing as consensus nears)</title>
+  <!-- Four arcs = four seats; stroke weight grows as agreement accumulates -->
+  <g stroke="#6366F1" stroke-linecap="round">
+    <path d="M 98.6 84 A 40 40 0 0 1 59.8 103.8" stroke-width="4"/>
+    <path d="M 51.6 102 A 40 40 0 0 1 24.2 68.2" stroke-width="6"/>
+    <path d="M 24.2 59.8 A 40 40 0 0 1 51.6 26" stroke-width="8"/>
+    <path d="M 59.8 24.2 A 40 40 0 0 1 98.6 44" stroke-width="10"/>
+  </g>
+</svg>
