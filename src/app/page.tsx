@@ -197,13 +197,13 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Filter bar (status tabs) ─────────────────────────── */}
-      <div className="flex items-center gap-1 mb-6">
+      <div className="flex items-center gap-1 mb-6 overflow-x-auto scrollbar-none -mx-1 px-1">
         {(["all", "draft", "in-review", "consensus", "building", "done"] as const).map(tab => {
           const label = tab === "all" ? "All" : tab.charAt(0).toUpperCase() + tab.slice(1).replace("-", " ");
           const active = activeFilter === tab;
           return (
             <button key={tab} onClick={() => setActiveFilter(tab)}
-              className="px-3 py-1.5 text-xs font-medium cursor-pointer transition-all duration-100"
+              className="px-3 py-1.5 text-xs font-medium cursor-pointer transition-all duration-100 whitespace-nowrap shrink-0"
               style={{
                 background: active ? MP.tabActive.bg : "transparent",
                 color: active ? MP.tabActive.text : MP.tabInactive.text,
