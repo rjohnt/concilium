@@ -35,3 +35,10 @@ next-env.d.ts
 
 # runtime data
 data/concilium.db*
+
+# sizzle-reel render artifacts and finished cuts (regenerate with
+# `npx hyperframes render --quality high` inside each marketing/variants/* dir;
+# the shipped website video lives in public/welcome/)
+marketing/sizzle-reel/renders/
+marketing/variants/*/renders/
+marketing/videos/*.mp4

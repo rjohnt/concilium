@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="assets/vendor/gsap.min.js"></script>
+    <script src="assets/vendor/three.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "Bricolage Grotesque";
+        font-style: normal; font-weight: 100 900; font-display: block;
+        src: url("assets/fonts/Bricolage-normal.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Hanken Grotesk";
+        font-style: normal; font-weight: 100 900; font-display: block;
+        src: url("assets/fonts/Hanken-normal.woff2") format("woff2");
+      }
+      :root {
+        --coral: #e85d34; --coral-light: #f07e5c; --coral-deep: #cf4a28;
+        --cream: #fcfaf6; --ink: #2b221c;
+        --eng: #1e9c86; --des: #7a57d1; --prod: #d9962a; --qa: #2f82c7;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #120c08; }
+      body { font-family: "Hanken Grotesk", sans-serif; }
+      .display { font-family: "Bricolage Grotesque", sans-serif; }
+
+      #stage { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+      #bg {
+        position: absolute; inset: 0; z-index: 0;
+        background: radial-gradient(120% 90% at 50% 38%, #3a2e25 0%, #271d16 42%, #160f0a 100%);
+      }
+      #three-layer { position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: 1; }
+      #vignette {
+        position: absolute; inset: 0; z-index: 2; pointer-events: none;
+        background: radial-gradient(115% 85% at 50% 42%, transparent 55%, rgba(8, 5, 3, 0.52) 100%);
+      }
+      #warmwash {
+        position: absolute; inset: 0; z-index: 4; opacity: 0; pointer-events: none;
+        background: radial-gradient(120% 100% at 50% 45%, #fffaf3 0%, #fdf3ea 45%, #f7e7d8 100%);
+      }
+
+      .scene {
+        position: absolute; inset: 0; z-index: 6;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        text-align: center; padding: 120px 180px;
+        opacity: 0; visibility: hidden;
+      }
+      .headline {
+        font-family: "Bricolage Grotesque", sans-serif;
+        font-weight: 700; color: var(--cream);
+        line-height: 1.04; letter-spacing: -0.025em;
+        text-shadow: 0 4px 34px rgba(8, 5, 3, 0.55);
+      }
+      .accent { color: var(--coral-light); }
+
+      #s1 .headline { font-size: 120px; }
+      #s2 { justify-content: flex-start; padding-top: 140px; }
+      #s2 .headline { font-size: 96px; }
+      .persona-strip { display: flex; justify-content: center; gap: 15px; margin-top: 50px; }
+      .pchip {
+        display: inline-flex; align-items: center; gap: 10px;
+        padding: 12px 22px; border-radius: 999px;
+        background: rgba(24, 17, 12, 0.66);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        font-size: 22px; font-weight: 600; color: var(--cream);
+        backdrop-filter: blur(6px);
+      }
+      .pchip .dot { width: 14px; height: 14px; border-radius: 50%; }
+      #s3 .headline { font-size: 108px; }
+
+      #s5 .stamp {
+        width: 210px; height: 210px; border-radius: 50%;
+        border: 6px solid var(--coral);
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+        color: var(--coral-deep); margin-bottom: 40px;
+        background: rgba(255, 255, 255, 0.78);
+        box-shadow: 0 0 0 13px rgba(232, 93, 52, 0.11), 0 26px 60px rgba(232, 93, 52, 0.2);
+      }
+      #s5 .seal-word {
+        font-family: "Bricolage Grotesque", sans-serif;
+        font-weight: 700; font-size: 30px; letter-spacing: 0.05em; text-transform: uppercase;
+      }
+      #s5 .seal-sub { font-size: 13px; letter-spacing: 0.32em; text-transform: uppercase; opacity: 0.8; }
+      #s5 .headline { font-size: 84px; color: var(--ink); text-shadow: none; }
+      #s5 .headline .accent { color: var(--coral-deep); }
+
+      #s6 .lockrow { display: flex; align-items: center; gap: 28px; }
+      #s6 .mark { position: relative; width: 108px; height: 108px; }
+      #s6 .mark i { position: absolute; border-radius: 50%; display: block; }
+      #s6 .peb-coral { width: 41px; height: 41px; background: #e85d34; left: 34px; top: 12px; }
+      #s6 .peb-iris  { width: 41px; height: 41px; background: #7a57d1; left: 15px; top: 45px; }
+      #s6 .peb-teal  { width: 41px; height: 41px; background: #1e9c86; left: 52px; top: 45px; }
+      #s6 .peb-dot   { width: 20px; height: 20px; background: #2b221c; left: 44px; top: 46px; }
+      #s6 .brand {
+        font-family: "Bricolage Grotesque", sans-serif;
+        font-weight: 700; font-size: 98px; color: var(--ink); letter-spacing: -0.03em;
+      }
+      #s6 .tagline { margin-top: 20px; font-weight: 500; font-size: 38px; color: var(--coral-deep); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="15" data-width="1920" data-height="1080">
+      <audio id="bed" class="clip" src="assets/music.m4a" data-start="0" data-duration="15" data-track-index="9" data-volume="0.85"></audio>
+      <div id="stage">
+        <div id="bg" data-layout-ignore></div>
+        <canvas id="three-layer" width="1920" height="1080" data-layout-ignore></canvas>
+        <div id="vignette" data-layout-ignore></div>
+        <div id="warmwash" data-layout-ignore></div>
+
+        <div id="s1" class="scene">
+          <div class="headline display">Four voices. <span class="accent">One verdict.</span></div>
+        </div>
+
+        <div id="s2" class="scene">
+          <div class="headline display">The council convenes.</div>
+          <div class="persona-strip">
+            <span class="pchip pc"><span class="dot" style="background: var(--eng)"></span>Engineer</span>
+            <span class="pchip pc"><span class="dot" style="background: var(--des)"></span>Designer</span>
+            <span class="pchip pc"><span class="dot" style="background: var(--prod)"></span>Product</span>
+            <span class="pchip pc"><span class="dot" style="background: var(--qa)"></span>QA</span>
+          </div>
+        </div>
+
+        <div id="s3" class="scene">
+          <div class="headline display">They weigh in. <span class="accent">You steer.</span></div>
+        </div>
+
+        <div id="s5" class="scene">
+          <div class="stamp" id="seal">
+            <div class="seal-word">Consensus</div>
+            <div class="seal-sub">Verdict reached</div>
+          </div>
+          <div class="headline display">The build <span class="accent">begins.</span></div>
+        </div>
+
+        <div id="s6" class="scene">
+          <div class="lockrow">
+            <div class="mark">
+              <i class="peb-coral"></i><i class="peb-iris"></i><i class="peb-teal"></i><i class="peb-dot"></i>
+            </div>
+            <div class="brand display">Concilium</div>
+          </div>
+          <div class="tagline">Software by consensus.</div>
+        </div>
+      </div>
+    </div>
+
+    <script type="application/json" id="council-config">
+      {
+        "palette": "dark",
+        "duration": 15,
+        "beats": {
+          "reveal": [0, 2.2],
+          "seats": { "start": 2.4, "stagger": 0.4 },
+          "focus": null,
+          "consensus": [9.0, 11.2],
+          "beam": [9.2, 11.8],
+          "fadeOut": [11.8, 12.8]
+        },
+        "camera": {
+          "orbitSpeed": 0.16, "orbitOffset": -0.9,
+          "rFrom": 9.0, "rTo": 7.4, "hFrom": 5.3, "hTo": 3.2,
+          "push": 1.5, "pushDrop": 0.55, "lookY": 0.1
+        },
+        "motes": true,
+        "beam": true
+      }
+    </script>
+    <script src="assets/vendor/council-scene.js"></script>
+
+    <script>
+      (function () {
+        window.__timelines = window.__timelines || {};
+        const tl = gsap.timeline({ paused: true });
+        const E = "power3.out";
+        function scene(sel, start, end, inDur, outDur) {
+          tl.fromTo(sel, { autoAlpha: 0 }, { autoAlpha: 1, duration: inDur, ease: "power2.out" }, start);
+          tl.to(sel, { autoAlpha: 0, duration: outDur, ease: "power2.in" }, end - outDur);
+        }
+
+        /* 1 · hook (0.2–2.6) */
+        scene("#s1", 0.2, 2.6, 0.45, 0.4);
+        tl.fromTo("#s1 .headline",
+          { y: 46, opacity: 0, filter: "blur(12px)" },
+          { y: 0, opacity: 1, filter: "blur(0px)", duration: 0.7, ease: E }, 0.3);
+
+        /* 2 · convene (2.6–5.6) */
+        scene("#s2", 2.6, 5.6, 0.4, 0.4);
+        tl.from("#s2 .headline", { scale: 0.9, opacity: 0, duration: 0.5, ease: "back.out(1.6)" }, 2.7);
+        tl.from("#s2 .pc", { y: 30, opacity: 0, duration: 0.35, stagger: 0.38, ease: "back.out(1.8)" }, 2.9);
+
+        /* 3 · weigh in (5.6–8.9) */
+        scene("#s3", 5.6, 8.9, 0.45, 0.4);
+        tl.from("#s3 .headline", { y: 38, opacity: 0, duration: 0.6, ease: E }, 5.75);
+
+        /* warm bloom under consensus */
+        tl.fromTo("#warmwash", { autoAlpha: 0 }, { autoAlpha: 0.96, duration: 1.5, ease: "power2.inOut" }, 9.4);
+
+        /* 5 · verdict (9.0–12.6) */
+        scene("#s5", 9.0, 12.6, 0.5, 0.45);
+        tl.from("#s5 .stamp", { scale: 0.4, opacity: 0, rotate: -16, duration: 0.55, ease: "back.out(1.9)" }, 9.5);
+        tl.to("#s5 #seal", { scale: 1.07, duration: 0.15, yoyo: true, repeat: 1, ease: "power2.inOut" }, 10.05);
+        tl.from("#s5 .headline", { y: 30, opacity: 0, duration: 0.55, ease: E }, 9.9);
+
+        /* 6 · lockup (12.7–15) */
+        tl.fromTo("#s6", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.5, ease: "power2.out" }, 12.7); // lockup holds to the end
+        tl.from("#s6 .peb-coral", { x: -100, y: -72, opacity: 0, duration: 0.55, ease: "back.out(1.4)" }, 12.8);
+        tl.from("#s6 .peb-iris",  { x: -116, y: 76, opacity: 0, duration: 0.55, ease: "back.out(1.4)" }, 12.88);
+        tl.from("#s6 .peb-teal",  { x: 50, y: 116, opacity: 0, duration: 0.55, ease: "back.out(1.4)" }, 12.96);
+        tl.from("#s6 .peb-dot",   { scale: 0, opacity: 0, duration: 0.36, ease: "back.out(2.2)" }, 13.36);
+        tl.from("#s6 .brand", { x: -22, opacity: 0, duration: 0.55, ease: E }, 13.25);
+        tl.from("#s6 .tagline", { y: 18, opacity: 0, duration: 0.5, ease: E }, 13.6);
+
+        /* anchor: pad the timeline to the composition end so seeks past the
+           last tween never reset to initial state (blank final frames) */
+        tl.set("#root", { autoAlpha: 1 }, 14.98);
+
+        window.__timelines["main"] = tl;
+      })();
+    </script>
+  </body>
+</html>

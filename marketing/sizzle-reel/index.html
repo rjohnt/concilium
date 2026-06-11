@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <script src="assets/vendor/gsap.min.js"></script>
+    <script src="assets/vendor/three.min.js"></script>
+    <style>
+      /* Concilium / Claude Design type system — vendored locally for
+         offline-safe renders. Variable fonts: one file covers all weights. */
+      @font-face {
+        font-family: "Bricolage Grotesque";
+        font-style: normal;
+        font-weight: 100 900;
+        font-display: block;
+        src: url("assets/fonts/Bricolage-normal.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Hanken Grotesk";
+        font-style: normal;
+        font-weight: 100 900;
+        font-display: block;
+        src: url("assets/fonts/Hanken-normal.woff2") format("woff2");
+      }
+      /* ============================================================
+         Concilium — "Software by consensus" sizzle reel
+         Brand tokens (hardcoded — standalone HTML can't read app vars):
+           chamber ground  warm-dark  #2B221C / #160f0a
+           cream           #FCFAF6 / #F7F1E8
+           coral           #E85D34  (consensus / approval)
+           Engineer/Ada    #1E9C86 (teal)
+           Designer/Iris   #7A57D1 (purple)
+           Product/Pam     #D9962A (gold)
+           QA/Ray          #2F82C7 (blue)
+         ============================================================ */
+      :root {
+        --coral: #e85d34;
+        --coral-light: #f07e5c;
+        --cream: #fcfaf6;
+        --cream-2: #f7f1e8;
+        --ink: #2b221c;
+        --ink-soft: #4b3f35;
+        --eng: #1e9c86;
+        --des: #7a57d1;
+        --prod: #d9962a;
+        --qa: #2f82c7;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #120c08;
+      }
+      body {
+        font-family: "Hanken Grotesk", sans-serif;
+      }
+      .mono {
+        font-family: "JetBrains Mono", monospace;
+      }
+      /* class name kept for minimal churn; now the Bricolage display face */
+      .serif {
+        font-family: "Bricolage Grotesque", sans-serif;
+      }
+
+      /* ---- Stage layers --------------------------------------- */
+      #stage {
+        position: absolute;
+        inset: 0;
+        width: 1920px;
+        height: 1080px;
+      }
+      /* The chamber ground: warm radial, never pure black */
+      #chamber-bg {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          120% 90% at 50% 38%,
+          #3a2e25 0%,
+          #271d16 42%,
+          #160f0a 100%
+        );
+        z-index: 0;
+      }
+      /* Three.js council table + consensus ring */
+      #three-layer {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+        z-index: 1;
+      }
+      /* vignette for cinematic depth */
+      #vignette {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        pointer-events: none;
+        background: radial-gradient(
+          110% 80% at 50% 42%,
+          transparent 55%,
+          rgba(8, 5, 3, 0.55) 100%
+        );
+      }
+      /* film grain */
+      #grain {
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        pointer-events: none;
+        opacity: 0.06;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+      }
+      /* The warm bloom that takes over at consensus */
+      #warmwash {
+        position: absolute;
+        inset: 0;
+        z-index: 4;
+        opacity: 0;
+        pointer-events: none;
+        background: radial-gradient(
+          120% 100% at 50% 45%,
+          #fffaf3 0%,
+          #fdf3ea 45%,
+          #f7e7d8 100%
+        );
+      }
+
+      /* ---- Scenes (overlay text) ------------------------------ */
+      .scene {
+        position: absolute;
+        inset: 0;
+        z-index: 6;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 120px 200px;
+        opacity: 0;
+        visibility: hidden;
+      }
+      .eyebrow {
+        font-size: 22px;
+        letter-spacing: 0.42em;
+        text-transform: uppercase;
+        font-weight: 600;
+        color: var(--coral-light);
+      }
+      .kicker-line {
+        overflow: hidden;
+      }
+      .display {
+        font-family: "Bricolage Grotesque", sans-serif;
+        font-weight: 600;
+        color: var(--cream);
+        line-height: 1.02;
+        letter-spacing: -0.015em;
+      }
+      .accent {
+        color: var(--coral-light);
+      }
+
+      /* Scene 1 — cold open */
+      #s1 .line-1 {
+        font-size: 84px;
+        color: #cdbfae;
+      }
+      #s1 .line-2 {
+        font-size: 112px;
+        margin-top: 18px;
+      }
+
+      /* Scene 2 — the seats fill */
+      #s2 .display {
+        font-size: 92px;
+      }
+      .persona-row {
+        display: flex;
+        gap: 26px;
+        margin-top: 64px;
+      }
+      .pcard {
+        width: 230px;
+        padding: 26px 22px 28px;
+        border-radius: 20px;
+        background: rgba(28, 21, 16, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(6px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+      }
+      .pcard .av {
+        width: 76px;
+        height: 76px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 30px;
+        color: #fff;
+        box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.05);
+      }
+      .pcard .pname {
+        font-family: "Bricolage Grotesque", sans-serif;
+        font-size: 30px;
+        font-weight: 600;
+        color: var(--cream);
+      }
+      .pcard .prole {
+        font-size: 17px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        font-weight: 600;
+        opacity: 0.85;
+      }
+
+      /* Scene 3 — deliberation */
+      #s3 .heading {
+        font-size: 58px;
+        margin-bottom: 40px;
+      }
+      .ticket {
+        width: 1180px;
+        background: rgba(22, 16, 12, 0.72);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 24px;
+        padding: 30px 36px;
+        box-shadow: 0 40px 90px rgba(0, 0, 0, 0.55);
+        backdrop-filter: blur(8px);
+      }
+      .ticket-bar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding-bottom: 22px;
+        margin-bottom: 8px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+      }
+      .ticket-id {
+        margin-left: 10px;
+        font-size: 18px;
+        letter-spacing: 0.08em;
+        color: #b7a896;
+      }
+      .msg {
+        display: flex;
+        align-items: flex-start;
+        gap: 18px;
+        padding: 16px 4px;
+        text-align: left;
+      }
+      .msg .av {
+        flex: 0 0 auto;
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 20px;
+        color: #fff;
+      }
+      .msg .body .who {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 5px;
+      }
+      .msg .body .who b {
+        font-family: "Bricolage Grotesque", sans-serif;
+        font-size: 23px;
+        color: var(--cream);
+        font-weight: 600;
+      }
+      .msg .body .tag {
+        font-size: 13px;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 999px;
+      }
+      .msg .body .tx {
+        font-size: 24px;
+        line-height: 1.42;
+        color: #ddd2c4;
+      }
+
+      /* Scene 4 — your seat */
+      #s4 .display {
+        font-size: 100px;
+        max-width: 1400px;
+      }
+      #s4 .sub {
+        margin-top: 30px;
+        font-size: 30px;
+        letter-spacing: 0.04em;
+        color: #c9bba9;
+      }
+
+      /* Scene 5 — consensus */
+      #s5 .stamp {
+        width: 240px;
+        height: 240px;
+        border-radius: 50%;
+        border: 6px solid var(--coral);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 4px;
+        color: var(--coral);
+        box-shadow:
+          0 0 0 14px rgba(232, 93, 52, 0.12),
+          0 30px 70px rgba(232, 93, 52, 0.25);
+        margin-bottom: 46px;
+      }
+      #s5 .stamp .seal-word {
+        font-family: "Bricolage Grotesque", sans-serif;
+        font-weight: 700;
+        font-size: 34px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      #s5 .stamp .seal-sub {
+        font-size: 15px;
+        letter-spacing: 0.34em;
+        text-transform: uppercase;
+        opacity: 0.8;
+      }
+      #s5 .display {
+        font-size: 78px;
+        color: var(--ink);
+      }
+      #s5 .display .accent {
+        color: var(--coral);
+      }
+
+      /* Scene 6 — lockup */
+      #s6 .wordmark {
+        display: flex;
+        align-items: center;
+        gap: 26px;
+      }
+      #s6 .ring-mark {
+        width: 104px;
+        height: 104px;
+      }
+      #s6 .brand {
+        font-family: "Bricolage Grotesque", sans-serif;
+        font-weight: 700;
+        font-size: 100px;
+        color: var(--ink);
+        letter-spacing: -0.03em;
+      }
+      #s6 .tagline {
+        margin-top: 24px;
+        font-family: "Hanken Grotesk", sans-serif;
+        font-weight: 500;
+        font-size: 40px;
+        letter-spacing: -0.01em;
+        color: var(--coral);
+      }
+      #s6 .cta {
+        margin-top: 50px;
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        background: var(--coral);
+        color: #fff;
+        font-weight: 600;
+        font-size: 28px;
+        padding: 20px 40px;
+        border-radius: 999px;
+        box-shadow: 0 18px 44px rgba(232, 93, 52, 0.36);
+      }
+      #s6 .cta .arrow {
+        font-size: 30px;
+        line-height: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div data-hf-id="hf-0xju" id="root" data-composition-id="main" data-start="0" data-duration="31" data-width="1920" data-height="1080">
+      <!-- Ambient music bed (synthesized, license-clean). Muxed by the renderer. -->
+      <audio
+        id="bed"
+        class="clip"
+        src="assets/music.m4a"
+        data-start="0"
+        data-duration="31"
+        data-track-index="9"
+        data-volume="0.85"
+      ></audio>
+      <div data-hf-id="hf-1rt5" id="stage">
+        <div data-hf-id="hf-7et6" id="chamber-bg" data-layout-ignore=""></div>
+        <canvas data-hf-id="hf-5g1t" id="three-layer" width="1920" height="1080" data-layout-ignore=""></canvas>
+        <div data-hf-id="hf-3obq" id="vignette" data-layout-ignore=""></div>
+        <div data-hf-id="hf-ksa1" id="grain" data-layout-ignore=""></div>
+        <div data-hf-id="hf-qqeq" id="warmwash" data-layout-ignore=""></div>
+
+        <!-- Scene 1 — cold open -->
+        <div data-hf-id="hf-yihu" id="s1" class="scene">
+          <div data-hf-id="hf-hco2" class="kicker-line">
+            <div data-hf-id="hf-dryk" class="display line-1 serif">AI can write the code.</div>
+          </div>
+          <div data-hf-id="hf-txza" class="kicker-line">
+            <div data-hf-id="hf-3muw" class="display line-2 serif">
+              But who decides <span data-hf-id="hf-841v" class="accent">what to build?</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scene 2 — the seats fill -->
+        <div data-hf-id="hf-ukdt" id="s2" class="scene">
+          <div data-hf-id="hf-cwcd" class="eyebrow s2-eye">The council convenes</div>
+          <div data-hf-id="hf-9xox" class="display serif" style="margin-top: 22px">
+            Every seat is filled.
+          </div>
+          <div data-hf-id="hf-pgo3" class="persona-row">
+            <div data-hf-id="hf-dbf6" class="pcard pc" data-c="eng">
+              <div data-hf-id="hf-omem" class="av" style="background: var(--eng)">A</div>
+              <div data-hf-id="hf-um5r" class="pname">Ada</div>
+              <div data-hf-id="hf-ueok" class="prole" style="color: var(--eng)">Engineer</div>
+            </div>
+            <div data-hf-id="hf-setu" class="pcard pc" data-c="des">
+              <div data-hf-id="hf-nozy" class="av" style="background: var(--des)">I</div>
+              <div data-hf-id="hf-sw6y" class="pname">Iris</div>
+              <div data-hf-id="hf-cac4" class="prole" style="color: var(--des)">Designer</div>
+            </div>
+            <div data-hf-id="hf-i9gp" class="pcard pc" data-c="prod">
+              <div data-hf-id="hf-413m" class="av" style="background: var(--prod)">P</div>
+              <div data-hf-id="hf-iyk9" class="pname">Pam</div>
+              <div data-hf-id="hf-0vg4" class="prole" style="color: var(--prod)">Product Owner</div>
+            </div>
+            <div data-hf-id="hf-yatg" class="pcard pc" data-c="qa">
+              <div data-hf-id="hf-egsp" class="av" style="background: var(--qa)">R</div>
+              <div data-hf-id="hf-jd2z" class="pname">Ray</div>
+              <div data-hf-id="hf-ny3x" class="prole" style="color: var(--qa)">QA</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scene 3 — deliberation -->
+        <div data-hf-id="hf-tsq0" id="s3" class="scene">
+          <div data-hf-id="hf-6ani" class="display heading serif">
+            They weigh in. <span data-hf-id="hf-z9yr" class="accent">You steer.</span>
+          </div>
+          <div data-hf-id="hf-1qws" class="ticket">
+            <div data-hf-id="hf-6m50" class="ticket-bar">
+              <span data-hf-id="hf-lrn5" class="dot" style="background: var(--prod)"></span>
+              <span data-hf-id="hf-8h82" class="dot" style="background: var(--qa)"></span>
+              <span data-hf-id="hf-vnxy" class="dot" style="background: var(--des)"></span>
+              <span data-hf-id="hf-fxya" class="dot" style="background: var(--eng)"></span>
+              <span data-hf-id="hf-2lmr" class="ticket-id mono">TKT-128 · living ticket</span>
+            </div>
+            <div data-hf-id="hf-nkbm" class="msg m" data-c="prod">
+              <div data-hf-id="hf-cfdi" class="av" style="background: var(--prod)">P</div>
+              <div data-hf-id="hf-2t3w" class="body">
+                <div data-hf-id="hf-xhzk" class="who">
+                  <b data-hf-id="hf-3gyt">Pam</b>
+                  <span data-hf-id="hf-ctju" class="tag" style="color: var(--prod); background: rgba(217, 150, 42, 0.16)">Product Owner</span>
+                </div>
+                <div data-hf-id="hf-qlvx" class="tx">
+                  Goal: ship the share page — buyers see ticket status without
+                  signing in.
+                </div>
+              </div>
+            </div>
+            <div data-hf-id="hf-g5pn" class="msg m" data-c="qa">
+              <div data-hf-id="hf-do59" class="av" style="background: var(--qa)">R</div>
+              <div data-hf-id="hf-6g9g" class="body">
+                <div data-hf-id="hf-e2p4" class="who">
+                  <b data-hf-id="hf-xi7z">Ray</b>
+                  <span data-hf-id="hf-la75" class="tag" style="color: var(--qa); background: rgba(47, 130, 199, 0.16)">QA</span>
+                </div>
+                <div data-hf-id="hf-gssj" class="tx">
+                  Edge case: an expired link should explain itself, not 404.
+                </div>
+              </div>
+            </div>
+            <div data-hf-id="hf-3bov" class="msg m" data-c="des">
+              <div data-hf-id="hf-26vm" class="av" style="background: var(--des)">I</div>
+              <div data-hf-id="hf-59cd" class="body">
+                <div data-hf-id="hf-cvs1" class="who">
+                  <b data-hf-id="hf-xehy">Iris</b>
+                  <span data-hf-id="hf-q8rp" class="tag" style="color: var(--des); background: rgba(122, 87, 209, 0.16)">Designer</span>
+                </div>
+                <div data-hf-id="hf-b6cg" class="tx">
+                  On it — an empty-state that keeps the page warm. ✦
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scene 4 — your seat -->
+        <div data-hf-id="hf-pulz" id="s4" class="scene">
+          <div data-hf-id="hf-8j7b" class="display serif">
+            AI holds the seat <span data-hf-id="hf-3ki4" class="accent">until you take it.</span>
+          </div>
+          <div data-hf-id="hf-d1ws" class="sub">Claim a seat. Steer the room. Ship with provenance.</div>
+        </div>
+
+        <!-- Scene 5 — consensus -->
+        <div data-hf-id="hf-lwhy" id="s5" class="scene">
+          <div data-hf-id="hf-jmq0" class="stamp" id="seal">
+            <div data-hf-id="hf-jdjr" class="seal-word">Consensus</div>
+            <div data-hf-id="hf-5wqd" class="seal-sub">Verdict reached</div>
+          </div>
+          <div data-hf-id="hf-dqo8" class="display serif">
+            Consensus reached. <span data-hf-id="hf-3oqm" class="accent">The build begins.</span>
+          </div>
+        </div>
+
+        <!-- Scene 6 — lockup -->
+        <div data-hf-id="hf-hydx" id="s6" class="scene">
+          <div data-hf-id="hf-cb03" class="wordmark">
+            <!-- The Concilium council mark: three persona pebbles + the seat
+                 the council gathers around (matches public/brand/logo-mark.svg). -->
+            <svg class="ring-mark" viewBox="0 0 120 120" fill="none">
+              <circle cx="60" cy="38" r="22" fill="#E85D34" />
+              <circle cx="39" cy="74" r="22" fill="#7A57D1" />
+              <circle cx="81" cy="74" r="22" fill="#1E9C86" />
+              <circle cx="60" cy="62" r="11" fill="#2B221C" />
+            </svg>
+            <div data-hf-id="hf-5xvk" class="brand">Concilium</div>
+          </div>
+          <div data-hf-id="hf-zcw4" class="tagline">Software by consensus.</div>
+          <div data-hf-id="hf-fcz6" class="cta">Convene your council <span data-hf-id="hf-v68i" class="arrow">→</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== Three.js council chamber ===================== -->
+    <script>
+      // THREE is provided as a global by assets/vendor/three.min.js (UMD).
+      // Wrapped in an IIFE: classic <script> tags share one global lexical
+      // scope, so an unwrapped `const scene` here would collide with the
+      // GSAP script below and silently break compilation.
+      (function () {
+      const canvas = document.getElementById("three-layer");
+      const renderer = new THREE.WebGLRenderer({
+        canvas,
+        alpha: true,
+        antialias: true,
+      });
+      renderer.setSize(1920, 1080, false);
+      renderer.setPixelRatio(1);
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.05;
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(34, 1920 / 1080, 0.1, 100);
+
+      // Persona seat colors, canonical order: Engineer, Designer, Product, QA
+      const SEATCOLORS = [0x1e9c86, 0x7a57d1, 0xd9962a, 0x2f82c7];
+      const RING_R = 2.15;
+
+      // ---- The round council table --------------------------------
+      const table = new THREE.Mesh(
+        new THREE.CylinderGeometry(2.55, 2.62, 0.16, 96),
+        new THREE.MeshStandardMaterial({
+          color: 0x241a13,
+          roughness: 0.55,
+          metalness: 0.35,
+          transparent: true,
+        }),
+      );
+      table.position.y = -0.18;
+      scene.add(table);
+
+      // subtle inlaid top ring on the table surface
+      const inlay = new THREE.Mesh(
+        new THREE.RingGeometry(2.3, 2.42, 96),
+        new THREE.MeshBasicMaterial({
+          color: 0x4a382a,
+          transparent: true,
+          opacity: 0.6,
+          side: THREE.DoubleSide,
+        }),
+      );
+      inlay.rotation.x = -Math.PI / 2;
+      inlay.position.y = -0.095;
+      scene.add(inlay);
+
+      // ---- The consensus ring (the logo mark shape) ---------------
+      const consensusMat = new THREE.MeshStandardMaterial({
+        color: 0x3a2a20,
+        emissive: 0xe85d34,
+        emissiveIntensity: 0.04,
+        roughness: 0.4,
+        metalness: 0.2,
+      });
+      const consensusRing = new THREE.Mesh(
+        new THREE.TorusGeometry(RING_R, 0.05, 24, 160),
+        consensusMat,
+      );
+      consensusRing.rotation.x = -Math.PI / 2;
+      consensusRing.position.y = -0.05;
+      scene.add(consensusRing);
+
+      // ---- Four council chairs, each with a seated persona "pebble" ----
+      // The figures echo the logo's persona pebbles. They materialise into
+      // their chairs as the council convenes, then brighten at consensus.
+      const chairMat = new THREE.MeshStandardMaterial({
+        color: 0x2c2017,
+        roughness: 0.6,
+        metalness: 0.2,
+      });
+      const CHAIR_R = 2.95;
+      const seats = [];
+      for (let i = 0; i < 4; i++) {
+        const a = -Math.PI / 2 + (i * Math.PI) / 2; // top, right, bottom, left
+        const x = Math.cos(a) * CHAIR_R;
+        const z = Math.sin(a) * CHAIR_R;
+
+        const place = new THREE.Group();
+        place.position.set(x, 0, z);
+        place.rotation.y = Math.PI / 2 - a; // backrest faces outward
+        scene.add(place);
+
+        // chair: seat slab + backrest (legs fall away into chamber shadow)
+        const seatSlab = new THREE.Mesh(
+          new THREE.BoxGeometry(0.66, 0.1, 0.62),
+          chairMat,
+        );
+        place.add(seatSlab);
+        const back = new THREE.Mesh(
+          new THREE.BoxGeometry(0.66, 0.78, 0.1),
+          chairMat,
+        );
+        back.position.set(0, 0.42, 0.28);
+        place.add(back);
+
+        // glow disc on the seat that lights when the chair is taken
+        const halo = new THREE.Mesh(
+          new THREE.CircleGeometry(0.42, 40),
+          new THREE.MeshBasicMaterial({
+            color: SEATCOLORS[i],
+            transparent: true,
+            opacity: 0,
+            side: THREE.DoubleSide,
+          }),
+        );
+        halo.rotation.x = -Math.PI / 2;
+        halo.position.y = 0.06;
+        place.add(halo);
+
+        // the seated persona figure (body + head) in the seat color
+        const figure = new THREE.Group();
+        const bodyMat = new THREE.MeshStandardMaterial({
+          color: SEATCOLORS[i],
+          emissive: SEATCOLORS[i],
+          emissiveIntensity: 0.3,
+          roughness: 0.42,
+          metalness: 0.05,
+        });
+        const headMat = new THREE.MeshStandardMaterial({
+          color: SEATCOLORS[i],
+          emissive: SEATCOLORS[i],
+          emissiveIntensity: 0.3,
+          roughness: 0.36,
+          metalness: 0.05,
+        });
+        const body = new THREE.Mesh(
+          new THREE.CapsuleGeometry(0.24, 0.34, 8, 20),
+          bodyMat,
+        );
+        body.position.set(0, 0.52, -0.04);
+        const head = new THREE.Mesh(
+          new THREE.SphereGeometry(0.21, 28, 28),
+          headMat,
+        );
+        head.position.set(0, 0.96, 0.0);
+        figure.add(body, head);
+        figure.scale.setScalar(0.001); // hidden until the seat fills
+        place.add(figure);
+
+        seats.push({ figure, bodyMat, headMat, halo });
+      }
+
+      // ---- Lighting: hemi fill + a single ceremonial rim ----------
+      // three r149 uses the legacy (non-physical) light model, so intensities
+      // stay small. The chamber should read dark and moody, not blown out.
+      const hemi = new THREE.HemisphereLight(0xffe6cf, 0x140d08, 0.32);
+      scene.add(hemi);
+      const key = new THREE.SpotLight(0xfff0dd, 9, 26, 0.8, 0.5, 1.1);
+      key.position.set(0, 9, 2.4);
+      key.target.position.set(0, 0, 0);
+      scene.add(key);
+      scene.add(key.target);
+      const coralFill = new THREE.PointLight(0xe85d34, 0, 16);
+      coralFill.position.set(0, 1.4, 0);
+      scene.add(coralFill);
+
+      // ---- time helpers -------------------------------------------
+      const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+      const lerp = (a, b, t) => a + (b - a) * clamp(t, 0, 1);
+      const smooth = (e0, e1, x) => {
+        const t = clamp((x - e0) / (e1 - e0), 0, 1);
+        return t * t * (3 - 2 * t);
+      };
+
+      function renderAt(t) {
+        // camera: high reveal -> settle -> push-in at consensus
+        const orbit = 0.1 * t - 0.5;
+        const reveal = smooth(0, 4.5, t);
+        const push = smooth(20.5, 25.5, t);
+        const radius = lerp(7.4, 5.6, reveal) - push * 1.1;
+        const height = lerp(4.6, 2.55, reveal) - push * 0.3;
+        camera.position.set(
+          Math.cos(orbit) * radius,
+          height,
+          Math.sin(orbit) * radius,
+        );
+        camera.lookAt(0, 0.35, 0);
+
+        // table rises into view
+        const rise = smooth(0.2, 3.2, t);
+        table.material.opacity = rise;
+        table.position.y = lerp(-0.6, -0.18, rise);
+
+        // personas take their seats one-by-one (scene 2: ~4.7s..8.6s)
+        for (let i = 0; i < 4; i++) {
+          const start = 4.7 + i * 0.85;
+          const f = smooth(start, start + 0.7, t); // 0..1 materialise
+          // "your seat" beat (15.3-20.6): seat 0 leans in & pulses, others ease back
+          let pulse = 1;
+          let lift = 0;
+          let haloBoost = 1;
+          if (t > 15.3 && t < 20.6) {
+            const p = Math.sin((t - 15.3) * 3.2) * 0.5 + 0.5;
+            pulse = i === 0 ? 1 + p * 0.9 : 0.5;
+            lift = i === 0 ? 0.05 + p * 0.05 : 0;
+            haloBoost = i === 0 ? 1.4 : 0.8;
+          }
+          const bob = Math.sin(t * 1.3 + i) * 0.02 * f; // gentle breathing
+          const consensusBoost = 1 + push * 0.7;
+          // a touch of overshoot as each figure settles into the chair
+          const settle = 1 + Math.sin(f * Math.PI) * 0.08;
+          seats[i].figure.scale.setScalar(0.001 + f * settle);
+          seats[i].figure.position.y = lift + bob;
+          const emi = (0.3 + f * 0.85) * pulse * consensusBoost;
+          seats[i].bodyMat.emissiveIntensity = emi;
+          seats[i].headMat.emissiveIntensity = emi;
+          seats[i].halo.material.opacity =
+            f * 0.4 * haloBoost + push * 0.25 * f;
+          seats[i].halo.scale.setScalar(1 + f * 0.1 + push * 0.25);
+        }
+
+        // consensus ring ignites then fills coral
+        const ign = smooth(9.0, 13.0, t);
+        const ringFill = smooth(20.5, 24.0, t);
+        consensusMat.emissiveIntensity = 0.04 + ign * 0.35 + ringFill * 2.6;
+        const ringPulse =
+          ringFill > 0 ? 1 + Math.sin(t * 6) * 0.012 * (1 - push * 0.4) : 1;
+        consensusRing.scale.setScalar((1 + ringFill * 0.04) * ringPulse);
+        coralFill.intensity = ringFill * 3.4;
+
+        // everything dims as the warm wash + lockup take over
+        const fade = smooth(24.8, 26.4, t);
+        renderer.toneMappingExposure =
+          lerp(0.92, 1.12, ringFill) * lerp(1, 0.2, fade);
+
+        renderer.render(scene, camera);
+      }
+
+      window.addEventListener("hf-seek", (e) => renderAt(e.detail.time));
+      renderAt(window.__hfThreeTime || 0);
+      })();
+    </script>
+
+    <!-- ===================== GSAP overlay timeline ===================== -->
+    <script>
+      (function () {
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      const E = "power3.out";
+
+      // show a scene across [start, end] with an explicit fade in/out.
+      // fromTo (not from) because the scene containers default to opacity:0
+      // in CSS — gsap.from would read that as the target and animate 0 -> 0.
+      function scene(sel, start, end, inDur, outDur) {
+        tl.fromTo(
+          sel,
+          { autoAlpha: 0 },
+          { autoAlpha: 1, duration: inDur, ease: "power2.out" },
+          start,
+        );
+        tl.to(sel, { autoAlpha: 0, duration: outDur, ease: "power2.in" }, end - outDur);
+      }
+
+      /* Scene 1 — cold open (0 – 4.6) */
+      scene("#s1", 0.2, 4.6, 0.8, 0.6);
+      tl.from("#s1 .line-1", { yPercent: 120, opacity: 0, duration: 0.9, ease: E }, 0.4);
+      tl.from("#s1 .line-2", { yPercent: 120, opacity: 0, duration: 0.95, ease: E }, 1.5);
+
+      /* Scene 2 — the seats fill (4.6 – 9.4) */
+      scene("#s2", 4.6, 9.4, 0.6, 0.6);
+      tl.from("#s2 .s2-eye", { y: 22, opacity: 0, duration: 0.6, ease: E }, 4.7);
+      tl.from("#s2 .display", { y: 34, opacity: 0, duration: 0.7, ease: E }, 4.9);
+      tl.from(
+        "#s2 .pc",
+        { y: 60, opacity: 0, scale: 0.9, duration: 0.6, stagger: 0.85, ease: "back.out(1.6)" },
+        5.0,
+      );
+
+      /* Scene 3 — deliberation (9.4 – 15.3) */
+      scene("#s3", 9.4, 15.3, 0.6, 0.6);
+      tl.from("#s3 .heading", { y: 30, opacity: 0, duration: 0.6, ease: E }, 9.6);
+      tl.from("#s3 .ticket", { y: 50, opacity: 0, duration: 0.7, ease: E }, 9.9);
+      tl.from("#s3 .m", { x: -40, opacity: 0, duration: 0.55, stagger: 1.05, ease: E }, 10.5);
+
+      /* Scene 4 — your seat (15.3 – 20.5) */
+      scene("#s4", 15.3, 20.5, 0.7, 0.6);
+      tl.from("#s4 .display", { y: 40, opacity: 0, duration: 0.9, ease: E }, 15.6);
+      tl.from("#s4 .sub", { y: 26, opacity: 0, duration: 0.7, ease: E }, 16.3);
+
+      /* Warm bloom begins as consensus lands */
+      tl.fromTo(
+        "#warmwash",
+        { autoAlpha: 0 },
+        { autoAlpha: 0.96, duration: 2.0, ease: "power2.inOut" },
+        21.0,
+      );
+
+      /* Scene 5 — consensus (20.6 – 25.4) */
+      scene("#s5", 20.6, 25.4, 0.7, 0.6);
+      tl.from("#s5 .stamp", { scale: 0.4, opacity: 0, rotate: -18, duration: 0.7, ease: "back.out(1.8)" }, 21.4);
+      tl.to("#s5 #seal", { scale: 1.06, duration: 0.18, yoyo: true, repeat: 1, ease: "power2.inOut" }, 22.1);
+      tl.from("#s5 .display", { y: 34, opacity: 0, duration: 0.7, ease: E }, 22.0);
+
+      /* Scene 6 — lockup (25.5 – 30.9) */
+      scene("#s6", 25.5, 30.9, 0.8, 0.5);
+      tl.from("#s6 .ring-mark", { scale: 0, rotate: -120, opacity: 0, duration: 0.8, ease: "back.out(1.7)" }, 25.8);
+      tl.from("#s6 .brand", { x: -30, opacity: 0, duration: 0.7, ease: E }, 26.1);
+      tl.from("#s6 .tagline", { y: 24, opacity: 0, duration: 0.7, ease: E }, 26.5);
+      tl.from("#s6 .cta", { y: 24, opacity: 0, scale: 0.92, duration: 0.6, ease: "back.out(1.6)" }, 27.0);
+      tl.to("#s6 .cta", { scale: 1.04, duration: 0.5, yoyo: true, repeat: 2, ease: "power1.inOut" }, 28.2);
+
+      window.__timelines["main"] = tl;
+      })();
+    </script>
+  </body>
+</html>

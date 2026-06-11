@@ -7,11 +7,12 @@ import {
   Compass,
   Microscope,
   PenTool,
-  Play,
   Sparkles,
   type LucideIcon,
 } from "lucide-react";
 import styles from "./welcome.module.css";
+import DemoLightbox from "./DemoLightbox";
+import CouncilChamber3D from "./CouncilChamber3D";
 
 export const metadata: Metadata = {
   title: "Concilium — give every project a council",
@@ -223,12 +224,7 @@ function Hero() {
                 <ArrowRight size={17} />
               </span>
             </Link>
-            <a href="#how-it-works" className={`${styles.btn} ${styles.btnLg} ${styles.btnSecondary}`}>
-              <span className={styles.btnIcon}>
-                <Play size={15} />
-              </span>
-              Watch the demo
-            </a>
+            <DemoLightbox />
           </div>
           <div className={styles.heroNote}>
             <Check size={15} style={{ color: "var(--success-500)" }} /> Free to try · no card ·
@@ -399,6 +395,7 @@ export default function WelcomePage() {
     <div className={styles.mk}>
       <Nav />
       <Hero />
+      <CouncilChamber3D />
       <Council />
       <HowItWorks />
       <QuoteSec />

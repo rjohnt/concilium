@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="assets/vendor/gsap.min.js"></script>
+    <script src="assets/vendor/three.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "Bricolage Grotesque";
+        font-style: normal;
+        font-weight: 100 900;
+        font-display: block;
+        src: url("assets/fonts/Bricolage-normal.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Hanken Grotesk";
+        font-style: normal;
+        font-weight: 100 900;
+        font-display: block;
+        src: url("assets/fonts/Hanken-normal.woff2") format("woff2");
+      }
+      :root {
+        --coral: #e85d34; --coral-deep: #cf4a28;
+        --cream: #fcfaf6; --ink: #2b221c; --ink-soft: #6e6053;
+        --eng: #1e9c86; --des: #7a57d1; --prod: #d9962a; --qa: #2f82c7;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #fcfaf6; }
+      body { font-family: "Hanken Grotesk", sans-serif; }
+      .display { font-family: "Bricolage Grotesque", sans-serif; }
+
+      #stage { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+      #bg {
+        position: absolute; inset: 0; z-index: 0;
+        background: radial-gradient(120% 95% at 50% 30%, #fffdf9 0%, #faf3e8 50%, #f1e6d4 100%);
+      }
+      #three-layer { position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: 1; }
+      #vignette {
+        position: absolute; inset: 0; z-index: 2; pointer-events: none;
+        background: radial-gradient(115% 85% at 50% 45%, transparent 60%, rgba(141, 110, 78, 0.14) 100%);
+      }
+
+      .scene {
+        position: absolute; inset: 0; z-index: 6;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        text-align: center; padding: 120px 200px;
+        opacity: 0; visibility: hidden;
+      }
+      .headline {
+        font-family: "Bricolage Grotesque", sans-serif;
+        font-weight: 700; color: var(--ink);
+        line-height: 1.05; letter-spacing: -0.025em;
+      }
+      .accent { color: var(--coral-deep); }
+      .eyebrow {
+        font-size: 20px; letter-spacing: 0.4em; text-transform: uppercase;
+        font-weight: 700; color: var(--coral-deep);
+      }
+
+      /* s1 — open */
+      #s1 .eyebrow { margin-bottom: 26px; }
+      #s1 .headline { font-size: 124px; }
+
+      /* s2 — seats */
+      #s2 { justify-content: flex-start; padding-top: 128px; }
+      #s2 .headline { font-size: 92px; }
+      .persona-strip {
+        position: absolute; bottom: 84px; left: 0; right: 0;
+        display: flex; justify-content: center; gap: 18px;
+      }
+      .pcard {
+        display: flex; align-items: center; gap: 13px;
+        padding: 15px 25px 15px 17px; border-radius: 999px;
+        background: rgba(255, 255, 255, 0.86);
+        border: 1px solid rgba(43, 34, 28, 0.1);
+        box-shadow: 0 14px 38px rgba(43, 34, 28, 0.12);
+      }
+      .pcard .av {
+        width: 50px; height: 50px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 20px; color: #fff;
+      }
+      .pcard .pname {
+        font-family: "Bricolage Grotesque", sans-serif;
+        font-size: 24px; font-weight: 600; color: var(--ink); line-height: 1.1; text-align: left;
+      }
+      .pcard .prole {
+        font-size: 13.5px; letter-spacing: 0.08em; text-transform: uppercase;
+        font-weight: 700; text-align: left;
+      }
+
+      /* s3 — weigh in */
+      #s3 .headline { font-size: 96px; }
+      #s3 .sub { margin-top: 26px; font-size: 31px; font-weight: 500; color: var(--ink-soft); }
+
+      /* s5 — consensus */
+      #s5 .stamp {
+        width: 220px; height: 220px; border-radius: 50%;
+        border: 6px solid var(--coral);
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+        color: var(--coral-deep); margin-bottom: 42px;
+        background: rgba(255, 255, 255, 0.75);
+        box-shadow: 0 0 0 14px rgba(232, 93, 52, 0.1), 0 26px 60px rgba(232, 93, 52, 0.2);
+      }
+      #s5 .seal-word {
+        font-family: "Bricolage Grotesque", sans-serif;
+        font-weight: 700; font-size: 31px; letter-spacing: 0.05em; text-transform: uppercase;
+      }
+      #s5 .seal-sub { font-size: 13.5px; letter-spacing: 0.32em; text-transform: uppercase; opacity: 0.8; }
+      #s5 .headline { font-size: 84px; }
+
+      /* s6 — lockup */
+      #s6 .lockrow { display: flex; align-items: center; gap: 30px; }
+      #s6 .mark { position: relative; width: 116px; height: 116px; }
+      #s6 .mark i { position: absolute; border-radius: 50%; display: block; }
+      #s6 .peb-coral { width: 44px; height: 44px; background: #e85d34; left: 36px; top: 13px; }
+      #s6 .peb-iris  { width: 44px; height: 44px; background: #7a57d1; left: 16px; top: 48px; }
+      #s6 .peb-teal  { width: 44px; height: 44px; background: #1e9c86; left: 56px; top: 48px; }
+      #s6 .peb-dot   { width: 22px; height: 22px; background: #2b221c; left: 47px; top: 49px; }
+      #s6 .brand {
+        font-family: "Bricolage Grotesque", sans-serif;
+        font-weight: 700; font-size: 104px; color: var(--ink); letter-spacing: -0.03em;
+      }
+      #s6 .tagline { margin-top: 22px; font-weight: 500; font-size: 40px; color: var(--coral-deep); }
+      #s6 .cta {
+        margin-top: 46px; display: inline-flex; align-items: center; gap: 14px;
+        background: var(--coral); color: #fff;
+        font-weight: 600; font-size: 27px; padding: 19px 38px; border-radius: 999px;
+        box-shadow: 0 18px 44px rgba(232, 93, 52, 0.3);
+      }
+      #softwash {
+        position: absolute; inset: 0; z-index: 4; opacity: 0; pointer-events: none;
+        background: radial-gradient(120% 100% at 50% 45%, #ffffff 0%, #fffaf2 55%, #fbf1e2 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="24" data-width="1920" data-height="1080">
+      <audio id="bed" class="clip" src="assets/music.m4a" data-start="0" data-duration="24" data-track-index="9" data-volume="0.85"></audio>
+      <div id="stage">
+        <div id="bg" data-layout-ignore></div>
+        <canvas id="three-layer" width="1920" height="1080" data-layout-ignore></canvas>
+        <div id="vignette" data-layout-ignore></div>
+        <div id="softwash" data-layout-ignore></div>
+
+        <!-- 1 · open -->
+        <div id="s1" class="scene">
+          <div class="eyebrow">Concilium</div>
+          <div class="headline display">Decided, <span class="accent">then built.</span></div>
+        </div>
+
+        <!-- 2 · seats -->
+        <div id="s2" class="scene">
+          <div class="headline display">Every seat is filled.</div>
+          <div class="persona-strip">
+            <div class="pcard pc">
+              <span class="av" style="background: var(--eng)">A</span>
+              <span><span class="pname">Ada</span><br /><span class="prole" style="color: var(--eng)">Engineer</span></span>
+            </div>
+            <div class="pcard pc">
+              <span class="av" style="background: var(--des)">I</span>
+              <span><span class="pname">Iris</span><br /><span class="prole" style="color: var(--des)">Designer</span></span>
+            </div>
+            <div class="pcard pc">
+              <span class="av" style="background: var(--prod)">P</span>
+              <span><span class="pname">Pam</span><br /><span class="prole" style="color: var(--prod)">Product Owner</span></span>
+            </div>
+            <div class="pcard pc">
+              <span class="av" style="background: var(--qa)">R</span>
+              <span><span class="pname">Ray</span><br /><span class="prole" style="color: var(--qa)">QA</span></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3 · weigh in -->
+        <div id="s3" class="scene">
+          <div class="headline display">They weigh in. <span class="accent">You steer.</span></div>
+          <div class="sub">Engineer, Designer, Product Owner &amp; QA — present from ticket one.</div>
+        </div>
+
+        <!-- 5 · consensus -->
+        <div id="s5" class="scene">
+          <div class="stamp" id="seal">
+            <div class="seal-word">Consensus</div>
+            <div class="seal-sub">Verdict reached</div>
+          </div>
+          <div class="headline display">Consensus reached. <span class="accent">The build begins.</span></div>
+        </div>
+
+        <!-- 6 · lockup -->
+        <div id="s6" class="scene">
+          <div class="lockrow">
+            <div class="mark">
+              <i class="peb-coral"></i><i class="peb-iris"></i><i class="peb-teal"></i><i class="peb-dot"></i>
+            </div>
+            <div class="brand display">Concilium</div>
+          </div>
+          <div class="tagline">Software by consensus.</div>
+          <div class="cta">Convene your council <span>→</span></div>
+        </div>
+      </div>
+    </div>
+
+    <script type="application/json" id="council-config">
+      {
+        "palette": "light",
+        "duration": 24,
+        "beats": {
+          "reveal": [0, 3.8],
+          "seats": { "start": 4.2, "stagger": 0.7 },
+          "focus": null,
+          "consensus": [15.5, 18.5],
+          "beam": [15.8, 19.2],
+          "fadeOut": [19.4, 20.9]
+        },
+        "camera": {
+          "orbitSpeed": 0.06, "orbitOffset": -0.4,
+          "rFrom": 9.4, "rTo": 7.7, "hFrom": 5.2, "hTo": 3.3,
+          "push": 1.25, "pushDrop": 0.45, "lookY": 0.1
+        },
+        "motes": false,
+        "beam": true
+      }
+    </script>
+    <script src="assets/vendor/council-scene.js"></script>
+
+    <script>
+      (function () {
+        window.__timelines = window.__timelines || {};
+        const tl = gsap.timeline({ paused: true });
+        const E = "power3.out";
+        function scene(sel, start, end, inDur, outDur) {
+          tl.fromTo(sel, { autoAlpha: 0 }, { autoAlpha: 1, duration: inDur, ease: "power2.out" }, start);
+          tl.to(sel, { autoAlpha: 0, duration: outDur, ease: "power2.in" }, end - outDur);
+        }
+
+        /* 1 · open (0.2–5.0) */
+        scene("#s1", 0.2, 5.0, 0.7, 0.6);
+        tl.from("#s1 .eyebrow", { y: 20, opacity: 0, duration: 0.6, ease: E }, 0.4);
+        tl.fromTo("#s1 .headline",
+          { y: 48, opacity: 0, filter: "blur(12px)" },
+          { y: 0, opacity: 1, filter: "blur(0px)", duration: 1.0, ease: E }, 0.7);
+
+        /* 2 · seats (5.0–10.2) */
+        scene("#s2", 5.0, 10.2, 0.6, 0.6);
+        tl.from("#s2 .headline", { y: 30, opacity: 0, duration: 0.7, ease: E }, 5.15);
+        tl.from("#s2 .pc", { y: 40, opacity: 0, scale: 0.93, duration: 0.5, stagger: 0.7, ease: "back.out(1.7)" }, 5.2);
+
+        /* 3 · weigh in (10.2–15.4) */
+        scene("#s3", 10.2, 15.4, 0.6, 0.6);
+        tl.from("#s3 .headline", { y: 32, opacity: 0, duration: 0.7, ease: E }, 10.4);
+        tl.from("#s3 .sub", { y: 22, opacity: 0, duration: 0.65, ease: E }, 10.9);
+
+        /* soft wash for the lockup */
+        tl.fromTo("#softwash", { autoAlpha: 0 }, { autoAlpha: 0.92, duration: 1.8, ease: "power2.inOut" }, 16.2);
+
+        /* 5 · consensus (15.6–19.6) */
+        scene("#s5", 15.6, 19.6, 0.6, 0.55);
+        tl.from("#s5 .stamp", { scale: 0.4, opacity: 0, rotate: -18, duration: 0.65, ease: "back.out(1.8)" }, 16.0);
+        tl.to("#s5 #seal", { scale: 1.06, duration: 0.18, yoyo: true, repeat: 1, ease: "power2.inOut" }, 16.6);
+        tl.from("#s5 .headline", { y: 30, opacity: 0, duration: 0.65, ease: E }, 16.5);
+
+        /* 6 · lockup (19.7–24) */
+        tl.fromTo("#s6", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.7, ease: "power2.out" }, 19.7); // lockup holds to the end
+        tl.from("#s6 .peb-coral", { x: -110, y: -80, opacity: 0, duration: 0.7, ease: "back.out(1.4)" }, 19.85);
+        tl.from("#s6 .peb-iris",  { x: -130, y: 84, opacity: 0, duration: 0.7, ease: "back.out(1.4)" }, 19.95);
+        tl.from("#s6 .peb-teal",  { x: 56, y: 130, opacity: 0, duration: 0.7, ease: "back.out(1.4)" }, 20.05);
+        tl.from("#s6 .peb-dot",   { scale: 0, opacity: 0, duration: 0.42, ease: "back.out(2.2)" }, 20.6);
+        tl.from("#s6 .brand", { x: -24, opacity: 0, duration: 0.65, ease: E }, 20.45);
+        tl.from("#s6 .tagline", { y: 20, opacity: 0, duration: 0.6, ease: E }, 20.85);
+        tl.from("#s6 .cta", { y: 20, opacity: 0, scale: 0.93, duration: 0.55, ease: "back.out(1.6)" }, 21.3);
+        tl.to("#s6 .cta", { scale: 1.035, duration: 0.5, yoyo: true, repeat: 2, ease: "power1.inOut" }, 22.2);
+
+        /* anchor: pad the timeline to the composition end so seeks past the
+           last tween never reset to initial state (blank final frames) */
+        tl.set("#root", { autoAlpha: 1 }, 23.98);
+
+        window.__timelines["main"] = tl;
+      })();
+    </script>
+  </body>
+</html>
