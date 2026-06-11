@@ -1,2 +1,10 @@
-// Reuse the Open Graph card for X / Twitter link previews.
-export { default, runtime, alt, size, contentType } from "./opengraph-image";
+import { renderWelcomeCard } from "@/lib/og";
+
+export const runtime = "nodejs";
+export const alt = "Concilium — give every project a council";
+export const size = { width: 1200, height: 630 };
+export const contentType = "image/png";
+
+export default function Image() {
+  return renderWelcomeCard();
+}
