@@ -401,12 +401,8 @@ describe("TicketCard", () => {
           ticket={createTestTicket({ status: "in-review", approvals: [] })}
         />,
       );
-      // The progress bar track is a div with bg-gray-800 + rounded-full + overflow-hidden.
-      // PersonaBadge spans also have bg-gray-800 + rounded-full, so we must scope to div.
-      const card = document.querySelector("[data-ticket-card]");
-      const progressBars = card?.querySelectorAll(
-        "div.bg-gray-800.rounded-full",
-      );
+      // The progress bar track carries data-testid="consensus-progress".
+      const progressBars = screen.queryAllByTestId("consensus-progress");
       expect(progressBars?.length).toBe(0);
     });
 
@@ -416,10 +412,7 @@ describe("TicketCard", () => {
           ticket={createTestTicket({ status: "draft", approvals: [] })}
         />,
       );
-      const card = document.querySelector("[data-ticket-card]");
-      const progressBars = card?.querySelectorAll(
-        "div.bg-gray-800.rounded-full",
-      );
+      const progressBars = screen.queryAllByTestId("consensus-progress");
       expect(progressBars?.length).toBe(1);
     });
 

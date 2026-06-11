@@ -162,19 +162,43 @@ export function TicketCard({
               <span className="text-[11px] font-medium" style={{ color: "var(--ink-400)" }}>Consensus</span>
               <span className="text-[11px]" style={{ color: "var(--ink-400)" }}>{ticket.approvals.length}/{allPersonas.length}</span>
             </div>
-            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--warm-200)" }}>
+            <div data-testid="consensus-progress" className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--warm-200)" }}>
               <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progress * 100}%`, background: "var(--coral-500)" }} />
             </div>
           </div>
         )}
 
         {SHOW_CONSENSUS_DOTS.includes(ticket.status as MPStatus) && (
-          <div className="mt-2.5 flex items-center gap-2" title={`${ticket.approvals.length} of ${allPersonas.length} approved`}>
+          <div
+            data-testid="consensus-dots"
+            className="mt-2.5 flex items-center gap-2"
+            title={`${ticket.approvals.length} of ${allPersonas.length} approved`}
+            aria-label={`Consensus: ${ticket.approvals.length} of ${allPersonas.length} approved`}
+          >
             <span className="text-[11px] font-medium" style={{ color: "var(--ink-400)" }}>Consensus</span>
-            <div className="flex items-center gap-1">
-              {allPersonas.map((p) => (
-                <PersonaIcon key={p.id} personaId={p.id} size={13} className={ticket.approvals.includes(p.id) ? "text-[#059669]" : "text-[var(--warm-300)]"} />
-              ))}
+            <div className="flex items-center gap-1.5">
+              {allPersonas.map((p) => {
+                const approved = ticket.approvals.includes(p.id);
+                return (
+                  <span
+                    key={p.id}
+                    title={`${p.label} — ${approved ? "approved" : "awaiting"}`}
+                    className="inline-flex items-center justify-center rounded-full"
+                    style={{
+                      width: 22,
+                      height: 22,
+                      background: approved ? "var(--success-100)" : "var(--warm-100)",
+                      border: `1px solid ${approved ? "var(--success-500)" : "var(--warm-200)"}`,
+                    }}
+                  >
+                    <PersonaIcon
+                      personaId={p.id}
+                      size={14}
+                      className={approved ? "text-olive" : "text-ink-muted"}
+                    />
+                  </span>
+                );
+              })}
             </div>
           </div>
         )}

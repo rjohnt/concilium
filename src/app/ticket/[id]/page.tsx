@@ -15,7 +15,7 @@ import { BuildIterationPanel } from "@/components/BuildIterationPanel";
 import { PersonaBadge } from "@/components/PersonaBadge";
 import { JoinSessionModal } from "@/components/JoinSessionModal";
 import { CopyButton } from "@/components/CopyButton";
-import { ConsensusProgress } from "@/components/ConsensusProgress";
+import { CouncilTable } from "@/components/CouncilTable";
 import { DetailSkeleton } from "@/components/Skeleton";
 import { DeleteTicketDialog } from "@/components/DeleteTicketDialog";
 import { ActivityFeed } from "@/components/ActivityFeed";
@@ -447,12 +447,9 @@ export default function TicketDetailPage() {
         </div>
       </div>
 
-      {/* Consensus progress */}
+      {/* Council table — who holds each seat and where they stand */}
       <div className="card mb-6">
-        <ConsensusProgress
-          ticketId={ticket.id}
-          approvals={ticket.approvals}
-        />
+        <CouncilTable ticket={ticket} />
       </div>
 
       {/* Activity feed */}
