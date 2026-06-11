@@ -8,6 +8,12 @@ vi.mock("@/lib/mediator", () => ({
   continueMediation: vi.fn(),
 }));
 
+vi.mock("@/lib/llm", () => ({
+  callDeepSeek: vi.fn(),
+  isLLMConfigured: vi.fn(() => true),
+  AI_NOT_CONFIGURED_MESSAGE: "AI features aren't configured on this server",
+}));
+
 vi.mock("@/lib/store", () => {
   const mockTickets: Map<string, Record<string, unknown>> = new Map();
   return {
@@ -18,6 +24,7 @@ vi.mock("@/lib/store", () => {
 
 import { POST, GET } from "../prompt/route";
 import { mediate, continueMediation } from "@/lib/mediator";
+import { isLLMConfigured } from "@/lib/llm";
 import { resetRateLimitBuckets } from "@/lib/rateLimit";
 
 function makeMockMediationResult() {
@@ -282,5 +289,24 @@ describe("GET /api/prompt", () => {
     const response = await GET(request);
 
     expect(response.status).toBe(400);
+  });
+});
+
+describe("POST /api/prompt — AI not configured", () => {
+  beforeEach(() => {
+    resetRateLimitBuckets();
+  });
+
+  it("returns 503 with code ai_not_configured when the LLM key is missing", async () => {
+    vi.mocked(isLLMConfigured).mockReturnValueOnce(false);
+    const request = new NextRequest("http://localhost:3000/api/prompt", {
+      method: "POST",
+      body: JSON.stringify({ ticketId: "TIX-001", personaId: "engineer", message: "hi" }),
+      headers: { "Content-Type": "application/json", "x-forwarded-for": "10.9.9.8" },
+    });
+    const response = await POST(request);
+    expect(response.status).toBe(503);
+    const data = await response.json();
+    expect(data.code).toBe("ai_not_configured");
   });
 });
