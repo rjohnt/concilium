@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Bricolage_Grotesque, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 import { AuthGuard } from "@/components/AuthGuard";
@@ -6,6 +7,24 @@ import { ThemeProvider } from "@/lib/theme";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { ToastProvider } from "@/components/Toast";
 import { AppShell } from "@/components/AppShell";
+
+const bricolage = Bricolage_Grotesque({
+  subsets: ["latin"],
+  variable: "--font-bricolage",
+  display: "swap",
+});
+
+const hanken = Hanken_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-hanken",
+  display: "swap",
+});
+
+const jetbrains = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Concilium — Multiplayer AI-Assisted Tickets",
@@ -19,7 +38,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${bricolage.variable} ${hanken.variable} ${jetbrains.variable}`}
+    >
       <body className="min-h-screen bg-deep">
         <ThemeProvider>
           <OfflineBanner />

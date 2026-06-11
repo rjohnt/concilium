@@ -15,12 +15,17 @@ interface AppShellProps {
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
 
-  const isPublicShareRoute = useMemo(
-    () => pathname === "/share" || pathname.startsWith("/share/"),
+  // Routes that render bare — no sidebar, breadcrumb, or app chrome
+  const isBareRoute = useMemo(
+    () =>
+      pathname === "/share" ||
+      pathname.startsWith("/share/") ||
+      pathname === "/welcome" ||
+      pathname.startsWith("/welcome/"),
     [pathname]
   );
 
-  if (isPublicShareRoute) {
+  if (isBareRoute) {
     return <PageTransition>{children}</PageTransition>;
   }
 

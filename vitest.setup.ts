@@ -28,6 +28,21 @@ vi.mock("framer-motion", async () => {
   };
 });
 
+// Mock next/font/google — vitest has no Next SWC font transform, so the
+// loaders imported in layout.tsx are not callable here.
+vi.mock("next/font/google", () => {
+  const font = (name: string) => () => ({
+    className: `font-${name}`,
+    variable: `--font-${name}`,
+    style: { fontFamily: name },
+  });
+  return {
+    Bricolage_Grotesque: font("bricolage"),
+    Hanken_Grotesk: font("hanken"),
+    JetBrains_Mono: font("jetbrains"),
+  };
+});
+
 // Mock next/navigation for tests that render dashboard pages directly.
 // Individual tests can override with their own mocks if needed.
 vi.mock("next/navigation", () => ({

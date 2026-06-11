@@ -6,7 +6,66 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        /* ===== Shadcn-style names (MagicPath design system) ===== */
+        /* ===== Concilium DS palette ===== */
+        warm: {
+          50: "var(--warm-50)",
+          100: "var(--warm-100)",
+          150: "var(--warm-150)",
+          200: "var(--warm-200)",
+          300: "var(--warm-300)",
+          400: "var(--warm-400)",
+        },
+        coral: {
+          50: "var(--coral-50)",
+          100: "var(--coral-100)",
+          200: "var(--coral-200)",
+          400: "var(--coral-400)",
+          500: "var(--coral-500)",
+          600: "var(--coral-600)",
+          700: "var(--coral-700)",
+        },
+        "persona-eng": {
+          50: "var(--persona-eng-50)",
+          100: "var(--persona-eng-100)",
+          400: "var(--persona-eng-400)",
+          500: "var(--persona-eng-500)",
+        },
+        "persona-des": {
+          50: "var(--persona-des-50)",
+          100: "var(--persona-des-100)",
+          400: "var(--persona-des-400)",
+          500: "var(--persona-des-500)",
+        },
+        "persona-prod": {
+          50: "var(--persona-prod-50)",
+          100: "var(--persona-prod-100)",
+          400: "var(--persona-prod-400)",
+          500: "var(--persona-prod-500)",
+        },
+        "persona-res": {
+          50: "var(--persona-res-50)",
+          100: "var(--persona-res-100)",
+          400: "var(--persona-res-400)",
+          500: "var(--persona-res-500)",
+        },
+        success: {
+          100: "var(--success-100)",
+          500: "var(--success-500)",
+        },
+        warning: {
+          100: "var(--warning-100)",
+          500: "var(--warning-500)",
+        },
+        danger: {
+          100: "var(--danger-100)",
+          500: "var(--danger-500)",
+        },
+        info: {
+          100: "var(--info-100)",
+          500: "var(--info-500)",
+        },
+
+        /* ===== Shadcn-style names ===== */
         background: "var(--background)",
         foreground: "var(--foreground)",
         card: {
@@ -85,6 +144,11 @@ module.exports = {
         elevated: "var(--color-elevated)",
         overlay: "var(--color-overlay)",
         ink: {
+          900: "var(--ink-900)",
+          700: "var(--ink-700)",
+          500: "var(--ink-500)",
+          400: "var(--ink-400)",
+          300: "var(--ink-300)",
           primary: "var(--color-ink-primary)",
           secondary: "var(--color-ink-secondary)",
           muted: "var(--color-ink-muted)",
@@ -100,24 +164,34 @@ module.exports = {
         "blue-steel": "var(--color-blue-steel)",
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        heading: ["Inter", "system-ui", "sans-serif"],
-        mono: ["JetBrains Mono", "monospace"],
+        sans: ["var(--font-hanken)", "Hanken Grotesk", "system-ui", "sans-serif"],
+        heading: ["var(--font-bricolage)", "Bricolage Grotesque", "Hanken Grotesk", "system-ui", "sans-serif"],
+        display: ["var(--font-bricolage)", "Bricolage Grotesque", "Hanken Grotesk", "system-ui", "sans-serif"],
+        mono: ["var(--font-jetbrains)", "JetBrains Mono", "ui-monospace", "monospace"],
       },
       borderRadius: {
+        xs: "var(--radius-xs)",
         sm: "var(--radius-sm)",
         DEFAULT: "var(--radius)",
         md: "var(--radius-md)",
         lg: "var(--radius-lg)",
         xl: "var(--radius-xl)",
+        "2xl": "var(--radius-2xl)",
+        pill: "var(--radius-pill)",
       },
       boxShadow: {
+        xs: "var(--shadow-xs)",
         sm: "var(--shadow-sm)",
         DEFAULT: "var(--shadow)",
         md: "var(--shadow-md)",
         lg: "var(--shadow-lg)",
         xl: "var(--shadow-xl)",
         "2xl": "var(--shadow-2xl)",
+        focus: "var(--shadow-focus)",
+      },
+      transitionTimingFunction: {
+        "out-soft": "var(--ease-out)",
+        spring: "var(--ease-spring)",
       },
     },
   },

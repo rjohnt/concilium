@@ -18,14 +18,14 @@ import { useRouter } from "next/navigation";
 type FilterKey = "all" | TicketStatus;
 const BATCH_SIZE = 20;
 
-// ── MagicPath v2 authoritative palette ──────────────────────────────
+// ── Concilium Design System palette ─────────────────────────────────
 const MP = {
-  statCard: { bg: "#ffffff", border: "#e8eaf6", hoverBorder: "#d0d4f0", shadow: "0 1px 3px rgba(79,70,229,0.04)", hoverShadow: "0 4px 12px rgba(79,70,229,0.08)" },
-  tabActive: { bg: "#4f46e5", text: "#ffffff" },
-  tabInactive: { text: "#6b7280", hoverText: "#0d0f1a", countBg: "#ebeeff", countText: "#4f46e5" },
-  searchBorder: "#e8eaf6", searchBg: "#f8f9ff",
-  ticket: { border: "#e8eaf6", hoverBorder: "#d0d4f0", shadow: "none", hoverShadow: "0 2px 8px rgba(79,70,229,0.07)" },
-  columnHeader: "#9ca3af",
+  statCard: { bg: "#ffffff", border: "var(--warm-200)", hoverBorder: "var(--warm-300)", shadow: "var(--shadow-xs)", hoverShadow: "var(--shadow-md)" },
+  tabActive: { bg: "var(--coral-500)", text: "#ffffff" },
+  tabInactive: { text: "var(--ink-500)", hoverText: "var(--ink-900)", countBg: "var(--coral-100)", countText: "var(--coral-700)" },
+  searchBorder: "var(--warm-200)", searchBg: "#ffffff",
+  ticket: { border: "var(--warm-200)", hoverBorder: "var(--warm-300)", shadow: "none", hoverShadow: "var(--shadow-md)" },
+  columnHeader: "var(--ink-400)",
 };
 
 export default function DashboardPage() {
@@ -110,12 +110,12 @@ export default function DashboardPage() {
   if (loading) return <DashboardSkeleton />;
 
   return (
-    <div className="max-w-5xl mx-auto" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div className="max-w-5xl mx-auto" style={{ fontFamily: "var(--font-sans)" }}>
       {/* ── Header ───────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-xl font-bold tracking-tight" style={{ color: "#0d0f1a" }}>Tickets</h2>
-          <p className="text-xs mt-0.5" style={{ color: "#6b7280" }}>Multiplayer stakeholder collaboration</p>
+          <h2 className="text-xl font-bold tracking-tight" style={{ color: "var(--ink-900)", fontFamily: "var(--font-display)" }}>Tickets</h2>
+          <p className="text-xs mt-0.5" style={{ color: "var(--ink-500)" }}>Multiplayer stakeholder collaboration</p>
         </div>
         <Link href="/new" className="btn-primary text-xs">
           <PlusCircle size={16} /> New Ticket
@@ -138,20 +138,20 @@ export default function DashboardPage() {
             <div className="flex items-center gap-4">
               {"icon" in stat && stat.icon ? (
                 <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: MP.statCard.bg, border: `1px solid ${MP.statCard.border}` }}>
-                  <stat.icon size={18} style={{ color: MP.searchBorder }} />
+                  <stat.icon size={18} style={{ color: "var(--ink-400)" }} />
                 </div>
               ) : stat.accent ? (
-                <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#EEF2FF" }}>
-                  <span className="text-sm font-bold" style={{ color: "#4f46e5" }}>{stat.value}</span>
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "var(--coral-100)" }}>
+                  <span className="text-sm font-bold" style={{ color: "var(--coral-700)" }}>{stat.value}</span>
                 </div>
               ) : (
-                <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#F1F5F9" }}>
-                  <span className="text-sm font-bold" style={{ color: "#64748B" }}>{stat.value}</span>
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "var(--warm-150)" }}>
+                  <span className="text-sm font-bold" style={{ color: "var(--ink-500)" }}>{stat.value}</span>
                 </div>
               )}
               <div>
                 <div className="text-xs font-medium" style={{ color: MP.tabInactive.text }}>{stat.label}</div>
-                <div className="text-2xl font-bold tracking-tight" style={{ color: "#0d0f1a" }}>{stat.value}</div>
+                <div className="text-2xl font-bold tracking-tight" style={{ color: "var(--ink-900)" }}>{stat.value}</div>
               </div>
             </div>
           </div>
@@ -175,8 +175,8 @@ export default function DashboardPage() {
             placeholder="Search tickets by title or description..."
             aria-label="Search tickets"
             className="w-full pl-10 pr-10 py-2.5 rounded-lg text-sm outline-none transition-all duration-150"
-            style={{ background: MP.searchBg, border: `1px solid ${MP.searchBorder}`, color: "#0d0f1a" }}
-            onFocus={e => e.currentTarget.style.borderColor = "#4f46e5"}
+            style={{ background: MP.searchBg, border: `1px solid ${MP.searchBorder}`, color: "var(--ink-900)" }}
+            onFocus={e => e.currentTarget.style.borderColor = "var(--coral-500)"}
             onBlur={e => e.currentTarget.style.borderColor = MP.searchBorder}
           />
           {searchQuery && (
@@ -194,18 +194,19 @@ export default function DashboardPage() {
           const active = activeFilter === tab;
           return (
             <button key={tab} onClick={() => setActiveFilter(tab)}
-              className="px-3 py-1.5 rounded-md text-xs font-medium cursor-pointer transition-all duration-100"
+              className="px-3 py-1.5 text-xs font-medium cursor-pointer transition-all duration-100"
               style={{
                 background: active ? MP.tabActive.bg : "transparent",
                 color: active ? MP.tabActive.text : MP.tabInactive.text,
                 border: active ? "none" : "1px solid transparent",
-                fontFamily: "'Inter', system-ui, sans-serif",
+                borderRadius: 999,
+                fontFamily: "var(--font-sans)",
               }}
               onMouseOver={e => { if (!active) e.currentTarget.style.color = MP.tabInactive.hoverText; }}
               onMouseOut={e => { if (!active) e.currentTarget.style.color = MP.tabInactive.text; }}
             >
               {label}
-              <span className="ml-1.5 px-1 py-0.5 rounded text-[10px] font-bold"
+              <span className="ml-1.5 px-1 py-0.5 rounded-full text-[10px] font-bold"
                 style={{
                   background: active ? "rgba(255,255,255,0.18)" : MP.tabInactive.countBg,
                   color: active ? "#ffffff" : MP.tabInactive.countText,
@@ -223,17 +224,17 @@ export default function DashboardPage() {
         <Filter size={13} style={{ color: MP.tabInactive.text }} />
         <span className="text-[11px] font-medium mr-1" style={{ color: MP.tabInactive.text }}>Priority:</span>
         <button onClick={() => setPriorityFilter(null)}
-          className={`px-2.5 py-1 rounded-md text-[11px] font-medium border transition-colors ${priorityFilter === null ? "bg-brand-100/50 text-brand-600 border-brand-200" : ""}`}
+          className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${priorityFilter === null ? "bg-brand-100/50 text-brand-600 border-brand-200" : ""}`}
           style={priorityFilter !== null ? { borderColor: MP.searchBorder, color: MP.tabInactive.text } : {}}
         >All</button>
         {([0, 1, 2, 3, 4] as PriorityLevel[]).map(p => (
           <button key={p} onClick={() => setPriorityFilter(p)}
-            className="px-2.5 py-1 rounded-md text-[11px] font-medium border transition-colors"
+            className="px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors"
             style={{
               background: priorityFilter === p ? PRIORITY_COLORS[p].replace("text-", "").replace(/-/g, "") : "transparent",
               borderColor: priorityFilter === p ? "transparent" : MP.searchBorder,
               color: priorityFilter === p ? "#fff" : MP.tabInactive.text,
-              fontFamily: "'Inter', system-ui, sans-serif",
+              fontFamily: "var(--font-sans)",
             }}
             onMouseOver={e => { if (priorityFilter !== p) e.currentTarget.style.color = MP.tabInactive.hoverText; }}
             onMouseOut={e => { if (priorityFilter !== p) e.currentTarget.style.color = MP.tabInactive.text; }}
@@ -246,8 +247,8 @@ export default function DashboardPage() {
         <Filter size={13} style={{ color: MP.tabInactive.text }} />
         <span className="text-[11px] font-medium mr-1" style={{ color: MP.tabInactive.text }}>Tags:</span>
         <button onClick={() => setTagFilter([])}
-          className="px-2.5 py-1 rounded-md text-[11px] font-medium border transition-colors"
-          style={{ borderColor: tagFilter.length === 0 ? "#C7D2FE" : MP.searchBorder, background: tagFilter.length === 0 ? "#EEF2FF" : "transparent", color: tagFilter.length === 0 ? "#4f46e5" : MP.tabInactive.text }}
+          className="px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors"
+          style={{ borderColor: tagFilter.length === 0 ? "var(--coral-200)" : MP.searchBorder, background: tagFilter.length === 0 ? "var(--coral-100)" : "transparent", color: tagFilter.length === 0 ? "var(--coral-700)" : MP.tabInactive.text }}
         >All</button>
         {PREDEFINED_TAGS.map(tag => (
           <TagChip key={tag.id} tag={tag} mode="toggle" selected={tagFilter.includes(tag.id)}
@@ -262,12 +263,12 @@ export default function DashboardPage() {
           <Filter size={13} style={{ color: MP.tabInactive.text }} />
           <span className="text-[11px] font-medium mr-1" style={{ color: MP.tabInactive.text }}>Persona:</span>
           <button onClick={() => setPersonaFilterMode("reviewed-by")}
-            className="px-2.5 py-1 rounded-md text-[11px] font-medium border transition-colors"
-            style={{ borderColor: personaFilterMode === "reviewed-by" ? "#C7D2FE" : MP.searchBorder, background: personaFilterMode === "reviewed-by" ? "#EEF2FF" : "transparent", color: personaFilterMode === "reviewed-by" ? "#4f46e5" : MP.tabInactive.text }}
+            className="px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors"
+            style={{ borderColor: personaFilterMode === "reviewed-by" ? "var(--coral-200)" : MP.searchBorder, background: personaFilterMode === "reviewed-by" ? "var(--coral-100)" : "transparent", color: personaFilterMode === "reviewed-by" ? "var(--coral-700)" : MP.tabInactive.text }}
           >Reviewed by</button>
           <button onClick={() => setPersonaFilterMode("awaitring-review")}
-            className="px-2.5 py-1 rounded-md text-[11px] font-medium border transition-colors"
-            style={{ borderColor: personaFilterMode === "awaitring-review" ? "#C7D2FE" : MP.searchBorder, background: personaFilterMode === "awaitring-review" ? "#EEF2FF" : "transparent", color: personaFilterMode === "awaitring-review" ? "#4f46e5" : MP.tabInactive.text }}
+            className="px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors"
+            style={{ borderColor: personaFilterMode === "awaitring-review" ? "var(--coral-200)" : MP.searchBorder, background: personaFilterMode === "awaitring-review" ? "var(--coral-100)" : "transparent", color: personaFilterMode === "awaitring-review" ? "var(--coral-700)" : MP.tabInactive.text }}
           >Awaiting review</button>
           <span className="w-px h-4 mx-1" style={{ background: MP.searchBorder }} />
           {getAllPersonas().map(persona => {
@@ -275,15 +276,15 @@ export default function DashboardPage() {
             const count = personaCounts[persona.id] ?? 0;
             return (
               <button key={persona.id} onClick={() => setPersonaFilter(prev => prev.includes(persona.id) ? prev.filter(id => id !== persona.id) : [...prev, persona.id])}
-                className="px-2.5 py-1 rounded-md text-[11px] font-medium border transition-colors"
+                className="px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors"
                 style={{
-                  background: active ? persona.color.replace("text-", "bg-").replace("bg-bg-", "bg-") || "#EEF2FF" : "#F8FAFC",
+                  background: active ? persona.color.replace("text-", "bg-").replace("bg-bg-", "bg-") || "var(--coral-100)" : "var(--warm-50)",
                   borderColor: active ? "transparent" : MP.searchBorder,
                   color: active ? "#fff" : MP.tabInactive.text,
                 }}
               >
                 <PersonaIcon personaId={persona.id} size={13} className="mr-1 inline-block align-text-bottom" /> {persona.label}
-                {count > 0 && <span className={`ml-1 px-1 py-0.5 rounded text-[10px] font-bold ${active ? "bg-white/20 text-white" : ""}`} style={!active ? { background: "#F1F5F9", color: "#64748B" } : {}}>{count}</span>}
+                {count > 0 && <span className={`ml-1 px-1 py-0.5 rounded-full text-[10px] font-bold ${active ? "bg-white/20 text-white" : ""}`} style={!active ? { background: "var(--warm-150)", color: "var(--ink-500)" } : {}}>{count}</span>}
               </button>
             );
           })}

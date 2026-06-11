@@ -1,18 +1,18 @@
 import { PersonaId } from "@/lib/types";
-import { Wrench, Palette, NotebookText, FlaskConical } from "lucide-react";
+import { Code, PenTool, Compass, Microscope } from "lucide-react";
 
 const iconMap: Record<PersonaId, React.ComponentType<{ size?: number; className?: string }>> = {
-  engineer: Wrench,
-  designer: Palette,
-  "product-owner": NotebookText,
-  qa: FlaskConical,
+  engineer: Code,
+  designer: PenTool,
+  "product-owner": Compass,
+  qa: Microscope,
 };
 
 const colorMap: Record<PersonaId, string> = {
-  engineer: "text-blue-400",
-  designer: "text-purple-400",
-  "product-owner": "text-emerald-400",
-  qa: "text-amber-400",
+  engineer: "text-[var(--persona-eng-500)]",
+  designer: "text-[var(--persona-des-500)]",
+  "product-owner": "text-[var(--persona-prod-500)]",
+  qa: "text-[var(--persona-res-500)]",
 };
 
 interface PersonaIconProps {
