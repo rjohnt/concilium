@@ -13,6 +13,7 @@ import { PersonaId } from "@/lib/types";
 import { coldStartScenario, conflictScenario } from "./scenarios";
 import { judgeResponse } from "./judge";
 import { recordResult } from "./record";
+import { EVAL_MODEL } from "./config";
 
 const PASS_THRESHOLD = 3; // per-dimension minimum on the 1-5 judge scale
 const hasApiKey = !!process.env.DEEPSEEK_API_KEY;
@@ -22,7 +23,7 @@ const PERSONAS: PersonaId[] = ["engineer", "designer", "product-owner", "qa"];
 describe.skipIf(!hasApiKey)("stand-in persona prompts", () => {
   for (const personaId of PERSONAS) {
     it(`${personaId} produces grounded, domain-specific feedback (cold start)`, async () => {
-      const run = await runStandinLLM(coldStartScenario.ticket, personaId, coldStartScenario.history);
+      const run = await runStandinLLM(coldStartScenario.ticket, personaId, coldStartScenario.history, EVAL_MODEL);
       expect(run).not.toBeNull();
 
       const responseText = [
@@ -56,7 +57,7 @@ describe.skipIf(!hasApiKey)("stand-in persona prompts", () => {
   }
 
   it("qa stand-in engages with prior stakeholder feedback (seeded conflict)", async () => {
-    const run = await runStandinLLM(conflictScenario.ticket, "qa", conflictScenario.history);
+    const run = await runStandinLLM(conflictScenario.ticket, "qa", conflictScenario.history, EVAL_MODEL);
     expect(run).not.toBeNull();
 
     const responseText = [

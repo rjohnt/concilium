@@ -14,6 +14,7 @@ import { PersonaId } from "@/lib/types";
 import { multiTrapShareReport } from "./scenarios";
 import { judgeCatch } from "./judge";
 import { recordResult } from "./record";
+import { EVAL_MODEL } from "./config";
 
 const hasApiKey = !!process.env.DEEPSEEK_API_KEY;
 const ROLES: PersonaId[] = ["engineer", "designer", "product-owner", "qa"];
@@ -25,7 +26,7 @@ describe.skipIf(!hasApiKey)("cross-persona differentiation", () => {
     // Generate all four reviews of the same ticket up front.
     const reviews = await Promise.all(
       ROLES.map(async (role) => {
-        const run = await runStandinLLM(scenario.ticket, role, []);
+        const run = await runStandinLLM(scenario.ticket, role, [], EVAL_MODEL);
         const text = run
           ? [run.parsed.feedback, `Concerns: ${run.parsed.concerns.join("; ")}`].join("\n")
           : "";

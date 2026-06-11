@@ -15,6 +15,7 @@ import { PROMPT_VERSION } from "@/lib/persona-prompts";
 import { catchScenarios } from "./scenarios";
 import { judgeCatch } from "./judge";
 import { recordResult } from "./record";
+import { EVAL_MODEL } from "./config";
 
 const hasApiKey = !!process.env.DEEPSEEK_API_KEY;
 const IN_ROLE_MIN = 3;
@@ -22,7 +23,7 @@ const IN_ROLE_MIN = 3;
 describe.skipIf(!hasApiKey)("persona targeted-catch", () => {
   for (const scenario of catchScenarios) {
     it(`${scenario.role} catches: ${scenario.name}`, async () => {
-      const run = await runStandinLLM(scenario.ticket, scenario.role, scenario.history);
+      const run = await runStandinLLM(scenario.ticket, scenario.role, scenario.history, EVAL_MODEL);
       expect(run).not.toBeNull();
 
       const responseText = [
@@ -69,7 +70,7 @@ describe.skipIf(!hasApiKey)("persona targeted-catch", () => {
   // engineering-flavored, not a UX review in disguise.
   it("engineer on the designer's UX trap stays in the engineering lane", async () => {
     const ux = catchScenarios.find((s) => s.role === "designer")!;
-    const run = await runStandinLLM(ux.ticket, "engineer", ux.history);
+    const run = await runStandinLLM(ux.ticket, "engineer", ux.history, EVAL_MODEL);
     expect(run).not.toBeNull();
 
     const responseText = [

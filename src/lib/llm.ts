@@ -4,7 +4,9 @@
  */
 
 const DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1";
-const DEEPSEEK_MODEL = "deepseek-v4-flash";
+/** Default generation model (stand-ins, mediator). */
+export const DEEPSEEK_MODEL = "deepseek-v4-flash";
+/** Stronger model used for build specs and the eval judge. */
 export const DEEPSEEK_PRO_MODEL = "deepseek-v4-pro";
 
 export interface LLMRequest {
