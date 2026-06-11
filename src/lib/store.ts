@@ -384,6 +384,49 @@ export function addFeedback(
   return entry;
 }
 
+/**
+ * Merge feedback entries generated server-side (AI stand-ins) into the local
+ * store without re-posting them to the server. Recomputes approvals and
+ * status transitions the same way addFeedback does.
+ */
+export function importServerFeedback(
+  ticketId: string,
+  entries: FeedbackEntry[]
+): number {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  if (!ticket || entries.length === 0) return 0;
+
+  const existingIds = new Set(ticket.feedback.map((f) => f.id));
+  let imported = 0;
+
+  for (const entry of entries) {
+    if (existingIds.has(entry.id)) continue;
+    ticket.feedback.push({ ...entry, ticketId });
+    imported++;
+
+    if (entry.approved && !ticket.approvals.includes(entry.personaId)) {
+      ticket.approvals.push(entry.personaId);
+    } else if (!entry.approved) {
+      ticket.approvals = ticket.approvals.filter((p) => p !== entry.personaId);
+    }
+  }
+
+  if (imported === 0) return 0;
+
+  ticket.updatedAt = new Date().toISOString();
+
+  if (ticket.status === "draft" && ticket.feedback.length > 0) {
+    ticket.status = "in-review";
+  }
+  const justReachedConsensus = autoTransitionToConsensus(ticket.id);
+  if (!justReachedConsensus) {
+    autoTransitionToBuilding(ticket.id);
+  }
+
+  persistState(ticketId);
+  return imported;
+}
+
 export function getFeedbackHistory(
   ticketId: string,
   personaId?: PersonaId

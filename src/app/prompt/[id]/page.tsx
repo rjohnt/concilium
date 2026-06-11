@@ -31,6 +31,8 @@ import {
 } from "lucide-react";
 import { PersonaIcon } from "@/components/PersonaIcon";
 import { SessionParticipants } from "@/components/SessionParticipants";
+import { StandinPanel } from "@/components/StandinPanel";
+import { MediatorPanel } from "@/components/MediatorPanel";
 import {
   joinSession,
   updateOwnPersona,
@@ -366,6 +368,12 @@ export default function PromptSessionPage() {
                 onPersonaSelect={handlePersonaSelect}
               />
             </div>
+
+            {/* AI stand-ins for unclaimed seats */}
+            <StandinPanel ticket={ticket} onFeedbackImported={handleFeedbackUpdate} />
+
+            {/* Mediator facilitator agent */}
+            <MediatorPanel ticket={ticket} />
           </div>
         </div>
 
