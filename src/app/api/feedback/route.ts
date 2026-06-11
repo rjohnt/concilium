@@ -68,12 +68,14 @@ export async function POST(request: NextRequest) {
     body.content = sanitize(body.content);
 
     const approved = body.approved === true;
+    const source = body.source === "ai-standin" ? "ai-standin" : "human";
 
     const entry = serverDb.addFeedback(
       body.ticketId,
       body.personaId as PersonaId,
       body.content,
       approved,
+      source,
     );
 
     if (!entry) {

@@ -52,6 +52,25 @@ export interface Persona {
   promptTemplate: string; // used for AI-mediated sessions
 }
 
+// === Seats: who holds each persona role on a ticket ===
+// Every persona seat is held by an AI stand-in until a human claims it.
+
+export type SeatOccupant = "human" | "ai";
+
+export interface Seat {
+  personaId: PersonaId;
+  occupant: SeatOccupant;
+  /** Stable client id of the human holding the seat (occupant === "human") */
+  claimedBy?: string;
+  /** Display name shown for the human occupant */
+  claimedByLabel?: string;
+  claimedAt?: string; // ISO string
+}
+
+export type SeatMap = Partial<Record<PersonaId, Seat>>;
+
+export type FeedbackSource = "human" | "ai-standin";
+
 export interface FeedbackEntry {
   id: string;
   ticketId: string;
@@ -59,6 +78,21 @@ export interface FeedbackEntry {
   content: string;
   createdAt: string; // ISO string
   approved: boolean; // has this persona approved the current state?
+  /** Who authored this entry. Defaults to "human" when absent (legacy data). */
+  source?: FeedbackSource;
+}
+
+// === Build artifacts: evidence of what a build executor produced ===
+
+export type BuildArtifactType = "log" | "diff" | "file-list" | "screenshot" | "report";
+
+export interface BuildArtifact {
+  id: string;
+  type: BuildArtifactType;
+  label: string;
+  /** Inline text content (logs, diffs, file lists) or a URL/path for binary artifacts. */
+  content: string;
+  createdAt: string; // ISO string
 }
 
 export interface BuildReport {
@@ -74,6 +108,21 @@ export interface BuildReport {
   consensusSummary: string;
   /** Human-readable error message from the last failed API call. */
   errorMessage?: string;
+  /** Which executor produced this build (e.g. "report", "local-claude"). */
+  executor?: string;
+  /** Evidence produced by the build executor (logs, diffs, file lists). */
+  artifacts?: BuildArtifact[];
+  /** Role-scoped change requests on a completed build, fed into the next build round. */
+  changeRequests?: BuildChangeRequest[];
+}
+
+export interface BuildChangeRequest {
+  id: string;
+  personaId: PersonaId;
+  content: string;
+  createdAt: string; // ISO string
+  /** Set once a rebuild has consumed this request. */
+  resolvedByBuildId?: string;
 }
 
 export interface RateLimitConfig {
@@ -105,6 +154,11 @@ export interface Ticket {
   feedback: FeedbackEntry[];
   // Derived: which personas have approved?
   approvals: PersonaId[];
+  /**
+   * Seat occupancy per persona. Absent on legacy tickets — normalize with
+   * normalizeSeats() from @/lib/seats, which defaults every seat to an AI stand-in.
+   */
+  seats?: SeatMap;
   buildReport?: BuildReport;
   /** Timestamp of the last build retry attempt (ISO string). Enforces 5s cooldown. */
   lastAttemptedAt?: string;

@@ -365,7 +365,6 @@ describe("Sidebar", () => {
     render(<Sidebar />);
     expect(screen.getByText("Dashboard")).toBeInTheDocument();
     expect(screen.getByText("New Ticket")).toBeInTheDocument();
-    expect(screen.getByText("VIN Decoder")).toBeInTheDocument();
   });
 
   // --- Ticket badge tests ---

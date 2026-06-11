@@ -3,7 +3,7 @@
  *
  * AuthGuard wraps protected routes, handles auth state:
  * - Dev bypass when Supabase credentials missing
- * - Public path detection (startsWith: /login, /signup, /auth/callback, /vin; exact: /)
+ * - Public path detection (startsWith: /login, /signup, /auth/callback; exact: /)
  * - Loading spinner while auth checks
  * - Redirect unauthenticated users to /login
  * - Redirect authenticated users away from auth pages
@@ -252,15 +252,6 @@ describe("AC4 — Authenticated user on auth pages", () => {
     expect(screen.getByTestId("child")).toBeInTheDocument();
   });
 
-  it("does NOT redirect from /vin when authenticated", () => {
-    setPathname("/vin");
-    setupAuthState(testUser as unknown as Record<string, unknown>, false);
-
-    renderAuthGuard();
-
-    expect(mockReplace).not.toHaveBeenCalled();
-    expect(screen.getByTestId("child")).toBeInTheDocument();
-  });
 });
 
 // ============================================================================
@@ -305,58 +296,6 @@ describe("AC5 — Unauthenticated access to public paths", () => {
     renderAuthGuard();
 
     // startsWith("/auth/callback") matches — treated as public
-    expect(screen.getByTestId("child")).toBeInTheDocument();
-    expect(mockReplace).not.toHaveBeenCalled();
-  });
-
-  it("allows access to /vin", () => {
-    setPathname("/vin");
-    setupAuthState(null, false);
-
-    renderAuthGuard();
-
-    expect(screen.getByTestId("child")).toBeInTheDocument();
-    expect(mockReplace).not.toHaveBeenCalled();
-  });
-
-  it("allows access to /vin/ABC123 (subpath via startsWith)", () => {
-    setPathname("/vin/ABC123");
-    setupAuthState(null, false);
-
-    renderAuthGuard();
-
-    expect(screen.getByTestId("child")).toBeInTheDocument();
-    expect(mockReplace).not.toHaveBeenCalled();
-  });
-
-  it("allows access to /share", () => {
-    setPathname("/share");
-    setupAuthState(null, false);
-
-    renderAuthGuard();
-
-    expect(screen.getByTestId("child")).toBeInTheDocument();
-    expect(mockReplace).not.toHaveBeenCalled();
-  });
-
-  it("allows access to /share/a1b2c3d4-e5f6-4000-8000-000000000001 (subpath via startsWith)", () => {
-    setPathname("/share/a1b2c3d4-e5f6-4000-8000-000000000001");
-    setupAuthState(null, false);
-
-    renderAuthGuard();
-
-    expect(screen.getByTestId("child")).toBeInTheDocument();
-    expect(mockReplace).not.toHaveBeenCalled();
-  });
-
-  it("NOTE: /vintage is matched as public due to startsWith('/vin') overmatch", () => {
-    setPathname("/vintage");
-    setupAuthState(null, false);
-
-    renderAuthGuard();
-
-    // Known behavior: startsWith("/vin") matches "/vintage"
-    // This documents current behavior, not desired behavior
     expect(screen.getByTestId("child")).toBeInTheDocument();
     expect(mockReplace).not.toHaveBeenCalled();
   });

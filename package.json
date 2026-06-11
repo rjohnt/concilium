@@ -6,8 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "test": "vitest run"
+    "lint": "eslint src scripts --ext .ts,.tsx",
+    "test": "vitest run",
+    "evals": "vitest run --config vitest.evals.config.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",

@@ -1,7 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
-import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/Sidebar";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { CommandPalette } from "@/components/CommandPalette";
@@ -13,17 +11,6 @@ interface AppShellProps {
 }
 
 export function AppShell({ children }: AppShellProps) {
-  const pathname = usePathname();
-
-  const isPublicShareRoute = useMemo(
-    () => pathname === "/share" || pathname.startsWith("/share/"),
-    [pathname]
-  );
-
-  if (isPublicShareRoute) {
-    return <PageTransition>{children}</PageTransition>;
-  }
-
   return (
     <>
       <div className="flex min-h-screen">

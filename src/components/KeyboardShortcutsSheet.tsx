@@ -23,7 +23,6 @@ const shortcutGroups: ShortcutGroup[] = [
     shortcuts: [
       { keys: ["⌘", "K"], description: "Open command palette" },
       { keys: ["⌘", "N"], description: "New ticket" },
-      { keys: ["⌘", "V"], description: "VIN decoder" },
     ],
   },
   {
