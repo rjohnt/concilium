@@ -39,6 +39,7 @@ export default function DashboardPage() {
   const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [personaFilter, setPersonaFilter] = useState<PersonaId[]>([]);
   const [personaFilterMode, setPersonaFilterMode] = useState<"reviewed-by" | "awaitring-review">("reviewed-by");
+  const [showFilters, setShowFilters] = useState(false);
   const [displayCount, setDisplayCount] = useState(BATCH_SIZE);
   const [loadingMore, setLoadingMore] = useState(false);
   const ticketListRef = useRef<HTMLDivElement>(null);
@@ -107,6 +108,10 @@ export default function DashboardPage() {
   const draftCount = statusCounts["draft"] ?? 0;
   const inReviewCount = statusCounts["in-review"] ?? 0;
   const hasActiveFilters = activeFilter !== "all" || searchQuery !== "" || priorityFilter !== null || tagFilter.length > 0 || personaFilter.length > 0;
+  // Count of active *advanced* filters (priority/tags/persona) — the ones tucked
+  // behind the Filters toggle.
+  const advancedFilterCount =
+    (priorityFilter !== null ? 1 : 0) + tagFilter.length + personaFilter.length;
 
   if (loading) return <DashboardSkeleton />;
 
@@ -223,6 +228,50 @@ export default function DashboardPage() {
         })}
       </div>
 
+      {/* ── Filters toggle (progressive disclosure) ──────────── */}
+      <div className="flex items-center gap-2 mb-5">
+        <button
+          onClick={() => setShowFilters((v) => !v)}
+          aria-expanded={showFilters}
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium border transition-colors"
+          style={{
+            borderColor: advancedFilterCount > 0 ? "var(--coral-200)" : MP.searchBorder,
+            background: advancedFilterCount > 0 ? "var(--coral-100)" : "transparent",
+            color: advancedFilterCount > 0 ? "var(--coral-700)" : MP.tabInactive.text,
+          }}
+        >
+          <Filter size={13} />
+          Filters
+          {advancedFilterCount > 0 && (
+            <span
+              className="px-1 py-0.5 rounded-full text-[10px] font-bold"
+              style={{ background: "var(--coral-500)", color: "#fff" }}
+            >
+              {advancedFilterCount}
+            </span>
+          )}
+          <ChevronDown
+            size={13}
+            style={{ transform: showFilters ? "rotate(180deg)" : "none", transition: "transform 0.15s" }}
+          />
+        </button>
+        {advancedFilterCount > 0 && (
+          <button
+            onClick={() => {
+              setPriorityFilter(null);
+              setTagFilter([]);
+              setPersonaFilter([]);
+            }}
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors"
+            style={{ borderColor: MP.searchBorder, color: MP.tabInactive.text }}
+          >
+            <X size={12} /> Clear
+          </button>
+        )}
+      </div>
+
+      {showFilters && (
+      <>
       {/* ── Priority filter ──────────────────────────────────── */}
       <div className="flex items-center gap-2 mb-5">
         <Filter size={13} style={{ color: MP.tabInactive.text }} />
@@ -293,6 +342,8 @@ export default function DashboardPage() {
             );
           })}
         </div>
+      )}
+      </>
       )}
 
       {/* ── Ticket list — MagicPath v2 visual ──────────────────── */}
