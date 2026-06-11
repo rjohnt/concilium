@@ -1,74 +1,94 @@
 # Concilium
 
-**A multiplayer AI-assisted development workflow replacing JIRA's agile model.**
+**Multiplayer, AI-mediated ticket refinement — a living ticket that builds itself once the stakeholders agree.**
 
-## Concept
+## The idea
 
-Instead of throw-it-over-the-wall ticket workflows, Concilium creates a *living ticket* where stakeholders progressively shape a feature through AI-mediated collaboration:
+Traditional agile tooling (Jira and friends) treats a ticket as a static
+artifact thrown over the wall: someone grooms it, someone designs it, someone
+builds it, context dies at every handoff. Concilium treats the ticket as a
+**negotiation**: stakeholders in different roles shape its scope together, an
+AI mediator keeps the conversation honest and moving, and when consensus is
+reached the agreed spec becomes the prompt for an agent that builds the
+feature. Stakeholders then review the build artifacts and iterate.
 
-1. **Multiplayer prompting session** — Engineer, Designer, Product Owner (and others) weigh in on a ticket over time
-2. **Progressive refinement** — Each persona contributes from their expertise; the prompt/ticket evolves
-3. **Consensus threshold** — When enough stakeholders approve, the system *builds* based on the combined feedback
-4. **Self-improving** — Cron-driven autonomous feature development continually improves the product
+## Identity: humans + AI stand-ins
 
-## Personas
+Every ticket has one **seat** per role — Engineer, Designer, Product Owner,
+QA. Each seat is held by an **AI stand-in** until a human claims it:
 
-- **Engineer** — Feasibility, architecture, implementation approach
-- **Designer** — UX, visual design, interaction patterns
-- **Product Owner** — Priority, scope, business value
-- **QA** — Edge cases, test scenarios, acceptance criteria
-- (Extensible — add ops, security, accessibility, etc.)
+- A solo founder gets a virtual product owner, designer, and QA who push back
+  on the ticket before anything gets built.
+- A full team claims all four seats and the AI steps back to mediation.
+- Anything in between: humans claim the seats they can cover, the stand-ins
+  cover the rest, and approvals from both count equally toward consensus.
+
+The dashboard shows seat occupancy (humans vs AI stand-ins) across active
+tickets at all times.
+
+## The pipeline
+
+```
+draft → in-review → consensus → building → done
+                        ↑                    │
+                        └── change requests ─┘  (rebuild with delta context)
+```
+
+1. **Refine** — stakeholders (human or stand-in) submit role-scoped feedback;
+   the AI mediator lens refines raw input through each persona's expertise.
+2. **Facilitate** — the **Mediator**, a dedicated facilitator agent with its
+   own system prompt, reads the whole session: it surfaces real conflicts
+   between roles, proposes compromises, names gaps, and recommends the next
+   action.
+3. **Consensus** — when 75% of seats approve, the ticket is ready to build.
+4. **Build** — a pluggable **build executor** turns the consensus into work:
+   - `report` (default): LLM-generated build spec (requirements, design
+     decisions, QA criteria, implementation plan)
+   - `local-claude`: additionally drives a local Claude Code CLI in a
+     sandboxed per-ticket git workspace; the diff, changed files, and run log
+     attach to the ticket as **artifacts** (set `CONCILIUM_BUILD_EXECUTOR=local-claude`)
+   - planned: Daytona / remote sandboxes behind the same interface
+5. **Review loop** — stakeholders file role-scoped **change requests**
+   against the completed build; a rebuild consumes them as delta context.
 
 ## Stack
 
-- **Frontend**: Next.js 14 + TypeScript + Tailwind CSS
-- **State**: localStorage (client) ↔ SQLite (server, via better-sqlite3)
-- **Data**: SQLite via better-sqlite3, persisted in `data/concilium.db`
-- **AI**: DeepSeek V4 Flash / V4 Pro via llm.ts, with persona-aware mediation
-
-## Status
-
-🏗️ **v0.8** — Granular notification preferences. Mute notifications by type or by persona. Settings accessible from prompt session header.
-
-### What Works
-- Ticket dashboard with persona status indicators and consensus progress bars
-- Ticket detail page with stakeholder feedback panel
-- Per-persona feedback entry (Engineer, Designer, PO, QA)
-- Approval tracking and consensus visualization
-- New ticket creation flow (with field validation and character counters)
-- Seed data with realistic multi-persona feedback
-- **AI-mediated prompting session** — write raw thoughts, DeepSeek V4 Flash mediator refines through persona lens
-- **LLM-powered mediator** — DeepSeek V4 Flash-powered persona-aware response generation (concerns, recommendations, follow-ups)
-- **`/api/prompt` route** — GET for session context, POST for mediation
-- **Multi-turn conversation** — follow-up question chaining within a session
-- **Consensus auto-build trigger** — auto-transitions draft→in-review→consensus→building→done
-- **Dark parchment design system** — unified `ink-*`, `bg-*` (raised/elevated/deep), `gold`, `olive`, `cardinal`, `blue-steel` tokens across all components
-- **Build report viewer** — `/build/[id]` page with structured requirements, design decisions, QA criteria
-- **Build auto-completion** — when the LLM generates the build report, the ticket auto-transitions to "done" (no manual step needed)
-- **Build complete celebration** — animated confetti particles and status display when a build finishes
-- **Full autonomous pipeline** — draft → in-review → consensus → building → done, all automatic
-- **SQLite backend persistence** — all tickets, feedback, and build reports stored in `data/concilium.db`
-- **Server-side CRUD API** — `/api/tickets`, `/api/feedback`, `/api/sync` RESTful endpoints
-- **Client-server sync** — client automatically syncs localStorage to server DB on every write
-- **Server-side mediator** — `/api/prompt` and `/api/build` use persistent SQLite data instead of ephemeral in-memory store
-- **Seed data migration** — localStorage data pushed to server on first client load
-- **🎮 Real-time session presence** — BroadcastChannel-powered presence tracking shows who's in a prompt session, which persona they're using, and how long they've been there
-- **Persona claim system** — prevents duplicate persona claims; shows available/unclaimed personas for quick-join
-- **🔔 Multiplayer notifications** — in-app notification store with cross-tab sync; browser Notification API integration for feedback submissions, consensus reached, and build completions
-- **Notification bell** — unread badge in prompt session header; persistent across tabs
-- **⚡ Real-time feedback streaming** — when one persona submits feedback, it appears instantly in all other session participants' chat timeline without refreshing. Live indicator badge shows "X just submitted" with pulsing dot. BroadcastChannel-powered, zero infrastructure needed.
-- **🔕 Granular notification preferences** — mute notifications by type (feedback, consensus, build) or by persona (don't notify when Engineer submits). Accessible via gear icon in prompt session header. Cross-tab sync, persisted to localStorage.
-
-### Next Up
-- Edit history and version diffing for ticket descriptions (VersionHistory, DiffView components exist, need integration into ticket detail page)
-- Add notification preferences UI to the dashboard settings area
-- Notification grouping in the notification bell dropdown
-- Cross-session feedback import (reuse persona feedback from similar tickets)
+- **Framework**: Next.js 16 (App Router) + React 19 + TypeScript 6
+- **Styling**: Tailwind CSS 3.4 (MagicPath v2 light/indigo dashboard, dark
+  parchment session surfaces)
+- **State**: client store (`src/lib/store.ts`) with localStorage persistence,
+  synced to a server-side SQLite DB (`src/lib/server-db.ts`)
+- **Auth**: Supabase (dev bypass when env vars are absent)
+- **AI**: DeepSeek V4 Flash/Pro via `src/lib/llm.ts`; prompts versioned in
+  `src/lib/persona-prompts.ts` + `src/lib/mediator-persona.ts`
+- **Realtime (current)**: BroadcastChannel — cross-tab only. The planned
+  migration is Supabase Realtime (Broadcast/Presence/Postgres Changes) with
+  Postgres replacing both SQLite and the localStorage source of truth.
+- **Testing**: Vitest (`npm test`); LLM prompt evals (`npm run evals`, see
+  `scripts/evals/README.md`)
+- **Deploy**: Railway (`railway.json`)
 
 ## Development
 
 ```bash
-npm run dev    # Start dev server on localhost:3000
-npm run build  # Production build
-npm run start  # Production server
+npm run dev      # localhost:3000
+npm run build    # production build
+npm test         # unit tests
+npm run evals    # LLM prompt evals (requires DEEPSEEK_API_KEY)
 ```
+
+Env vars: `DEEPSEEK_API_KEY` (mediator/stand-ins/builds),
+`NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` (auth),
+`CONCILIUM_BUILD_EXECUTOR`, `CONCILIUM_BUILD_WORKSPACE` (build executor).
+
+## Roadmap
+
+1. ~~Seat model: humans + AI stand-ins, role claim UI, occupancy dashboard~~ ✅
+2. ~~Agentic stand-ins with eval harness; Mediator as dedicated facilitator~~ ✅
+3. ~~Pluggable build executor (local Claude Code sandbox) + artifact review loop~~ ✅
+4. Supabase consolidation: Postgres as source of truth, Realtime replacing
+   BroadcastChannel, true multi-user seats/presence
+5. Objection-driven consensus: concerns as first-class blocking entities;
+   consensus = no open blockers + required sign-offs
+6. Richer artifacts: Playwright runs/recordings, deploy previews
+7. Automated prompt-improvement loop on top of the eval harness
