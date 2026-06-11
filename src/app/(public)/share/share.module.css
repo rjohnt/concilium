@@ -430,6 +430,36 @@
   white-space: pre;
 }
 
+/* ---------- Take it to your agent ---------- */
+.agent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 40px;
+  padding: 22px 24px;
+  background: var(--coral-50);
+  border: 1px solid var(--coral-200);
+  border-radius: var(--radius-2xl, 18px);
+}
+.agentCopy {
+  flex: 1;
+  min-width: 240px;
+}
+.agentCopy h2 {
+  margin: 0 0 6px;
+  font-family: var(--font-display, var(--font-sans));
+  font-size: 19px;
+  color: var(--ink-900);
+}
+.agentCopy p {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--ink-700);
+}
+
 /* ---------- CTA ---------- */
 .cta {
   margin-top: 8px;

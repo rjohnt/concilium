@@ -15,7 +15,9 @@ import Link from "next/link";
 import { ArrowRight, Check, Sparkles } from "lucide-react";
 import { getTicket } from "@/lib/server-db";
 import { checkConsensusThreshold } from "@/lib/consensus-threshold";
+import { generateAgentPrompt } from "@/lib/agent-prompt";
 import { normalizeSeats } from "@/lib/seats";
+import CopyPromptButton from "./CopyPromptButton";
 import type { PersonaId, Ticket, TicketStatus } from "@/lib/types";
 import styles from "../share.module.css";
 
@@ -336,6 +338,19 @@ export default async function SharePage({ params }: { params: Promise<{ id: stri
           </div>
           <Debate ticket={ticket} />
         </section>
+
+        {ticket.feedback.length > 0 && (
+          <section className={styles.agent}>
+            <div className={styles.agentCopy}>
+              <h2>Take this spec to your agent</h2>
+              <p>
+                Copy the council-refined spec as a ready-to-paste prompt for your coding agent —
+                Claude Code, Cursor, or anything else.
+              </p>
+            </div>
+            <CopyPromptButton prompt={generateAgentPrompt(ticket)} />
+          </section>
+        )}
 
         <BuildSection ticket={ticket} />
 
