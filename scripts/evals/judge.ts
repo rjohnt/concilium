@@ -5,7 +5,8 @@
  * per dimension. Uses the same DeepSeek client as production code.
  */
 
-import { callDeepSeek, DEEPSEEK_PRO_MODEL } from "@/lib/llm";
+import { callDeepSeek } from "@/lib/llm";
+import { JUDGE_MODEL } from "./config";
 
 export interface JudgeScores {
   /** Is the response grounded in THIS ticket vs generic filler? */
@@ -60,7 +61,7 @@ export async function judgeResponse(input: {
     systemPrompt: JUDGE_SYSTEM_PROMPT,
     userPrompt,
     expectJson: true,
-    model: DEEPSEEK_PRO_MODEL,
+    model: JUDGE_MODEL,
   });
 
   let parsed: Record<string, unknown> = {};
@@ -140,7 +141,7 @@ export async function judgeCatch(input: {
     systemPrompt: CATCH_JUDGE_SYSTEM_PROMPT,
     userPrompt,
     expectJson: true,
-    model: DEEPSEEK_PRO_MODEL,
+    model: JUDGE_MODEL,
   });
 
   let parsed: Record<string, unknown> = {};

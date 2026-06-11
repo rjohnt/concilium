@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint src scripts --ext .ts,.tsx",
     "test": "vitest run",
-    "evals": "vitest run --config vitest.evals.config.ts"
+    "evals": "vitest run --config vitest.evals.config.ts",
+    "evals:report": "node scripts/evals/report.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",

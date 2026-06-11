@@ -142,7 +142,9 @@ function parseReport(raw: string): Omit<FacilitatorReport, "meta"> {
  */
 export async function runMediatorLLM(
   ticket: Ticket,
-  history: FeedbackEntry[]
+  history: FeedbackEntry[],
+  /** Optional model override for eval-time model comparison (production: none). */
+  model?: string
 ): Promise<FacilitatorReport> {
   const userPrompt = [
     `## Ticket Context`,
@@ -165,6 +167,7 @@ export async function runMediatorLLM(
     systemPrompt: MEDIATOR_SYSTEM_PROMPT,
     userPrompt,
     expectJson: true,
+    model,
   });
 
   return {

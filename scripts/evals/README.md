@@ -52,12 +52,40 @@ DEEPSEEK_API_KEY=... npm run evals
 
 Without the key, all evals skip (so CI without secrets stays green).
 
+## Comparing models over time
+
+The harness is built to score the **same scenarios against different models** as
+they ship, and keep the history. Two models are involved (`config.ts`):
+
+- **`CONCILIUM_EVAL_MODEL`** — the model under test (generates the stand-in /
+  mediator responses). Defaults to the production model (`deepseek-v4-flash`).
+- **`CONCILIUM_EVAL_JUDGE_MODEL`** — the grader. Keep this **fixed** across
+  comparisons so scores stay comparable (defaults to `deepseek-v4-pro`).
+
+```bash
+# Benchmark the default model
+DEEPSEEK_API_KEY=... npm run evals
+
+# Benchmark a different / newer model on the identical scenarios
+DEEPSEEK_API_KEY=... CONCILIUM_EVAL_MODEL=deepseek-v4-pro npm run evals
+
+# Tabulate every recorded run side by side
+npm run evals:report
+```
+
+Every result is stamped with the model under test, the judge model, and
+`PROMPT_VERSION`, and written to `results/<model>__<promptVersion>.jsonl` (so a
+new model's run never clobbers another's). `npm run evals:report` reads them all
+and prints a table — model × prompt-version × suite → caught-count, in-lane,
+overall — which is how you watch a model regress or improve over time.
+
 ## The improvement loop
 
-1. Run the evals; note weak dimensions in `results/<version>.jsonl`.
-2. Edit the prompts in `src/lib/persona-prompts.ts` / `mediator-persona.ts`.
+1. Run the evals; note weak rows in `npm run evals:report`.
+2. Edit the charters/prompts in `src/lib/persona-charters.ts` /
+   `persona-prompts.ts` / `mediator-persona.ts`.
 3. **Bump `PROMPT_VERSION`** in `persona-prompts.ts`.
-4. Re-run and compare versions side by side.
+4. Re-run and compare versions (and models) side by side via the report.
 
 Add a scenario whenever a stand-in or the Mediator produces a bad real-world
 response: reproduce it as a fixture with an expectation that would have caught
