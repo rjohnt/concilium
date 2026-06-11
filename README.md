@@ -11,6 +11,11 @@ Instead of throw-it-over-the-wall ticket workflows, Concilium creates a *living 
 3. **Consensus threshold** — When enough stakeholders approve, the system *builds* based on the combined feedback
 4. **Self-improving** — Cron-driven autonomous feature development continually improves the product
 
+## Brand
+
+Brand strategy, voice & tone, visual identity, and logo concepts live in
+[docs/brand/](docs/brand/README.md). Tagline: **"Software by consensus."**
+
 ## Personas
 
 - **Engineer** — Feasibility, architecture, implementation approach
