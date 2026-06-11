@@ -56,7 +56,9 @@ us a deep vocabulary well — seats, quorum, the Mediator, verdicts.
 | Tagline | Use |
 | --- | --- |
 | **"Software by consensus."** | Primary. Short, ownable, says the whole thing. |
-| "Every seat filled. Every voice heard. Then it builds." | Landing-page hero (long form). |
+| **"Give every project a council."** | Landing-page hero (Claude Design system). |
+| "You steer; they do the legwork, in concert." | Hero subhead / supporting line. |
+| "Every seat filled. Every voice heard. Then it builds." | Long-form alt hero. |
 | "Where code gets a council." | Secondary / social. |
 | "Decided, then built." | Secondary / footer, decks. |
 | "The ticket is alive." | Dev-audience campaigns; leans on the living-ticket concept. Not the masthead. |
@@ -71,6 +73,6 @@ the crowded register we differentiate *against*.
 | --- | --- |
 | A council that builds | A chatbot that codes |
 | Deliberate, then fast | Fast, then sorry |
-| Ceremonial with a wink | Stuffy or academic |
+| Warm and human | Stuffy or academic |
 | Multiplayer by default | A solo prompt box |
 | Provenance and verdicts | Vibes and velocity metrics |

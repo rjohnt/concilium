@@ -1,9 +1,29 @@
 # Voice & Tone
 
-Concilium sounds like a well-run council: confident, warm, a little
-ceremonial, never bureaucratic. The ceremony is a wink, not a costume —
-if a sentence would feel at home in a legal filing, lighten it; if it would
-feel at home in a growth-hacking thread, slow it down.
+Concilium sounds like a sharp, friendly teammate — warm, direct, and human,
+not a brand. Plain words over jargon, short sentences, optimistic and a little
+playful, but it respects the reader's intelligence. The council metaphor leads
+(we *do* convene a council), but the register is collaborative, never
+bureaucratic or ceremonial — if a sentence would feel at home in a legal filing,
+lighten it; if it would feel at home in a growth-hacking thread, slow it down.
+
+**Person:** "you" for the user, "we" for Concilium; the personas are named
+characters ("the Designer is on it"). The product itself is a *council* / *room*
+/ *table* — lean into that.
+
+**Casing:** sentence case **everywhere** — headings, buttons, nav, labels.
+Never Title Case UI. Display headlines may take a period for a confident beat
+("Give every project a council.").
+
+**Punctuation:** em-dashes for asides, the occasional ampersand in tight UI
+("Product & QA"). Avoid exclamation marks except sparingly in persona dialogue.
+
+**Eyebrows / metadata:** uppercase mono, wide tracking ("MEET THE COUNCIL",
+"// seat: engineer"). This is where the technical edge lives.
+
+**Emoji:** used *very* sparingly and only in persona/chat dialogue (e.g. a
+single ✨ at the end of a designer's message). Never in headings, buttons,
+marketing copy, or labels.
 
 ## Vocabulary
 
@@ -33,9 +53,9 @@ always says "consensus".
 3. **Builds are earned.** Never imply the build is instant magic; it is the
    consequence of agreement. "Consensus reached — building" is a cause and
    an effect.
-4. **Plain verbs, occasional ceremony.** One ceremonial word per sentence,
-   maximum. "The council convenes" is good; "The esteemed council hereby
-   convenes its deliberations" is parody.
+4. **Plain verbs, warm framing.** Keep the council metaphor light and concrete.
+   "The council convenes" is good; "The esteemed council hereby convenes its
+   deliberations" is parody. Excitement comes from clarity, not hype.
 
 ## Do / don't examples
 
@@ -51,9 +71,9 @@ always says "consensus".
 
 ## Tone by surface
 
-- **Product UI:** warmest and plainest. Ceremony only at moments of meaning
-  (consensus, build completion, seat claims).
-- **Marketing site:** full council voice. Metaphor can lead.
+- **Product UI:** warmest and plainest. Save a touch of weight for the moments
+  that earn it (consensus, build completion, seat claims).
+- **Marketing site:** full council voice. The metaphor can lead.
 - **Docs / README:** neutral-technical; vocabulary table still applies, but
-  drop the ceremony.
-- **Errors:** zero ceremony. Be human, be clear, never blame the user.
+  keep it plain.
+- **Errors:** plainest of all. Be human, be clear, never blame the user.
