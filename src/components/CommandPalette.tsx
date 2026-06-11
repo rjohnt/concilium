@@ -6,8 +6,11 @@ import {
   Search,
   LayoutDashboard,
   PlusCircle,
+  FileText,
 } from "lucide-react";
 import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
+import { getTickets } from "@/lib/store";
+import type { Ticket } from "@/lib/types";
 
 interface Command {
   label: string;
@@ -16,35 +19,62 @@ interface Command {
   icon: React.ComponentType<{ size?: number; className?: string }>;
 }
 
-const commands: Command[] = [
+const STATIC_COMMANDS: Command[] = [
   { label: "Go to Dashboard", shortcut: "⌘1", href: "/", icon: LayoutDashboard },
   { label: "New Ticket", shortcut: "⌘N", href: "/new", icon: PlusCircle },
 ];
+
+// How many tickets to show when the query is empty / when filtering.
+const RECENT_LIMIT = 5;
+const MATCH_LIMIT = 8;
 
 export function CommandPalette() {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   // ── Refs for values read inside the keyboard-navigation listener ──
   // Using refs avoids re-attaching the event listener on every keystroke.
-  const filteredCommandsRef = useRef(commands);
+  const filteredCommandsRef = useRef<Command[]>(STATIC_COMMANDS);
   const selectedIndexRef = useRef(0);
 
+  // Tickets as jump-to commands (most-recently-updated first).
+  const ticketCommands = useMemo<Command[]>(
+    () =>
+      tickets.map((t) => ({
+        label: `${t.id} · ${t.title}`,
+        href: `/ticket/${t.id}`,
+        icon: FileText,
+      })),
+    [tickets]
+  );
+
   const filteredCommands = useMemo(() => {
-    if (!query.trim()) return commands;
-    const q = query.toLowerCase();
-    return commands.filter((cmd) => cmd.label.toLowerCase().includes(q));
-  }, [query]);
+    const q = query.toLowerCase().trim();
+    if (!q) {
+      return [...STATIC_COMMANDS, ...ticketCommands.slice(0, RECENT_LIMIT)];
+    }
+    const staticMatches = STATIC_COMMANDS.filter((cmd) => cmd.label.toLowerCase().includes(q));
+    const ticketMatches = ticketCommands
+      .filter((cmd) => cmd.label.toLowerCase().includes(q))
+      .slice(0, MATCH_LIMIT);
+    return [...staticMatches, ...ticketMatches];
+  }, [query, ticketCommands]);
 
   // Keep refs in sync
   filteredCommandsRef.current = filteredCommands;
   selectedIndexRef.current = selectedIndex;
 
   const open = useCallback(() => {
+    // Snapshot tickets when opening, most-recently-updated first.
+    const loaded = [...getTickets()].sort(
+      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+    setTickets(loaded);
     setIsOpen(true);
     setQuery("");
     setSelectedIndex(0);
@@ -181,7 +211,7 @@ export function CommandPalette() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Type a command..."
+            placeholder="Search tickets or run a command…"
             aria-activedescendant={activeDescendantId ?? ""}
             className="w-full bg-transparent text-ink-primary text-sm placeholder:text-ink-muted outline-none"
           />
@@ -194,12 +224,12 @@ export function CommandPalette() {
         <div ref={listRef} className="py-1">
           {filteredCommands.length === 0 ? (
             <div className="px-4 py-8 text-center text-sm text-ink-muted">
-              No commands found
+              No tickets or commands match &ldquo;{query}&rdquo;
             </div>
           ) : (
             filteredCommands.map((command, index) => (
               <button
-                key={command.label}
+                key={command.href}
                 id={`command-${index}`}
                 role="option"
                 aria-selected={index === selectedIndex}
