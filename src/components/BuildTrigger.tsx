@@ -3,9 +3,10 @@
 import { useState, useRef } from "react";
 import { Ticket } from "@/lib/types";
 import { getBuildReadiness, generateBuildSummary, DEFAULT_THRESHOLD } from "@/lib/consensus-threshold";
+import { generateAgentPrompt } from "@/lib/agent-prompt";
 import { triggerBuild } from "@/lib/store";
 import { getAllPersonas } from "@/lib/personas";
-import { AlertTriangle, CheckCircle2, Clock, Play, Rocket, X, XCircle, FileText, Wrench, Palette, FlaskConical, CheckCircle, ArrowRight, Loader2, RefreshCw } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, Play, Rocket, X, XCircle, FileText, Wrench, Palette, FlaskConical, CheckCircle, ArrowRight, Loader2, RefreshCw, Copy, Check } from "lucide-react";
 import { useToast } from "@/components/Toast";
 
 interface BuildTriggerProps {
@@ -16,6 +17,7 @@ interface BuildTriggerProps {
 export function BuildTrigger({ ticket, onBuildTriggered }: BuildTriggerProps) {
   const [showModal, setShowModal] = useState(false);
   const [summary, setSummary] = useState("");
+  const [promptCopied, setPromptCopied] = useState(false);
   const [isBuilding, setIsBuilding] = useState(false);
   const [buildError, setBuildError] = useState<string | null>(null);
   const { addToast } = useToast();
@@ -36,7 +38,26 @@ export function BuildTrigger({ ticket, onBuildTriggered }: BuildTriggerProps) {
   const handleShowSummary = () => {
     const s = generateBuildSummary(ticket);
     setSummary(s);
+    setPromptCopied(false);
     setShowModal(true);
+  };
+
+  const handleCopyPrompt = () => {
+    const prompt = generateAgentPrompt(ticket);
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(prompt).then(
+        () => {
+          setPromptCopied(true);
+          setTimeout(() => setPromptCopied(false), 2000);
+          addToast({
+            variant: "success",
+            title: "Agent prompt copied",
+            description: "Paste the council-refined spec into your coding agent.",
+          });
+        },
+        () => addToast({ variant: "error", title: "Couldn't copy prompt" })
+      );
+    }
   };
 
   const handleTriggerBuild = async () => {
@@ -354,6 +375,23 @@ export function BuildTrigger({ ticket, onBuildTriggered }: BuildTriggerProps) {
                 className="btn-secondary"
               >
                 Cancel
+              </button>
+              <button
+                onClick={handleCopyPrompt}
+                className="btn-secondary"
+                title="Copy the council-refined spec as a prompt for your coding agent"
+              >
+                {promptCopied ? (
+                  <>
+                    <Check size={16} className="text-[var(--success-500)]" />
+                    Copied
+                  </>
+                ) : (
+                  <>
+                    <Copy size={16} />
+                    Copy agent prompt
+                  </>
+                )}
               </button>
               <button
                 onClick={handleTriggerBuild}
