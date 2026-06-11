@@ -1,17 +1,19 @@
-const CHANNEL_NAME = "concilium-sync";
+/**
+ * crossTabSync.ts — Ticket-mutation fan-out across tabs and users.
+ *
+ * Rides the realtime transport (Supabase Broadcast when configured, else
+ * BroadcastChannel), so a write in one session is signalled to every other
+ * open session — same browser or another user's machine.
+ */
 
-let channel: BroadcastChannel | null = null;
+import { getTransportChannel, type TransportChannel } from "./realtime-transport";
 
-function getChannel(): BroadcastChannel | null {
+let channel: TransportChannel | null = null;
+
+function getChannel(): TransportChannel | null {
   if (typeof window === "undefined") return null;
   if (!channel) {
-    try {
-      channel = new BroadcastChannel(CHANNEL_NAME);
-    } catch {
-      // BroadcastChannel not supported (e.g. older browsers) —
-      // cross-tab sync will fall back to the existing storage event.
-      return null;
-    }
+    channel = getTransportChannel("sync");
   }
   return channel;
 }
@@ -24,7 +26,7 @@ export interface TicketUpdateMessage {
 }
 
 /**
- * Broadcast a ticket mutation to all other tabs (and the current tab).
+ * Broadcast a ticket mutation to all other tabs/users.
  * Called from the store after persistState().
  */
 export function broadcastTicketUpdate(
@@ -39,11 +41,11 @@ export function broadcastTicketUpdate(
     action,
     timestamp: Date.now(),
   };
-  ch.postMessage(msg);
+  ch.send(msg as unknown as Record<string, unknown>);
 }
 
 /**
- * Subscribe to ticket updates from other tabs.
+ * Subscribe to ticket updates from other tabs/users.
  * Returns an unsubscribe function.
  */
 export function onTicketUpdate(
@@ -52,14 +54,12 @@ export function onTicketUpdate(
   const ch = getChannel();
   if (!ch) return () => {};
 
-  const handler = (event: MessageEvent<TicketUpdateMessage>) => {
-    if (event.data?.type === "ticket-update") {
-      callback(event.data);
+  return ch.onMessage((message) => {
+    const msg = message as unknown as TicketUpdateMessage;
+    if (msg?.type === "ticket-update") {
+      callback(msg);
     }
-  };
-
-  ch.addEventListener("message", handler);
-  return () => ch.removeEventListener("message", handler);
+  });
 }
 
 /**
@@ -68,10 +68,10 @@ export function onTicketUpdate(
 export function broadcastFullSync(): void {
   const ch = getChannel();
   if (!ch) return;
-  ch.postMessage({
+  ch.send({
     type: "ticket-update",
     ticketId: "*",
     action: "full-sync",
     timestamp: Date.now(),
-  });
+  } as Record<string, unknown>);
 }

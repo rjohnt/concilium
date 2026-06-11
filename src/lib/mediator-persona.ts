@@ -183,9 +183,9 @@ export async function runMediatorLLM(
  * doesn't exist.
  */
 export async function facilitate(ticketId: string): Promise<FacilitatorReport | null> {
-  const ticket = getTicket(ticketId);
+  const ticket = await getTicket(ticketId);
   if (!ticket) return null;
 
-  const history = getFeedbackHistory(ticketId);
+  const history = await getFeedbackHistory(ticketId);
   return runMediatorLLM(ticket, history);
 }

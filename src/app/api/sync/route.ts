@@ -11,7 +11,7 @@ import { Ticket } from "@/lib/types";
 
 export async function GET() {
   try {
-    const tickets = serverDb.getTickets();
+    const tickets = await serverDb.getTickets();
     return NextResponse.json({ tickets });
   } catch (error) {
     console.error("GET /api/sync error:", error);
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = serverDb.seedFromClientData({
+    const result = await serverDb.seedFromClientData({
       tickets: body.tickets,
       nextTicketId: body.nextTicketId || 1,
       nextFeedbackId: body.nextFeedbackId || 1,
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       imported: result.imported,
-      total: serverDb.getTickets().length,
+      total: (await serverDb.getTickets()).length,
     });
   } catch (error) {
     console.error("POST /api/sync error:", error);

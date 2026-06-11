@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     body.ticketId = sanitize(body.ticketId);
 
     // Validate ticket exists
-    const ticket = getTicket(body.ticketId);
+    const ticket = await getTicket(body.ticketId);
     if (!ticket) {
       const response = NextResponse.json(
         { error: "Ticket not found" },
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
       return applyRateLimitHeaders(response, rateLimitResult);
     }
 
-    const history = getFeedbackHistory(body.ticketId);
+    const history = await getFeedbackHistory(body.ticketId);
     // Delta context: change requests from the previous round not yet consumed
     const changeRequests = (ticket.buildReport?.changeRequests ?? []).filter(
       (cr) => !cr.resolvedByBuildId
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Persist to store
-    setBuildReport(body.ticketId, execution.report);
+    await setBuildReport(body.ticketId, execution.report);
 
     const successResponse = NextResponse.json(
       {
