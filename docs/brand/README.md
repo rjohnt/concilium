@@ -4,6 +4,10 @@ Brand strategy, voice, and visual identity for Concilium. These docs are the
 source of truth for how Concilium presents itself — in the product UI, the
 README, marketing pages, and generated imagery.
 
+The visual system is the **Claude Design** brand that shipped on 2026-06-10: a
+warm, human, light identity — cream canvas, warm ink, a terracotta-coral action
+color, and a four-color persona palette. Tokens live in `src/app/globals.css`.
+
 ## Contents
 
 | Doc | What it covers |

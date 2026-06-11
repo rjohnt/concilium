@@ -2,94 +2,156 @@
 
 ## Concept
 
-**"Council chamber meets modern dev tool."** Deliberate, composed surfaces
-with one ceremonial accent; crisp contemporary type so it never reads as a
-period costume.
+**"A well-lit studio, not a cold dashboard."** Warm, soft, and tactile
+surfaces where a council of collaborators gathers around a shared table. The
+one confident accent is a friendly terracotta coral; each persona owns a color
+that runs through the whole product. Crisp, characterful type keeps it modern
+and human.
 
-> **Status note — indigo vs. parchment.** The original Concilium identity was
-> "dark parchment" (true gold, cardinal, olive on a warm dark ground). The
-> MagicPath design-system merge remapped the token *values* to an
-> indigo/slate system while keeping the council token *names* (`gold`,
-> `cardinal`, `olive`). This guide documents the palette **as it ships
-> today**. Re-warming the palette toward true gold/parchment is an open
-> brand decision — if taken, only `src/app/globals.css` values change; token
-> names, components, and this doc's structure stay put.
+> **Status note — the warm system is canonical.** Concilium shipped the
+> **Claude Design** system on 2026-06-10: a fresh, warm, light identity (cream
+> canvas, warm ink, terracotta-coral primary, a four-color persona palette).
+> This replaced the earlier indigo/slate "MagicPath" values. The palette below
+> documents the system **as it ships today** in `src/app/globals.css`. The
+> previous "dark parchment" and indigo directions are retired; their logo
+> explorations are kept under [assets/](./assets/) as history only.
 
 ## Palette
 
 Brand colors are defined as CSS variables in `src/app/globals.css` and
 exposed through `tailwind.config.js`. **Always use tokens, never raw hex.**
+The system is **light-canonical**; a derived warm-dark theme exists for
+`[data-theme="dark"]` but the brand presents in light.
 
-### Core (dark theme — the brand-canonical theme)
+### Core (warm neutrals + the action accent)
 
-| Token | Value (dark) | Role |
+| Token | Value | Role |
 | --- | --- | --- |
-| `--background` / `deep` | `#0f172a` | The chamber — page ground |
-| `--color-raised` | `#1e293b` | Raised surfaces, cards |
-| `--color-gold` (= `--primary`) | `#6366f1` | **Consensus & approval.** Primary actions, progress toward consensus |
-| `--color-gold-light` | `#818cf8` | Hover/active states of consensus elements |
-| `--color-cardinal` | `#dc2626` | **Dissent & blockers.** Objections, destructive actions |
-| `--color-olive` | `#059669` | Affirmation, healthy/complete states |
-| `--color-blue-steel` | `#60a5fa` | Informational accents |
-| `--color-ink-primary` … `ink-ghost` | foreground scale | Text hierarchy ("ink" on the page) |
+| `--warm-50` (= `--background` / `bg-app`) | `#FCFAF6` | The canvas — cream page ground |
+| `--warm-100` (= `surface-raised` / `sidebar`) | `#F7F1E8` | Sand panels, sidebar, alternating sections |
+| `--warm-150` (= `bg-hover`) | `#F1E9DC` | Hover wash |
+| `--warm-200` (= `border-subtle`) | `#E8DCCB` | Hairline borders |
+| `--warm-300` (= `border-strong`) | `#D8C7B0` | Stronger dividers |
+| `--surface-card` | `#FFFFFF` | Card surfaces on cream |
+| `--coral-500` (= `--primary`) | `#E85D34` | **The one accent that means "act."** Primary buttons, links, focus rings, highlight underlines |
+| `--coral-400` | `#F07E5C` | Primary hover (lighten) |
+| `--coral-600` | `#CF4A28` | Primary press |
+| `--coral-100` / `--coral-50` | `#FCE2D8` / `#FEF2EC` | Coral tint surfaces |
+| `--ink-900` (= `text-heading`) | `#2B221C` | Headlines — a warm brown-black, never pure `#000` |
+| `--ink-700` (= `text-body`) | `#4B3F35` | Body text |
+| `--ink-500` (= `text-muted`) | `#6E6053` | Secondary text |
+| `--ink-400` (= `text-faint`) | `#8C7C6C` | Muted / placeholder |
 
-Semantic rule of thumb: **gold = agreement, cardinal = objection,
-olive = done/healthy, blue-steel = information.** Components should express
-council meaning through these four, not through arbitrary accent colors.
+### Semantic (status only)
 
-### Persona seat colors
-
-Each seat gets a stable accent so persona identity reads at a glance across
-the dashboard, presence indicators, and feedback timeline:
-
-| Seat | Token |
+| Token | Role |
 | --- | --- |
-| Engineer | `blue-steel` |
-| Designer | `gold-light` |
-| Product Owner | `olive` |
-| QA | `cardinal` (dimmed contexts: 60% opacity — QA flags risk, it isn't an error state) |
+| `--success-500` `#2E9E6B` | Healthy / complete |
+| `--warning-500` `#D9962A` | Caution |
+| `--danger-500` `#CB3A2A` | Destructive / blockers |
+| `--info-500` `#2F82C7` | Informational |
+
+Semantic colors are warm-leaning and used **only** for status — never as
+decorative accents. The single "act" color is coral; everything that means
+*agreement / progress / primary action* expresses through it.
+
+### Persona seat colors — the signature device
+
+Each seat owns one fixed color used consistently across avatars, badges, seat
+ownership, progress, and timelines. A reader should be able to scan **who** by
+color alone. Each has 50/100 tints for soft backgrounds.
+
+| Seat | Hue | Token (500) | Glyph (Lucide) |
+| --- | --- | --- | --- |
+| Engineer | Pine | `--persona-eng-500` `#1E9C86` | `Code` |
+| Designer | Iris | `--persona-des-500` `#7A57D1` | `PenTool` |
+| Product Owner | Amber | `--persona-prod-500` `#D9962A` | `Compass` |
+| QA | Sky | `--persona-res-500` `#2F82C7` | `Microscope` |
+
+Persona colors are for persona things only — avatars, seat badges, who-did-what
+indicators. Don't borrow them for generic UI accents.
 
 ## Typography
 
-- **UI / body:** Inter (current, keep). Workhorse, neutral.
-- **Brand display (recommended addition):** a serif with ceremony —
-  **Fraunces** or **Newsreader** — used *sparingly*: marketing headlines,
-  the wordmark, build-report titles. One serif moment per view, maximum.
-  This single pairing carries ~80% of the "council" feel.
-- **Mono:** JetBrains Mono (current, keep) for code and build artifacts.
+- **Display:** **Bricolage Grotesque** (weights 600–800) — characterful and
+  warm. Headlines, the wordmark, big confident moments. Sentence case with
+  negative tracking; a period for a confident beat ("Give every project a
+  council.").
+- **Body / UI:** **Hanken Grotesk** (400–700) — humanist, highly legible, set
+  at 1.5–1.65 line height for reading.
+- **Mono:** **JetBrains Mono** (400–600) — code, metadata, timestamps, IDs, and
+  **eyebrows** (uppercase, wide tracking — "MEET THE COUNCIL", "// seat:
+  engineer"). This is where the technical edge lives.
+
+All three load via `next/font` in `src/app/layout.tsx`
+(`--font-bricolage` / `--font-hanken` / `--font-jetbrains`), surfaced through
+the `--font-display` / `--font-sans` / `--font-mono` tokens and the Tailwind
+`font-display` / `font-sans` / `font-mono` families.
+
+## Shape, shadow & motion
+
+- **Corner radii** are friendly and rounded: inputs/cards at `--radius-md`/`lg`
+  (13–18px), big surfaces at `--radius-xl`/`2xl` (24–32px), all buttons and
+  chips fully **pill** (`--radius-pill`). Avatars are circular.
+- **Shadows** are soft and **warm-tinted** (rgba of the ink brown, not
+  gray-black), five steps `--shadow-xs` → `--shadow-xl`. Resting cards use
+  `sm`; hover lifts to `lg`. No inner shadows.
+- **Borders** are hairline `1px` in warm tones. Cards lean on soft shadow + a
+  hairline. Accent cards add a 3px colored **top** rule — never a left-only
+  colored border.
+- **Motion** is gentle and springy: `--ease-out` for most things,
+  `--ease-spring` (a slight friendly overshoot) for toggles/thumbs. Durations
+  120–340ms. Press states squish to ~0.985. Respect `prefers-reduced-motion`.
+- **Focus** is a 3px soft coral ring (`--shadow-focus`), never a hard outline.
 
 ## Logo
 
-Direction (concepts in [assets/](./assets/)):
+The shipping mark is the **council mark** — three persona pebbles (coral, iris,
+pine) meeting at a dark hub, representing collaborators convening at a table.
+The mark and the product's idea (a council gathering) are the same shape.
 
-1. **The Round Table / Consensus Ring** *(primary direction,
-   `assets/logo-consensus-ring.svg`)* — a round table viewed from above,
-   seats as marks around a ring. Strongest concept because the logo and the
-   product's consensus-progress ring are the same shape: the mark *is* the UI.
-2. **The Seal** (`assets/logo-seal.svg`) — wax-seal motif; consensus =
-   sealed. Good for build-report stamps and "approved" moments in-product.
-3. **The Quorum Mark** (`assets/logo-quorum.svg`) — abstract C formed by
-   four arcs (four seats), gap closing as consensus nears.
+Files (canonical, in [`public/brand/`](../../public/brand/), mirrored in
+[assets/](./assets/) for reference):
+
+- `logo-mark.svg` — the council mark (primary).
+- `logo-wordmark.svg` — mark + "Concilium" in Bricolage Grotesque.
+- `logo-mark-mono.svg` — single-color (`currentColor`) for stamps and tight
+  spots.
 
 Rules:
-- The mark must work in a single color (ink or gold) before any duotone.
+- The mark must work in a single color before any color version.
 - Final logo lives as hand-tuned SVG. Image-gen models are for *exploration
   only* — never ship a raster mark.
+- The retired `logo-consensus-ring.svg`, `logo-seal.svg`, and `logo-quorum.svg`
+  in [assets/](./assets/) are earlier explorations from the indigo direction;
+  keep for history, don't ship.
 
 ## Iconography & illustration
 
-- **In-product icons:** keep the existing line-icon system; council semantics
-  come from color tokens, not decorative icons.
-- **Marketing illustration:** engraved-line style (banknote/etching) —
-  distinctive, consistent, and reliably generatable. See
-  [imagegen-style-guide.md](./imagegen-style-guide.md) for the locked prompts.
+- **Icon set:** **Lucide** — rounded-join, 2px-stroke, open outline icons.
+  Their friendly geometry matches the warm humanist tone. Stroke weight 2,
+  round caps/joins, sized 14–22px. Each persona seat has a fixed glyph (see the
+  persona table above).
+- **No emoji in the icon system** — emoji is allowed only as a rare expressive
+  flourish inside persona/chat dialogue.
+- **Backgrounds:** mostly flat warm color — **no photographic hero imagery, no
+  busy patterns, no mesh gradients**. Alternating sections use cream ↔ sand.
+  The one decorative move: soft, blurred **persona-colored glow "blobs"** behind
+  dark CTA panels (low opacity, heavy blur), used once or twice, never
+  everywhere.
+- **In-product "imagery" is composed UI** — persona avatars and council threads,
+  not photos. See [imagegen-style-guide.md](./imagegen-style-guide.md) for the
+  rare cases where generated illustration is appropriate.
 
 ## Applied checklist
 
 When adding a brand surface (OG image, README header, landing section):
 
-- [ ] Dark chamber ground (`deep`), not pure black
-- [ ] One gold accent moment, used for the *agreement* concept
+- [ ] Warm cream/sand ground, not white-on-gray or a dark chamber
+- [ ] One coral accent moment, used for the *act / agreement* concept
 - [ ] Persona colors only for persona things
-- [ ] Serif only in the headline, Inter everywhere else
-- [ ] Tagline: "Software by consensus." unless the surface needs the long form
+- [ ] Bricolage in the headline, Hanken for body, mono for eyebrows/meta
+- [ ] Pill buttons, hairline warm borders, soft warm-tinted shadows
+- [ ] Sentence case everywhere — never Title Case UI
+- [ ] Tagline: "Give every project a council." (hero) or "Software by
+      consensus." (short) — see [brand-strategy.md](./brand-strategy.md)
