@@ -27,7 +27,7 @@ function Nav() {
           <div className={styles.navLinks}>
             <a href="#how-it-works">Product</a>
             <a href="#council">The council</a>
-            <a href="#">Pricing</a>
+            <Link href="/compare">vs Jira</Link>
             <a href="#">Docs</a>
           </div>
           <div className={styles.navRight}>

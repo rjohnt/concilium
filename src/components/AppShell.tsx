@@ -20,7 +20,9 @@ export function AppShell({ children }: AppShellProps) {
     () =>
       pathname === "/welcome" ||
       pathname.startsWith("/welcome/") ||
-      pathname.startsWith("/share/"),
+      pathname.startsWith("/share/") ||
+      pathname === "/compare" ||
+      pathname.startsWith("/compare/"),
     [pathname]
   );
 
