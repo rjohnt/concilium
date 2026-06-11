@@ -92,3 +92,69 @@ export async function judgeResponse(input: {
     rationale: String(parsed.rationale ?? "").trim(),
   };
 }
+
+// ── Catch judge ──────────────────────────────────────────────────────────────
+// Did this role surface the SPECIFIC seeded problem, and did it stay in its
+// lane while doing so? This is the proof that a role's lens does real work.
+
+export interface CatchResult {
+  /** Did the response clearly raise the seeded issue? */
+  caught: boolean;
+  /** How squarely the feedback sits in the role's domain (1-5). */
+  inRole: number;
+  rationale: string;
+}
+
+const CATCH_JUDGE_SYSTEM_PROMPT = `You are a strict evaluator of AI-generated stakeholder feedback. You decide two things: (1) did the response clearly and specifically raise a particular issue, and (2) is the feedback squarely within the stated role's domain. Be literal about "caught": a vague gesture in the right direction is NOT catching it; the response must concretely surface the specific issue. Return ONLY valid JSON.`;
+
+export async function judgeCatch(input: {
+  role: string;
+  ticketSummary: string;
+  mustCatch: string;
+  response: string;
+}): Promise<CatchResult> {
+  const userPrompt = [
+    `## Role under evaluation`,
+    input.role,
+    ``,
+    `## Ticket`,
+    input.ticketSummary,
+    ``,
+    `## The specific issue this role MUST catch`,
+    input.mustCatch,
+    ``,
+    `## Response to evaluate`,
+    `"""`,
+    input.response,
+    `"""`,
+    ``,
+    `Answer with JSON (no markdown, no code fences):`,
+    `{`,
+    `  "caught": true | false,   // did it clearly and specifically raise THAT issue?`,
+    `  "inRole": 1-5,            // is the feedback squarely in this role's domain?`,
+    `  "rationale": "One or two sentences citing what in the response did or didn't catch it"`,
+    `}`,
+  ].join("\n");
+
+  const llmResponse = await callDeepSeek({
+    systemPrompt: CATCH_JUDGE_SYSTEM_PROMPT,
+    userPrompt,
+    expectJson: true,
+    model: DEEPSEEK_PRO_MODEL,
+  });
+
+  let parsed: Record<string, unknown> = {};
+  try {
+    parsed = JSON.parse(llmResponse.content);
+  } catch {
+    const jsonMatch = llmResponse.content.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (jsonMatch) parsed = JSON.parse(jsonMatch[1].trim());
+  }
+
+  const n = Number(parsed.inRole);
+  return {
+    caught: parsed.caught === true,
+    inRole: Number.isFinite(n) ? Math.min(5, Math.max(1, n)) : 1,
+    rationale: String(parsed.rationale ?? "").trim(),
+  };
+}

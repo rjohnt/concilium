@@ -88,3 +88,131 @@ export const conflictScenario: EvalScenario = {
 };
 
 export const allScenarios: EvalScenario[] = [coldStartScenario, conflictScenario];
+
+// ── Targeted-catch scenarios ─────────────────────────────────────────────────
+// Each ticket hides a problem that ONE role is uniquely responsible for
+// catching. The trap is chosen so the OTHER roles would plausibly wave it
+// through — proving the role's lens is doing real work, not generic review.
+
+import { PersonaId } from "@/lib/types";
+
+export interface CatchScenario {
+  name: string;
+  /** The role under test — the one that must catch the seeded problem. */
+  role: PersonaId;
+  ticket: Ticket;
+  history: FeedbackEntry[];
+  /** The specific issue this role must surface, in plain language. */
+  mustCatch: string;
+  /** Short ticket summary for the judge. */
+  summary: string;
+}
+
+/** Designer must catch: a destructive bulk action with no confirmation/undo. */
+export const designerUxTrap: CatchScenario = {
+  name: "designer-destructive-no-confirm",
+  role: "designer",
+  ticket: ticket({
+    id: "TIX-010",
+    title: "'Clear completed' button on the task list",
+    description:
+      "Add a 'Clear completed' button to the task list header. When clicked it removes all tasks marked complete from the list so the view stays tidy. Backend already supports bulk delete by status; this is just wiring the button to that endpoint.",
+  }),
+  history: [],
+  mustCatch:
+    "The action is destructive and irreversible but has no confirmation step, no undo, and no warning about how many items will be deleted.",
+  summary: "A header button that immediately bulk-deletes all completed tasks.",
+};
+
+/** Product Owner must catch: gold-plating with no clear user need or metric. */
+export const poScopeTrap: CatchScenario = {
+  name: "po-gold-plating-no-metric",
+  role: "product-owner",
+  ticket: ticket({
+    id: "TIX-011",
+    title: "Fully customizable dashboard with draggable widgets",
+    description:
+      "Let users build their own dashboard: drag and drop from 25 widget types, resize and rearrange freely, save multiple named layouts, share layouts with teammates, and theme each widget's colors. This will make the product feel powerful and enterprise-ready.",
+  }),
+  history: [],
+  mustCatch:
+    "The scope is enormous and speculative — there is no stated user need, no success metric, and no MVP; it should be cut down and validated before building.",
+  summary:
+    "A large, fully-customizable drag-and-drop dashboard builder justified by 'feeling powerful', with no metric or validated need.",
+};
+
+/** Engineer must catch: an unbounded query / scale landmine in a 'simple' ask. */
+export const engineerScaleTrap: CatchScenario = {
+  name: "engineer-unbounded-query",
+  role: "engineer",
+  ticket: ticket({
+    id: "TIX-012",
+    title: "'Related items' panel on the record detail page",
+    description:
+      "On each record's detail page, show a 'Related items' panel listing every other record that shares at least one tag with this one. Simple win — users keep asking how to find similar records. Just query by overlapping tags and render the list.",
+  }),
+  history: [],
+  mustCatch:
+    "Querying every record sharing any tag is unbounded and will not scale — popular tags match huge numbers of rows; it needs pagination/limits, indexing, and a defined cap, or it will be a performance/N+1 problem on hot pages.",
+  summary:
+    "A detail-page panel that lists every record sharing any tag with the current one, with no limit or pagination.",
+};
+
+/** QA must catch: timezone/locale/edge correctness in a 'cosmetic' feature. */
+export const qaEdgeTrap: CatchScenario = {
+  name: "qa-relative-time-edges",
+  role: "qa",
+  ticket: ticket({
+    id: "TIX-013",
+    title: "Relative timestamps on comments",
+    description:
+      "Replace the absolute timestamp on each comment with a friendly relative time like '3 hours ago' or '2 days ago'. Purely cosmetic polish — compute the difference between now and the comment's created time and format it.",
+  }),
+  history: [],
+  mustCatch:
+    "There are real correctness edge cases: timezone handling and client/server clock skew, timestamps in the future (negative differences), very old dates, locale/pluralization, and what to show at boundaries (just now / 1 minute) — these need defined, testable behavior.",
+  summary:
+    "Render comment timestamps as relative 'time ago' strings, described as purely cosmetic.",
+};
+
+export const catchScenarios: CatchScenario[] = [
+  designerUxTrap,
+  poScopeTrap,
+  engineerScaleTrap,
+  qaEdgeTrap,
+];
+
+// ── Multi-trap differentiation ticket ────────────────────────────────────────
+// One ticket that simultaneously contains a UX trap, a scope trap, a scale
+// trap, and a correctness trap. Running all four personas against it should
+// produce four DIFFERENT reviews, each gravitating to its own trap.
+
+export interface DifferentiationScenario {
+  name: string;
+  ticket: Ticket;
+  summary: string;
+  /** What each role should home in on. */
+  perRole: Record<PersonaId, string>;
+}
+
+export const multiTrapShareReport: DifferentiationScenario = {
+  name: "share-report-multitrap",
+  ticket: ticket({
+    id: "TIX-020",
+    title: "'Share report' public link for the analytics dashboard",
+    description:
+      "Add a 'Share report' button to the analytics dashboard. Clicking it generates a public link that anyone (no login) can open to see a snapshot of the current dashboard — all charts plus the full underlying data table. This will help users show results to clients. Generate the link on click and copy it to the clipboard.",
+  }),
+  summary:
+    "A button that turns the analytics dashboard (charts + full underlying data) into a public, no-login link, to share results with clients.",
+  perRole: {
+    designer:
+      "the interaction/UX: no confirmation that this exposes data publicly, and missing empty/loading/error states and feedback for the share flow",
+    "product-owner":
+      "whether public, no-login sharing is the validated need, who it's for, and what success metric justifies it, plus MVP scoping",
+    engineer:
+      "the technical surface: snapshotting the full underlying dataset could be huge, and a public no-auth endpoint is a security/access-control concern",
+    qa: "correctness/risk: stale vs live snapshot, what exactly is exposed (permission leakage), link lifetime/expiry/revocation, and access-control edge cases",
+  },
+};
+
