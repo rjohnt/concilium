@@ -108,10 +108,10 @@ export function FeedbackPanel({
   return (
     <div className="card space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">
+        <h3 className="text-sm font-semibold text-ink-700 uppercase tracking-wider">
           Stakeholder Feedback
         </h3>
-        <span className="text-xs text-gray-500">
+        <span className="text-xs text-ink-500">
           {ticket.feedback.length} contribution
           {ticket.feedback.length !== 1 ? "s" : ""}
         </span>
@@ -131,7 +131,7 @@ export function FeedbackPanel({
               onClick={() => setActivePersona(pid)}
               className={`transition-all ${
                 activePersona === pid
-                  ? "ring-2 ring-brand-400 rounded-full scale-105"
+                  ? "ring-2 ring-[var(--coral-400)] rounded-full scale-105"
                   : "opacity-70 hover:opacity-100"
               }`}
             >
@@ -141,7 +141,7 @@ export function FeedbackPanel({
                 size="lg"
               />
               {hasFeedback && (
-                <span className="inline-block ml-0.5 w-1.5 h-1.5 rounded-full bg-brand-400" />
+                <span className="inline-block ml-0.5 w-1.5 h-1.5 rounded-full bg-coral-500" />
               )}
             </button>
           );
@@ -150,10 +150,10 @@ export function FeedbackPanel({
 
       {/* Feedback input */}
       {persona && (
-        <div className="space-y-3 border-t border-gray-800 pt-4">
+        <div className="space-y-3 border-t border-[var(--border-subtle)] pt-4">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-400 mb-0">
-              <span className="font-medium text-gray-300">
+            <p className="text-sm text-ink-500 mb-0">
+              <span className="font-medium text-ink-700">
                 <PersonaIcon personaId={persona.id} size={14} className="inline-block align-text-bottom" /> {persona.label}
               </span>{" "}
               — {persona.expertise}
@@ -161,7 +161,7 @@ export function FeedbackPanel({
             {onSwitchPersona && (
               <button
                 onClick={onSwitchPersona}
-                className="flex items-center gap-1 text-xs text-gray-500 hover:text-brand-400 transition-colors"
+                className="flex items-center gap-1 text-xs text-ink-500 hover:text-coral-600 transition-colors"
                 title="Switch persona"
               >
                 <RefreshCw size={12} />
@@ -176,22 +176,22 @@ export function FeedbackPanel({
             onKeyDown={handleKeyDown}
             placeholder={persona.promptTemplate}
             rows={4}
-            textareaClassName="bg-gray-800 border border-gray-700 text-gray-200 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-            previewClassName="bg-gray-800 border border-gray-700 text-gray-200"
+            textareaClassName="bg-[var(--surface-card)] border border-[var(--border-subtle)] text-ink-900 placeholder:text-[var(--text-faint)] focus:outline-none focus:ring-2 focus:ring-[var(--coral-400)] focus:border-transparent"
+            previewClassName="bg-[var(--surface-card)] border border-[var(--border-subtle)] text-ink-900"
           />
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
+              <label className="flex items-center gap-2 text-sm text-ink-500 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={approved}
                   onChange={(e) => setApproved(e.target.checked)}
-                  className="rounded bg-gray-700 border-gray-600 text-brand-500 focus:ring-brand-500"
+                  className="rounded border-[var(--border-strong)] text-coral-500 focus:ring-[var(--coral-400)]"
                 />
                 <span>Approve ticket ({persona.label} sign-off)</span>
                 {approved && (
-                  <ThumbsUp size={16} className="text-emerald-400" />
+                  <ThumbsUp size={16} className="text-[var(--success-500)]" />
                 )}
               </label>
               <span className="text-[11px] text-ink-muted/60 hidden sm:inline select-none">
@@ -212,8 +212,8 @@ export function FeedbackPanel({
 
       {/* Persona filter bar for feedback history */}
       {ticket.feedback.length > 0 && (
-        <div className="border-t border-gray-800 pt-4 space-y-3">
-          <p className="text-xs text-gray-500 uppercase tracking-wider">
+        <div className="border-t border-[var(--border-subtle)] pt-4 space-y-3">
+          <p className="text-xs text-ink-500 uppercase tracking-wider">
             Feedback History
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -222,8 +222,8 @@ export function FeedbackPanel({
               aria-pressed={historyFilter === "all"}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                 historyFilter === "all"
-                  ? "text-gray-200 bg-gray-700"
-                  : "text-gray-500 hover:text-gray-300"
+                  ? "text-ink-900 bg-[var(--bg-subtle)]"
+                  : "text-ink-500 hover:text-ink-700"
               }`}
             >
               All ({ticket.feedback.length})
@@ -239,13 +239,13 @@ export function FeedbackPanel({
                   aria-pressed={historyFilter === p.id}
                   className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                     historyFilter === p.id
-                      ? "text-gray-200 bg-gray-700"
-                      : "text-gray-500 hover:text-gray-300"
+                      ? "text-ink-900 bg-[var(--bg-subtle)]"
+                      : "text-ink-500 hover:text-ink-700"
                   }`}
                 >
                   <PersonaIcon personaId={p.id} size={12} className="inline-block align-text-bottom" /> {p.label}
                   {count > 0 && (
-                    <span className="ml-1 text-gray-600">({count})</span>
+                    <span className="ml-1 text-ink-400">({count})</span>
                   )}
                 </button>
               );
@@ -285,25 +285,25 @@ export function FeedbackPanel({
                 return (
                   <div
                     key={entry.id}
-                    className="bg-gray-800/50 rounded-lg p-3 border border-gray-800"
+                    className="bg-[var(--bg-subtle)] rounded-lg p-3 border border-[var(--border-subtle)]"
                   >
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
                         <PersonaIcon personaId={entry.personaId} size={14} />
-                        <span className="text-xs font-medium text-gray-300">
+                        <span className="text-xs font-medium text-ink-700">
                           {personaLabel}
                         </span>
-                        <span className="text-xs text-gray-500" title={formatAbsoluteDate(entry.createdAt)}>
+                        <span className="text-xs text-ink-500" title={formatAbsoluteDate(entry.createdAt)}>
                           {formatRelativeTime(entry.createdAt)}
                         </span>
                       </div>
                       {entry.approved && (
-                        <span className="badge bg-emerald-900/50 text-emerald-400">
+                        <span className="badge bg-[rgba(46,158,107,0.14)] text-[var(--success-600,var(--success-500))]">
                           <CheckCircle size={10} /> Approved
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-gray-300 whitespace-pre-wrap mt-1">
+                    <p className="text-sm text-ink-700 whitespace-pre-wrap mt-1">
                       {entry.content}
                     </p>
                   </div>

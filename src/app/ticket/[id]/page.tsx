@@ -338,8 +338,8 @@ export default function TicketDetailPage() {
                     }}
                     className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
                       ticket.priority === p
-                        ? `${PRIORITY_COLORS[p]} ring-1 ring-offset-1 ring-offset-gray-950`
-                        : "border-gray-700 text-gray-500 hover:text-gray-300 hover:border-gray-600"
+                        ? `${PRIORITY_COLORS[p]} ring-1 ring-offset-1 ring-offset-[var(--bg-app)]`
+                        : "border-[var(--border-subtle)] text-ink-500 hover:text-ink-900 hover:border-[var(--border-strong)]"
                     } ${p === 4 && ticket.priority !== 4 ? "opacity-50" : ""}`}
                   >
                     {PRIORITY_LABELS[p]}
@@ -380,7 +380,7 @@ export default function TicketDetailPage() {
                   type="date"
                   value={ticket.dueDate || ""}
                   onChange={(e) => handleUpdateDueDate(e.target.value || null)}
-                  className="bg-elevated border border-border-visible rounded-lg px-3 py-2 text-sm text-ink-primary focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent [color-scheme:dark]"
+                  className="bg-elevated border border-border-visible rounded-lg px-3 py-2 text-sm text-ink-primary focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent [color-scheme:light]"
                 />
                 {ticket.dueDate && (
                   <button
