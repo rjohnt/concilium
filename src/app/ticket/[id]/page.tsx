@@ -22,7 +22,7 @@ import { ActivityFeed } from "@/components/ActivityFeed";
 import { EditableField } from "@/components/EditableField";
 import { TagChip } from "@/components/TagChip";
 import { EmptyState } from "@/components/EmptyState";
-import { Clock, GitBranch, RefreshCw, Sparkles, ExternalLink, Trash2, FileQuestion, Calendar, Users, ChevronDown, Check, Share2 } from "lucide-react";
+import { Clock, GitBranch, RefreshCw, Sparkles, Trash2, FileQuestion, Calendar, Users, ChevronDown, Check, Share2, MoreHorizontal, Link2 } from "lucide-react";
 import { PersonaIcon } from "@/components/PersonaIcon";
 import Link from "next/link";
 import { useToast } from "@/components/Toast";
@@ -45,6 +45,10 @@ export default function TicketDetailPage() {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const statusDropdownRef = useRef<HTMLDivElement>(null);
 
+  // Actions overflow menu state
+  const [showActionsMenu, setShowActionsMenu] = useState(false);
+  const actionsMenuRef = useRef<HTMLDivElement>(null);
+
   // Click outside to close status dropdown
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -57,6 +61,30 @@ export default function TicketDetailPage() {
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showStatusDropdown]);
+
+  // Click outside to close the actions overflow menu
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (actionsMenuRef.current && !actionsMenuRef.current.contains(e.target as Node)) {
+        setShowActionsMenu(false);
+      }
+    };
+    if (showActionsMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showActionsMenu]);
+
+  const copyToClipboard = useCallback(
+    (text: string, title: string, description?: string) => {
+      if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) return;
+      navigator.clipboard.writeText(text).then(
+        () => addToast({ variant: "success", title, description }),
+        () => addToast({ variant: "error", title: "Couldn't copy link" })
+      );
+    },
+    [addToast]
+  );
 
   const handleStatusChange = (newStatus: TicketStatus) => {
     if (!ticket) return;
@@ -404,71 +432,87 @@ export default function TicketDetailPage() {
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex items-start gap-2 flex-shrink-0">
-            <div className="flex flex-col items-end gap-2">
-              {/* Copy Link button */}
-              <CopyButton
-                label="Copy link to this ticket"
-                icon="link"
-              />
-
-              {/* Public share button — copies the no-login /share link */}
-              <button
-                onClick={() => {
-                  const url =
-                    typeof window !== "undefined"
-                      ? `${window.location.origin}/share/${ticket.id}`
-                      : `/share/${ticket.id}`;
-                  const done = () =>
-                    addToast({
-                      variant: "success",
-                      title: "Public link copied",
-                      description: "Anyone can view this council — no sign-in needed.",
-                    });
-                  if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-                    navigator.clipboard.writeText(url).then(done, () =>
-                      addToast({ variant: "error", title: "Couldn't copy link" })
-                    );
-                  }
-                }}
-                className="btn-secondary whitespace-nowrap"
-                title="Copy a public, read-only link to share this council"
-              >
-                <Share2 size={16} />
-                <span className="hidden sm:inline">Share</span>
-              </button>
-
-              {/* Consensus Room button */}
-              <Link
-                href={`/consensus/${ticket.id}`}
-                className="btn-secondary whitespace-nowrap"
-                title="Open consensus room"
-              >
-                <Users size={16} />
-                <span className="hidden sm:inline">Consensus</span>
-              </Link>
-
-              {/* Start Prompt Session button */}
-              <Link
-                href={`/prompt/${ticket.id}`}
-                className="btn-primary whitespace-nowrap"
-                title="Open full-screen prompt session"
-              >
-                <Sparkles size={16} />
-                <span className="hidden sm:inline">Prompt Session</span>
-                <ExternalLink size={12} className="hidden sm:inline" />
-              </Link>
-            </div>
-
-            {/* Delete button */}
-            <button
-              onClick={() => setShowDeleteDialog(true)}
-              className="p-2 rounded-lg text-ink-muted hover:text-cardinal hover:bg-cardinal/10 transition-colors"
-              title="Delete ticket"
+          {/* Actions — primary action up front, the rest in an overflow menu */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Primary: start a prompt session */}
+            <Link
+              href={`/prompt/${ticket.id}`}
+              className="btn-primary whitespace-nowrap"
+              title="Open full-screen prompt session"
             >
-              <Trash2 size={16} />
-            </button>
+              <Sparkles size={16} />
+              <span className="hidden sm:inline">Prompt Session</span>
+            </Link>
+
+            {/* Overflow menu: copy links, consensus room, delete */}
+            <div className="relative" ref={actionsMenuRef}>
+              <button
+                onClick={() => setShowActionsMenu((v) => !v)}
+                aria-haspopup="menu"
+                aria-expanded={showActionsMenu}
+                className="p-2 rounded-lg text-ink-muted hover:text-ink-primary hover:bg-elevated transition-colors"
+                title="More actions"
+              >
+                <MoreHorizontal size={18} />
+              </button>
+              {showActionsMenu && (
+                <div
+                  role="menu"
+                  className="absolute right-0 mt-1 w-60 bg-raised border border-border-visible rounded-lg shadow-xl py-1 z-30"
+                >
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      setShowActionsMenu(false);
+                      if (typeof window !== "undefined") {
+                        copyToClipboard(window.location.href, "Link copied");
+                      }
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left text-ink-secondary hover:bg-elevated hover:text-ink-primary transition-colors"
+                  >
+                    <Link2 size={15} className="text-ink-muted" />
+                    Copy link to ticket
+                  </button>
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      setShowActionsMenu(false);
+                      const origin = typeof window !== "undefined" ? window.location.origin : "";
+                      copyToClipboard(
+                        `${origin}/share/${ticket.id}`,
+                        "Public link copied",
+                        "Anyone can view this council — no sign-in needed."
+                      );
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left text-ink-secondary hover:bg-elevated hover:text-ink-primary transition-colors"
+                  >
+                    <Share2 size={15} className="text-ink-muted" />
+                    Copy public share link
+                  </button>
+                  <Link
+                    role="menuitem"
+                    href={`/consensus/${ticket.id}`}
+                    onClick={() => setShowActionsMenu(false)}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left text-ink-secondary hover:bg-elevated hover:text-ink-primary transition-colors"
+                  >
+                    <Users size={15} className="text-ink-muted" />
+                    Open consensus room
+                  </Link>
+                  <div className="my-1 border-t border-border-subtle" />
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      setShowActionsMenu(false);
+                      setShowDeleteDialog(true);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left text-cardinal hover:bg-cardinal/10 transition-colors"
+                  >
+                    <Trash2 size={15} />
+                    Delete ticket
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
