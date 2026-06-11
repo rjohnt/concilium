@@ -1,4 +1,4 @@
-import { Ticket, FeedbackEntry, FeedbackSource, PersonaId, TicketStatus, PriorityLevel, BuildReport, Tag, Seat } from "./types";
+import { Ticket, FeedbackEntry, FeedbackSource, PersonaId, TicketStatus, PriorityLevel, BuildReport, BuildChangeRequest, Tag, Seat } from "./types";
 import { validateTransition } from "./status-machine";
 import { getAllPersonas } from "./personas";
 import { normalizeSeats, getSeat, isSeatHeldByOtherHuman } from "./seats";
@@ -659,6 +659,89 @@ export function completeBuild(ticketId: string): Ticket | null {
   }
 
   return ticket;
+}
+
+/**
+ * File a role-scoped change request against the ticket's completed build.
+ * Persists to the server (the next build round consumes it as delta context)
+ * and mirrors it into the local report.
+ */
+export async function requestBuildChanges(
+  ticketId: string,
+  personaId: PersonaId,
+  content: string
+): Promise<BuildChangeRequest | null> {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  if (!ticket || !ticket.buildReport || !content.trim()) return null;
+
+  let changeRequest: BuildChangeRequest | null = null;
+
+  // Server first — it's the source of truth the rebuild reads from
+  try {
+    const response = await fetch("/api/change-request", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ticketId, personaId, content }),
+    });
+    if (response.ok) {
+      const data = await response.json();
+      changeRequest = data.changeRequest ?? null;
+    }
+  } catch {
+    // Server unreachable — fall back to a local-only request
+  }
+
+  if (!changeRequest) {
+    changeRequest = {
+      id: `CR-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+      personaId,
+      content: content.trim(),
+      createdAt: new Date().toISOString(),
+    };
+  }
+
+  ticket.buildReport.changeRequests = [
+    ...(ticket.buildReport.changeRequests ?? []),
+    changeRequest,
+  ];
+  ticket.updatedAt = new Date().toISOString();
+  persistState(ticketId);
+  return changeRequest;
+}
+
+/** Open (not yet consumed by a rebuild) change requests on the latest build. */
+export function getOpenChangeRequests(ticketId: string): BuildChangeRequest[] {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  return (ticket?.buildReport?.changeRequests ?? []).filter((cr) => !cr.resolvedByBuildId);
+}
+
+/**
+ * Re-kick the build executor with the open change requests as delta context.
+ * Valid on a done ticket with a completed build; moves it back to building.
+ */
+export async function rebuildWithChanges(ticketId: string): Promise<BuildReport | null> {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  if (!ticket || !ticket.buildReport) return null;
+  if (ticket.status !== "done" && ticket.status !== "building") return null;
+  if (getOpenChangeRequests(ticketId).length === 0) return null;
+
+  ticket.status = "building";
+  ticket.buildReport.status = "building";
+  ticket.updatedAt = new Date().toISOString();
+  persistState(ticketId);
+
+  const report = await fetchBuildFromAPI(ticketId);
+  if (report) {
+    setBuildReport(ticketId, report);
+    completeBuild(ticketId);
+    return report;
+  }
+
+  // API failed — restore the previous completed state
+  ticket.status = "done";
+  ticket.buildReport.status = "completed";
+  persistState(ticketId);
+  return null;
 }
 
 /**
