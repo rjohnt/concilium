@@ -114,16 +114,16 @@ export async function generateStandinFeedback(
   ticketId: string,
   personaId: PersonaId
 ): Promise<StandinResult | null> {
-  const ticket = getTicket(ticketId);
+  const ticket = await getTicket(ticketId);
   if (!ticket) return null;
 
-  const history = getFeedbackHistory(ticketId);
+  const history = await getFeedbackHistory(ticketId);
   const run = await runStandinLLM(ticket, personaId, history);
   if (!run) return null;
 
   const { parsed, model, tokensUsed } = run;
 
-  const entry = addFeedback(
+  const entry = await addFeedback(
     ticketId,
     personaId,
     formatStandinFeedback(parsed),

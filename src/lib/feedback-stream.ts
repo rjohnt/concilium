@@ -1,15 +1,16 @@
 /**
  * feedback-stream.ts — Real-time feedback streaming for multiplayer prompt sessions.
  *
- * Uses BroadcastChannel to stream new feedback entries to all participants
- * in a prompt session in real-time. When one persona submits feedback,
- * everyone else in the session sees it appear instantly.
+ * Rides the realtime transport (Supabase Broadcast when configured, else
+ * BroadcastChannel) to stream new feedback entries to all participants in a
+ * session in real-time. When one persona submits feedback, everyone else —
+ * including other users — sees it appear instantly.
  *
  * This is the core "multiplayer" experience — the difference between
  * working alone in a room vs. collaborating around a shared whiteboard.
  */
 
-const STREAM_CHANNEL = "concilium-feedback-stream";
+import { getTransportChannel, type TransportChannel } from "./realtime-transport";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -36,18 +37,15 @@ export interface FeedbackStreamEvent {
 
 export type FeedbackStreamListener = (event: FeedbackStreamEvent) => void;
 
-// ── Broadcast Channel ──────────────────────────────────────────────────────
+// ── Transport ───────────────────────────────────────────────────────────────
 
-let channel: BroadcastChannel | null = null;
+let channel: TransportChannel | null = null;
 
-function getChannel(): BroadcastChannel | null {
+function getChannel(): TransportChannel | null {
   if (typeof window === "undefined") return null;
   if (!channel) {
-    try {
-      channel = new BroadcastChannel(STREAM_CHANNEL);
-    } catch {
-      return null;
-    }
+    channel = getTransportChannel("feedback-stream");
+    channel.onMessage((message) => dispatchLocally(message as unknown as FeedbackStreamEvent));
   }
   return channel;
 }
@@ -56,21 +54,15 @@ function getChannel(): BroadcastChannel | null {
 
 const listeners = new Set<FeedbackStreamListener>();
 
-function handleIncomingEvent(event: MessageEvent<FeedbackStreamEvent>): void {
-  if (!event.data || event.data.type !== "feedback-submitted") return;
+function dispatchLocally(event: FeedbackStreamEvent): void {
+  if (!event || event.type !== "feedback-submitted") return;
   for (const listener of listeners) {
     try {
-      listener(event.data);
+      listener(event);
     } catch {
       // Swallow individual listener errors
     }
   }
-}
-
-// Set up the channel listener once
-const ch = getChannel();
-if (ch) {
-  ch.addEventListener("message", handleIncomingEvent);
 }
 
 // ── Public API ──────────────────────────────────────────────────────────────
@@ -82,11 +74,11 @@ if (ch) {
 export function broadcastFeedback(event: FeedbackStreamEvent): void {
   const ch = getChannel();
   if (ch) {
-    ch.postMessage(event);
+    ch.send(event as unknown as Record<string, unknown>);
   }
-  // Also deliver locally (the sending tab won't receive its own
-  // BroadcastChannel message, but components need to react too)
-  handleIncomingEvent({ data: event } as MessageEvent<FeedbackStreamEvent>);
+  // Also deliver locally — the sending tab does not receive its own
+  // transport message, but its components still need to react.
+  dispatchLocally(event);
 }
 
 /**
@@ -98,6 +90,9 @@ export function broadcastFeedback(event: FeedbackStreamEvent): void {
 export function onFeedbackStream(
   listener: FeedbackStreamListener,
 ): () => void {
+  // Ensure the transport channel + its incoming-message wiring exist, so a
+  // tab that only subscribes (never broadcasts) still receives events.
+  getChannel();
   listeners.add(listener);
   return () => {
     listeners.delete(listener);

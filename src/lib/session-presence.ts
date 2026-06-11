@@ -1,14 +1,16 @@
 /**
  * session-presence.ts — Real-time session presence for multiplayer prompt sessions.
  *
- * Uses BroadcastChannel to share presence information across tabs/users.
- * Each client gets a persistent UUID stored in localStorage.
- * When a user joins a session, they broadcast their presence and listen for others.
+ * Rides the realtime transport (Supabase Broadcast when configured, else
+ * BroadcastChannel) to share presence across tabs and users. Each client gets
+ * a persistent UUID stored in localStorage. When a user joins a session, they
+ * broadcast their presence and listen for others.
  *
  * Heartbeat mechanism: re-broadcast every 30s. Clients >60s stale are pruned.
  */
 
-const PRESENCE_CHANNEL = "concilium-presence";
+import { getTransportChannel, type TransportChannel, type TransportMessage } from "./realtime-transport";
+
 const CLIENT_ID_KEY = "concilium-client-id";
 const HEARTBEAT_INTERVAL = 30_000; // 30s
 const STALE_TIMEOUT = 60_000; // 60s
@@ -66,18 +68,18 @@ export function getClientId(): string {
 
 // ── Presence Channel ────────────────────────────────────────────────────────
 
-let channel: BroadcastChannel | null = null;
+let channel: TransportChannel | null = null;
 
-function getChannel(): BroadcastChannel | null {
+function getChannel(): TransportChannel | null {
   if (typeof window === "undefined") return null;
   if (!channel) {
-    try {
-      channel = new BroadcastChannel(PRESENCE_CHANNEL);
-    } catch {
-      return null;
-    }
+    channel = getTransportChannel("presence");
   }
   return channel;
+}
+
+function sendPresence(ch: TransportChannel | null, msg: PresenceMessage): void {
+  ch?.send(msg as unknown as TransportMessage);
 }
 
 // ── Presence State ──────────────────────────────────────────────────────────
@@ -161,7 +163,7 @@ export function joinSession(
     label: label || personaId,
     timestamp: Date.now(),
   };
-  ch?.postMessage(joinMsg);
+  sendPresence(ch, joinMsg);
   handleMessage(joinMsg);
 
   // Start heartbeat
@@ -176,31 +178,32 @@ export function joinSession(
       label: ownPresence.label,
       timestamp: Date.now(),
     };
-    ch?.postMessage(hb);
+    sendPresence(ch, hb);
     // Also prune on heartbeat
     if (pruneStaleParticipants()) {
       notifyListeners();
     }
   }, HEARTBEAT_INTERVAL);
 
-  // Listen for others
-  const handler = (event: MessageEvent<PresenceMessage>) => {
-    if (event.data && event.data.type && event.data.clientId !== clientId) {
-      handleMessage(event.data);
+  // Listen for others (the transport never echoes our own messages, but keep
+  // the clientId guard as belt-and-suspenders)
+  const unsubscribe = ch?.onMessage((message) => {
+    const msg = message as unknown as PresenceMessage;
+    if (msg && msg.type && msg.clientId !== clientId) {
+      handleMessage(msg);
     }
-  };
-  ch?.addEventListener("message", handler);
+  });
 
   // Return cleanup function
   return () => {
-    cleanUp(ch, clientId, handler);
+    cleanUp(ch, clientId, unsubscribe);
   };
 }
 
 function cleanUp(
-  ch: BroadcastChannel | null,
+  ch: TransportChannel | null,
   clientId: string,
-  handler: (event: MessageEvent<PresenceMessage>) => void,
+  unsubscribe: (() => void) | undefined,
 ): void {
   // Broadcast leave
   if (ownPresence) {
@@ -212,7 +215,7 @@ function cleanUp(
       label: ownPresence.label,
       timestamp: Date.now(),
     };
-    ch?.postMessage(leaveMsg);
+    sendPresence(ch, leaveMsg);
     handleMessage(leaveMsg);
   }
   ownPresence = null;
@@ -224,7 +227,7 @@ function cleanUp(
   }
 
   // Remove listener
-  ch?.removeEventListener("message", handler);
+  unsubscribe?.();
 }
 
 /**
@@ -278,7 +281,7 @@ export function updateOwnPersona(
     label: label || newPersonaId,
     timestamp: Date.now(),
   };
-  ch?.postMessage(msg);
+  sendPresence(ch, msg);
   handleMessage(msg);
 }
 

@@ -17,7 +17,9 @@
 - **Framework:** Next.js 16 (App Router) + React 19 + TypeScript 6
 - **Styling:** Tailwind CSS 3.4 + tailwindcss-animate + framer-motion
 - **Icons:** Lucide React (prefer `@/lib/lucide` barrel export)
-- **State:** In-memory store (`src/lib/store.ts`) with localStorage persistence (`src/lib/persistence.ts`)
+- **State (client):** In-memory store (`src/lib/store.ts`) with localStorage cache (`src/lib/persistence.ts`)
+- **State (server):** Async data-layer facade (`src/lib/server-db.ts`) over two backends in `src/lib/db/` — Supabase Postgres (`supabase-db.ts`, source of truth when `SUPABASE_SERVICE_ROLE_KEY` is set) or SQLite (`sqlite-db.ts`, dev/CI fallback). **All server-db calls are async — await them.**
+- **Realtime:** `src/lib/realtime-transport.ts` (Supabase Broadcast ↔ BroadcastChannel) backs presence/feedback-stream/crossTabSync; `src/lib/postgres-sync.ts` re-pulls on Postgres Changes. Never use `new BroadcastChannel` directly — go through the transport.
 - **Auth:** Supabase (SSR helpers in `src/lib/supabase.ts`, context in `src/lib/auth-context.tsx`)
 - **Testing:** Vitest + @testing-library/react + jsdom
 - **Lint:** ESLint 8 + eslint-config-next
@@ -73,7 +75,7 @@ scripts/evals/        # LLM prompt eval harness (npm run evals)
 ### State Management
 
 - **All state via `src/lib/store.ts`.** Never read/write localStorage directly — use the store.
-- Store auto-persists to localStorage (50ms debounce). Cross-tab sync via `storage` event.
+- Store auto-persists to localStorage (50ms debounce, local cache). Peer sync via the realtime transport + Postgres Changes; the server (Postgres or SQLite) is the source of truth. `store.pullFromServer()` applies the authoritative snapshot, preserving optimistic local creates (`pendingTicketIds`).
 - Ticket status flow: `draft → in-review → consensus → building → done`; change
   requests on a completed build re-kick it (`done → building → done`).
 - Personas: `engineer`, `designer`, `product-owner`, `qa` (defined in `src/lib/personas.ts`)

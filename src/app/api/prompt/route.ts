@@ -166,7 +166,7 @@ export async function GET(request: NextRequest) {
   const { checkConsensusThreshold } = await import("@/lib/consensus-threshold");
   const { getPersona, getAllPersonas } = await import("@/lib/personas");
 
-  const ticket = getTicket(ticketId);
+  const ticket = await getTicket(ticketId);
   if (!ticket) {
     return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
   }
@@ -177,7 +177,7 @@ export async function GET(request: NextRequest) {
   }
 
   const consensus = checkConsensusThreshold(ticket);
-  const history = getFeedbackHistory(ticketId);
+  const history = await getFeedbackHistory(ticketId);
   const allPersonas = getAllPersonas();
 
   return NextResponse.json({

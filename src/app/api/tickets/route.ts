@@ -19,14 +19,14 @@ export async function GET(request: NextRequest) {
     const id = searchParams.get("id");
 
     if (id) {
-      const ticket = serverDb.getTicket(id);
+      const ticket = await serverDb.getTicket(id);
       if (!ticket) {
         return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
       }
       return NextResponse.json({ ticket });
     }
 
-    const tickets = serverDb.getTickets();
+    const tickets = await serverDb.getTickets();
     return NextResponse.json({ tickets });
   } catch (error) {
     console.error("GET /api/tickets error:", error);
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     }
 
     const priority = typeof body.priority === "number" ? (body.priority as PriorityLevel) : 2;
-    const ticket = serverDb.createTicket(
+    const ticket = await serverDb.createTicket(
       body.title,
       body.description || "",
       priority,
@@ -86,7 +86,7 @@ export async function PATCH(request: NextRequest) {
     if (typeof body.title === "string") body.title = sanitize(body.title);
     if (typeof body.description === "string") body.description = sanitize(body.description);
 
-    const ticket = serverDb.updateTicket(id, {
+    const ticket = await serverDb.updateTicket(id, {
       title: body.title,
       description: body.description,
       dueDate: body.dueDate !== undefined ? body.dueDate : undefined,
@@ -119,7 +119,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const deleted = serverDb.deleteTicket(id);
+    const deleted = await serverDb.deleteTicket(id);
     if (!deleted) {
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }

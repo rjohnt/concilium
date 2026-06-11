@@ -44,10 +44,13 @@ export async function createTicketOnServer(
   priority: PriorityLevel = 2,
   dueDate?: string,
   tags?: Tag[],
+  id?: string,
 ): Promise<Ticket | null> {
   const data = await fetchJson<{ ticket: Ticket }>(`${API_BASE}/tickets`, {
     method: "POST",
-    body: JSON.stringify({ title, description, priority, dueDate, tags }),
+    // Pass the client-assigned id so client and server agree on it — keeps
+    // optimistic local tickets reconcilable with authoritative server pulls.
+    body: JSON.stringify({ id, title, description, priority, dueDate, tags }),
   });
   return data?.ticket ?? null;
 }
