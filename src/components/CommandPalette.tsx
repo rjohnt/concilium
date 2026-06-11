@@ -6,7 +6,6 @@ import {
   Search,
   LayoutDashboard,
   PlusCircle,
-  Car,
 } from "lucide-react";
 import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
 
@@ -20,7 +19,6 @@ interface Command {
 const commands: Command[] = [
   { label: "Go to Dashboard", shortcut: "⌘1", href: "/", icon: LayoutDashboard },
   { label: "New Ticket", shortcut: "⌘N", href: "/new", icon: PlusCircle },
-  { label: "VIN Decoder", shortcut: "⌘V", href: "/vin", icon: Car },
 ];
 
 export function CommandPalette() {
