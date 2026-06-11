@@ -65,7 +65,7 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const ticket = getTicket(id);
+  const ticket = await getTicket(id);
   if (!ticket) {
     return { title: "Council not found · Concilium" };
   }
@@ -303,7 +303,7 @@ function BuildSection({ ticket }: { ticket: Ticket }) {
 
 export default async function SharePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const ticket = getTicket(id);
+  const ticket = await getTicket(id);
 
   if (!ticket) {
     return <NotFound />;
