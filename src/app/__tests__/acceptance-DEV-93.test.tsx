@@ -126,10 +126,7 @@ describe("DEV-93: Consensus Progress Indicator on TicketCard (acceptance)", () =
     );
     // Consensus section shows "X/Y" text in progress bar;
     // absence of that text inside a progress bar confirms it's hidden
-    const card = document.querySelector("[data-ticket-card]");
-    const progressBars = card?.querySelectorAll(
-      "div.bg-gray-800.rounded-full",
-    );
+    const progressBars = screen.queryAllByTestId("consensus-progress");
     expect(progressBars?.length).toBe(0);
   });
 
@@ -139,10 +136,7 @@ describe("DEV-93: Consensus Progress Indicator on TicketCard (acceptance)", () =
         ticket={createTicket({ status: "consensus", approvals: [] })}
       />,
     );
-    const card = document.querySelector("[data-ticket-card]");
-    const progressBars = card?.querySelectorAll(
-      "div.bg-gray-800.rounded-full",
-    );
+    const progressBars = screen.queryAllByTestId("consensus-progress");
     expect(progressBars?.length).toBe(0);
   });
 
@@ -154,10 +148,7 @@ describe("DEV-93: Consensus Progress Indicator on TicketCard (acceptance)", () =
         ticket={createTicket({ status: "draft", approvals: [] })}
       />,
     );
-    const card = document.querySelector("[data-ticket-card]");
-    const progressBars = card?.querySelectorAll(
-      "div.bg-gray-800.rounded-full",
-    );
+    const progressBars = screen.queryAllByTestId("consensus-progress");
     expect(progressBars?.length).toBe(1);
   });
 
@@ -167,10 +158,7 @@ describe("DEV-93: Consensus Progress Indicator on TicketCard (acceptance)", () =
         ticket={createTicket({ status: "building", approvals: [] })}
       />,
     );
-    const card = document.querySelector("[data-ticket-card]");
-    const progressBars = card?.querySelectorAll(
-      "div.bg-gray-800.rounded-full",
-    );
+    const progressBars = screen.queryAllByTestId("consensus-progress");
     expect(progressBars?.length).toBe(1);
   });
 
@@ -180,10 +168,7 @@ describe("DEV-93: Consensus Progress Indicator on TicketCard (acceptance)", () =
         ticket={createTicket({ status: "done", approvals: [] })}
       />,
     );
-    const card = document.querySelector("[data-ticket-card]");
-    const progressBars = card?.querySelectorAll(
-      "div.bg-gray-800.rounded-full",
-    );
+    const progressBars = screen.queryAllByTestId("consensus-progress");
     expect(progressBars?.length).toBe(1);
   });
 
