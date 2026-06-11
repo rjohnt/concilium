@@ -31,10 +31,8 @@ npm run build    # production build
 npm run start    # production server
 npm test         # vitest run
 npm run evals    # LLM prompt evals (needs DEEPSEEK_API_KEY; see scripts/evals/README.md)
+npm run lint     # ESLint CLI (Next 16 removed `next lint`; config in .eslintrc.json, root: true)
 ```
-
-> `npm run lint` is currently broken: Next.js 16 removed `next lint`.
-> Until it's migrated to the ESLint CLI, rely on `npx tsc --noEmit` + tests.
 
 ## Architecture Rules
 

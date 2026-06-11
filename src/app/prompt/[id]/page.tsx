@@ -97,16 +97,6 @@ export default function PromptSessionPage() {
     }
   }, []);
 
-  // Cleanup session presence on unmount
-  useEffect(() => {
-    return () => {
-      if (sessionPersona) {
-        // Leave session via the joinSession cleanup (called on component unmount)
-        // The joinSession itself returns a cleanup, but we can't store it here easily.
-      }
-    };
-  }, []);
-
   const handleJoinSession = (personaId: PersonaId) => {
     const ticketId = params.id as string;
 
