@@ -14,6 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Search,
+  FlaskConical,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/lib/auth-context";
@@ -89,6 +90,7 @@ export function Sidebar() {
   const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/new", label: "New Ticket", icon: PlusCircle },
+    { href: "/evals", label: "Agent Evals", icon: FlaskConical },
     { label: "Templates", icon: Settings, onClick: () => setIsTemplateEditorOpen(true) },
   ];
 

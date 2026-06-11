@@ -45,6 +45,7 @@ describe.skipIf(!hasApiKey)("persona targeted-catch", () => {
         scenario: scenario.name,
         subject: scenario.role,
         promptVersion: PROMPT_VERSION,
+        caught: result.caught,
         scores: {
           grounding: 0,
           domainSpecificity: result.inRole,
@@ -91,6 +92,8 @@ describe.skipIf(!hasApiKey)("persona targeted-catch", () => {
       scenario: "engineer-stays-in-lane-on-ux-trap",
       subject: "engineer",
       promptVersion: PROMPT_VERSION,
+      // Lane-discipline control: "caught" doesn't apply, only inRole does
+      caught: null,
       scores: { grounding: 0, domainSpecificity: result.inRole, actionability: 0, expectations: 0 },
       overall: result.inRole,
       rationale: result.rationale,

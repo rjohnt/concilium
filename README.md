@@ -74,17 +74,20 @@ Brand strategy, voice & tone, visual identity, and logo concepts live in
   (cross-tab). Powers presence, the feedback stream, and cross-tab sync. When
   Supabase is configured, the store also subscribes to Postgres Changes
   (`src/lib/postgres-sync.ts`) so other users' writes appear without a refresh.
-- **Testing**: Vitest (`npm test`); LLM prompt evals (`npm run evals`, see
-  `scripts/evals/README.md`)
+- **Testing**: Vitest (`npm test`); LLM agent evals (`npm run evals`) with the
+  strategy in `EVALS.md`, runner docs in `scripts/evals/README.md`, and a live
+  performance-over-time dashboard at `/evals` (results persist to the
+  `eval_results` table in Supabase)
 - **Deploy**: Railway (`railway.json`)
 
 ## Development
 
 ```bash
-npm run dev      # localhost:3000
-npm run build    # production build
-npm test         # unit tests
-npm run evals    # LLM prompt evals (requires DEEPSEEK_API_KEY)
+npm run dev           # localhost:3000
+npm run build         # production build
+npm test              # unit tests
+npm run evals         # LLM agent evals (requires DEEPSEEK_API_KEY)
+npm run evals:report  # tabulate recorded eval runs (CLI; /evals is the dashboard)
 ```
 
 Env vars: `DEEPSEEK_API_KEY` (mediator/stand-ins/builds),

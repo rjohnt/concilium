@@ -52,6 +52,7 @@ describe.skipIf(!hasApiKey)("cross-persona differentiation", () => {
         scenario: scenario.name,
         subject: role,
         promptVersion: PROMPT_VERSION,
+        caught: result.caught,
         scores: {
           grounding: 0,
           domainSpecificity: result.inRole,

@@ -93,6 +93,10 @@ scripts/evals/        # LLM prompt eval harness (npm run evals)
   system prompt. When changing a charter/prompt, bump `PROMPT_VERSION` and run
   `npm run evals`. Deterministic guardrail: `persona-charters.test.ts` asserts
   each prompt carries its own lens vocabulary (no LLM/key needed).
+- **Evals**: strategy in `EVALS.md` (read before changing scenarios, judges, or
+  thresholds). Results dual-write to local JSONL and the Supabase
+  `eval_results` table; the `/evals` page is the performance-over-time
+  dashboard and `eval-report.ts` holds its (unit-tested) aggregation.
 - **Build executors**: select via `CONCILIUM_BUILD_EXECUTOR` (`report` default,
   `local-claude` for sandboxed Claude Code builds). New executors implement
   `BuildExecutor` in `src/lib/build-executor/`.
