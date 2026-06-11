@@ -1,0 +1,9 @@
+<svg width="360" height="96" viewBox="0 0 360 96" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Concelium">
+  <g transform="translate(8,12) scale(0.6)">
+    <circle cx="60" cy="38" r="22" fill="#E85D34"></circle>
+    <circle cx="39" cy="74" r="22" fill="#7A57D1"></circle>
+    <circle cx="81" cy="74" r="22" fill="#1E9C86"></circle>
+    <circle cx="60" cy="62" r="11" fill="#2B221C"></circle>
+  </g>
+  <text x="92" y="60" font-family="&#39;Bricolage Grotesque&#39;,&#39;Hanken Grotesk&#39;,sans-serif" font-size="40" font-weight="700" letter-spacing="-1.2" fill="#2B221C">Concelium</text>
+</svg>

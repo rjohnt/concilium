@@ -1,7 +1,14 @@
-import { Persona, PersonaId } from "@/lib/types";
+import { PersonaId } from "@/lib/types";
 import { getPersona } from "@/lib/personas";
 import { PersonaIcon } from "./PersonaIcon";
 import { Check } from "lucide-react";
+
+const paletteMap: Record<PersonaId, { color: string; tint: string }> = {
+  engineer: { color: "var(--persona-eng-500)", tint: "var(--persona-eng-100)" },
+  designer: { color: "var(--persona-des-500)", tint: "var(--persona-des-100)" },
+  "product-owner": { color: "var(--persona-prod-500)", tint: "var(--persona-prod-100)" },
+  qa: { color: "var(--persona-res-500)", tint: "var(--persona-res-100)" },
+};
 
 export function PersonaBadge({
   personaId,
@@ -13,7 +20,7 @@ export function PersonaBadge({
   size?: "sm" | "lg";
 }) {
   const persona = getPersona(personaId);
-  const personaColor = persona?.color ?? "bg-gray-800";
+  const palette = paletteMap[personaId] ?? paletteMap.engineer;
   const personaLabel = persona?.label ?? personaId;
   const personaExpertise = persona?.expertise ?? "";
   const iconSize = size === "lg" ? 16 : 14;
@@ -24,14 +31,19 @@ export function PersonaBadge({
 
   return (
     <span
-      className={`inline-flex items-center rounded-full ${sizeClasses} ${
+      className={`inline-flex items-center rounded-full font-semibold ${sizeClasses} transition-colors`}
+      style={
         approved
-          ? `${personaColor} text-white`
-          : "bg-elevated text-ink-secondary border border-border-subtle"
-      } transition-colors`}
+          ? { backgroundColor: palette.color, color: "#fff" }
+          : { backgroundColor: palette.tint, color: palette.color }
+      }
       title={`${personaLabel}: ${personaExpertise}`}
     >
-      <PersonaIcon personaId={personaId} size={iconSize} />
+      <PersonaIcon
+        personaId={personaId}
+        size={iconSize}
+        className={approved ? "!text-white" : ""}
+      />
       <span>{personaLabel}</span>
       {approved && <Check size={iconSize} className="ml-0.5" />}
     </span>

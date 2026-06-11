@@ -5,10 +5,10 @@ import type { PersonaId } from "@/lib/types";
 
 describe("PersonaIcon", () => {
   const personas: { id: PersonaId; label: string; iconTitle: string }[] = [
-    { id: "engineer", label: "Wrench", iconTitle: "Wrench" },
-    { id: "designer", label: "Palette", iconTitle: "Palette" },
-    { id: "product-owner", label: "Notebook", iconTitle: "NotebookText" },
-    { id: "qa", label: "Flask", iconTitle: "FlaskConical" },
+    { id: "engineer", label: "Code", iconTitle: "Code" },
+    { id: "designer", label: "PenTool", iconTitle: "PenTool" },
+    { id: "product-owner", label: "Compass", iconTitle: "Compass" },
+    { id: "qa", label: "Microscope", iconTitle: "Microscope" },
   ];
 
   it.each(personas)(
@@ -17,7 +17,12 @@ describe("PersonaIcon", () => {
       const { container } = render(<PersonaIcon personaId={id} />);
       const svg = container.querySelector("svg");
       expect(svg).toBeInTheDocument();
-      const colorClasses = ["text-blue-400", "text-purple-400", "text-emerald-400", "text-amber-400"];
+      const colorClasses = [
+        "text-[var(--persona-eng-500)]",
+        "text-[var(--persona-des-500)]",
+        "text-[var(--persona-prod-500)]",
+        "text-[var(--persona-res-500)]",
+      ];
       const hasColorClass = colorClasses.some((cls) => svg!.classList.contains(cls));
       expect(hasColorClass).toBe(true);
     }

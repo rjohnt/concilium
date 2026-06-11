@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo } from "react";
+import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/Sidebar";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { CommandPalette } from "@/components/CommandPalette";
@@ -11,6 +13,18 @@ interface AppShellProps {
 }
 
 export function AppShell({ children }: AppShellProps) {
+  const pathname = usePathname();
+
+  // Routes that render bare — no sidebar, breadcrumb, or app chrome
+  const isBareRoute = useMemo(
+    () => pathname === "/welcome" || pathname.startsWith("/welcome/"),
+    [pathname]
+  );
+
+  if (isBareRoute) {
+    return <PageTransition>{children}</PageTransition>;
+  }
+
   return (
     <>
       <div className="flex min-h-screen">
