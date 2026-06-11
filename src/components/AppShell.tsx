@@ -17,7 +17,10 @@ export function AppShell({ children }: AppShellProps) {
 
   // Routes that render bare — no sidebar, breadcrumb, or app chrome
   const isBareRoute = useMemo(
-    () => pathname === "/welcome" || pathname.startsWith("/welcome/"),
+    () =>
+      pathname === "/welcome" ||
+      pathname.startsWith("/welcome/") ||
+      pathname.startsWith("/share/"),
     [pathname]
   );
 

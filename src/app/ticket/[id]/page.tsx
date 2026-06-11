@@ -22,7 +22,7 @@ import { ActivityFeed } from "@/components/ActivityFeed";
 import { EditableField } from "@/components/EditableField";
 import { TagChip } from "@/components/TagChip";
 import { EmptyState } from "@/components/EmptyState";
-import { Clock, GitBranch, RefreshCw, Sparkles, ExternalLink, Trash2, FileQuestion, Calendar, Users, ChevronDown, Check } from "lucide-react";
+import { Clock, GitBranch, RefreshCw, Sparkles, ExternalLink, Trash2, FileQuestion, Calendar, Users, ChevronDown, Check, Share2 } from "lucide-react";
 import { PersonaIcon } from "@/components/PersonaIcon";
 import Link from "next/link";
 import { useToast } from "@/components/Toast";
@@ -412,6 +412,32 @@ export default function TicketDetailPage() {
                 label="Copy link to this ticket"
                 icon="link"
               />
+
+              {/* Public share button — copies the no-login /share link */}
+              <button
+                onClick={() => {
+                  const url =
+                    typeof window !== "undefined"
+                      ? `${window.location.origin}/share/${ticket.id}`
+                      : `/share/${ticket.id}`;
+                  const done = () =>
+                    addToast({
+                      variant: "success",
+                      title: "Public link copied",
+                      description: "Anyone can view this council — no sign-in needed.",
+                    });
+                  if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+                    navigator.clipboard.writeText(url).then(done, () =>
+                      addToast({ variant: "error", title: "Couldn't copy link" })
+                    );
+                  }
+                }}
+                className="btn-secondary whitespace-nowrap"
+                title="Copy a public, read-only link to share this council"
+              >
+                <Share2 size={16} />
+                <span className="hidden sm:inline">Share</span>
+              </button>
 
               {/* Consensus Room button */}
               <Link
