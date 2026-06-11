@@ -5,6 +5,7 @@ import { Ticket, TicketStatus, PersonaId, PRIORITY_LABELS, PRIORITY_COLORS, Prio
 import { seedData, getTickets } from "@/lib/store";
 import { getAllPersonas } from "@/lib/personas";
 import { TicketCard } from "@/components/TicketCard";
+import { SeatOccupancyBanner } from "@/components/SeatOccupancyBanner";
 import { TagChip } from "@/components/TagChip";
 import { FilterBar } from "@/components/FilterBar";
 import { DashboardSkeleton, SkeletonCard } from "@/components/Skeleton";
@@ -121,6 +122,9 @@ export default function DashboardPage() {
           <PlusCircle size={16} /> New Ticket
         </Link>
       </div>
+
+      {/* ── Seat occupancy: humans vs AI stand-ins ───────────── */}
+      <SeatOccupancyBanner tickets={tickets} />
 
       {/* ── Stats row — MagicPath v2 styling ─────────────────── */}
       <div className="grid grid-cols-3 gap-4 mb-8">

@@ -11,7 +11,7 @@
 import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
-import { Ticket, FeedbackEntry, BuildReport, PersonaId, TicketStatus, PriorityLevel, Tag } from "./types";
+import { Ticket, FeedbackEntry, FeedbackSource, BuildReport, BuildArtifact, BuildChangeRequest, PersonaId, TicketStatus, PriorityLevel, Tag, SeatMap } from "./types";
 import { checkConsensusThreshold } from "./consensus-threshold";
 
 // ─── Database Path ───────────────────────────────────────────────────────────
@@ -83,6 +83,28 @@ function initSchema(): void {
     CREATE INDEX IF NOT EXISTS idx_feedback_ticket ON feedback(ticket_id);
     CREATE INDEX IF NOT EXISTS idx_build_reports_ticket ON build_reports(ticket_id);
   `);
+
+  migrateSchema(d);
+}
+
+/**
+ * Additive column migrations for databases created before these features.
+ * SQLite has no IF NOT EXISTS for columns, so probe the table info first.
+ */
+function migrateSchema(d: Database.Database): void {
+  const addColumnIfMissing = (table: string, column: string, ddl: string) => {
+    const columns = d.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[];
+    if (!columns.some((c) => c.name === column)) {
+      d.exec(`ALTER TABLE ${table} ADD COLUMN ${ddl}`);
+    }
+  };
+
+  addColumnIfMissing("tickets", "seats_json", "seats_json TEXT NOT NULL DEFAULT '{}'");
+  addColumnIfMissing("feedback", "source", "source TEXT NOT NULL DEFAULT 'human'");
+  addColumnIfMissing("build_reports", "executor", "executor TEXT");
+  addColumnIfMissing("build_reports", "artifacts_json", "artifacts_json TEXT NOT NULL DEFAULT '[]'");
+  addColumnIfMissing("build_reports", "change_requests_json", "change_requests_json TEXT NOT NULL DEFAULT '[]'");
+  addColumnIfMissing("build_reports", "error_message", "error_message TEXT");
 }
 
 // ─── Seed Data ───────────────────────────────────────────────────────────────
@@ -201,6 +223,7 @@ interface TicketRow {
   updated_at: string;
   due_date: string | null;
   tags_json: string;
+  seats_json: string;
 }
 
 interface FeedbackRow {
@@ -210,6 +233,7 @@ interface FeedbackRow {
   content: string;
   approved: number;
   created_at: string;
+  source: string;
 }
 
 interface BuildReportRow {
@@ -223,6 +247,10 @@ interface BuildReportRow {
   qa_criteria_json: string;
   implementation_plan: string;
   consensus_summary: string;
+  executor: string | null;
+  artifacts_json: string;
+  change_requests_json: string;
+  error_message: string | null;
 }
 
 function rowToTicket(row: TicketRow): Ticket {
@@ -249,6 +277,7 @@ function rowToTicket(row: TicketRow): Ticket {
     updatedAt: row.updated_at,
     dueDate: row.due_date || undefined,
     tags: JSON.parse(row.tags_json || "[]") as Tag[],
+    seats: JSON.parse(row.seats_json || "{}") as SeatMap,
     feedback: feedback.map(rowToFeedback),
     approvals,
     buildReport: buildReportRow ? rowToBuildReport(buildReportRow) : undefined,
@@ -263,6 +292,7 @@ function rowToFeedback(row: FeedbackRow): FeedbackEntry {
     content: row.content,
     createdAt: row.created_at,
     approved: row.approved === 1,
+    source: (row.source || "human") as FeedbackSource,
   };
 }
 
@@ -278,6 +308,10 @@ function rowToBuildReport(row: BuildReportRow): BuildReport {
     qaCriteria: JSON.parse(row.qa_criteria_json || "[]"),
     implementationPlan: row.implementation_plan,
     consensusSummary: row.consensus_summary,
+    executor: row.executor || undefined,
+    artifacts: JSON.parse(row.artifacts_json || "[]") as BuildArtifact[],
+    changeRequests: JSON.parse(row.change_requests_json || "[]") as BuildChangeRequest[],
+    errorMessage: row.error_message || undefined,
   };
 }
 
@@ -332,7 +366,7 @@ export function deleteTicket(id: string): boolean {
 
 export function updateTicket(
   ticketId: string,
-  updates: { title?: string; description?: string; dueDate?: string | null; priority?: PriorityLevel; status?: TicketStatus; tags?: Tag[] }
+  updates: { title?: string; description?: string; dueDate?: string | null; priority?: PriorityLevel; status?: TicketStatus; tags?: Tag[]; seats?: SeatMap }
 ): Ticket | undefined {
   const d = getDb();
   const existing = d.prepare("SELECT * FROM tickets WHERE id = ?").get(ticketId) as TicketRow | undefined;
@@ -366,6 +400,10 @@ export function updateTicket(
     setClauses.push("tags_json = ?");
     params.push(JSON.stringify(updates.tags));
   }
+  if (updates.seats !== undefined) {
+    setClauses.push("seats_json = ?");
+    params.push(JSON.stringify(updates.seats));
+  }
 
   params.push(ticketId);
   d.prepare(`UPDATE tickets SET ${setClauses.join(", ")} WHERE id = ?`).run(...params);
@@ -378,7 +416,8 @@ export function addFeedback(
   ticketId: string,
   personaId: PersonaId,
   content: string,
-  approved: boolean
+  approved: boolean,
+  source: FeedbackSource = "human"
 ): FeedbackEntry | null {
   const d = getDb();
   const ticket = d.prepare("SELECT id, status FROM tickets WHERE id = ?").get(ticketId) as { id: string; status: string } | undefined;
@@ -388,9 +427,9 @@ export function addFeedback(
   const now = new Date().toISOString();
 
   d.prepare(`
-    INSERT INTO feedback (id, ticket_id, persona_id, content, approved, created_at)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `).run(feedbackId, ticketId, personaId, content, approved ? 1 : 0, now);
+    INSERT INTO feedback (id, ticket_id, persona_id, content, approved, created_at, source)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(feedbackId, ticketId, personaId, content, approved ? 1 : 0, now, source);
 
   // Auto-transition to in-review on first feedback
   if (ticket.status === "draft") {
@@ -437,8 +476,8 @@ export function setBuildReport(ticketId: string, report: BuildReport): BuildRepo
   const now = new Date().toISOString();
 
   d.prepare(`
-    INSERT OR REPLACE INTO build_reports (id, ticket_id, created_at, completed_at, status, requirements_json, design_decisions_json, qa_criteria_json, implementation_plan, consensus_summary)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT OR REPLACE INTO build_reports (id, ticket_id, created_at, completed_at, status, requirements_json, design_decisions_json, qa_criteria_json, implementation_plan, consensus_summary, executor, artifacts_json, change_requests_json, error_message)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     report.id,
     ticketId,
@@ -450,6 +489,10 @@ export function setBuildReport(ticketId: string, report: BuildReport): BuildRepo
     JSON.stringify(report.qaCriteria),
     report.implementationPlan,
     report.consensusSummary,
+    report.executor || null,
+    JSON.stringify(report.artifacts ?? []),
+    JSON.stringify(report.changeRequests ?? []),
+    report.errorMessage || null,
   );
 
   // Mark ticket as done if build is completed
@@ -519,16 +562,16 @@ export function seedFromClientData(clientData: {
         ticket.id,
       );
 
-      // Restore status and dates
-      d.prepare("UPDATE tickets SET status = ?, created_at = ?, updated_at = ? WHERE id = ?")
-        .run(ticket.status, ticket.createdAt, ticket.updatedAt, ticket.id);
+      // Restore status, dates, and seats
+      d.prepare("UPDATE tickets SET status = ?, created_at = ?, updated_at = ?, seats_json = ? WHERE id = ?")
+        .run(ticket.status, ticket.createdAt, ticket.updatedAt, JSON.stringify(ticket.seats ?? {}), ticket.id);
 
       // Restore feedback
       for (const fb of ticket.feedback) {
         d.prepare(`
-          INSERT OR IGNORE INTO feedback (id, ticket_id, persona_id, content, approved, created_at)
-          VALUES (?, ?, ?, ?, ?, ?)
-        `).run(fb.id, ticket.id, fb.personaId, fb.content, fb.approved ? 1 : 0, fb.createdAt);
+          INSERT OR IGNORE INTO feedback (id, ticket_id, persona_id, content, approved, created_at, source)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        `).run(fb.id, ticket.id, fb.personaId, fb.content, fb.approved ? 1 : 0, fb.createdAt, fb.source ?? "human");
       }
 
       // Restore build report

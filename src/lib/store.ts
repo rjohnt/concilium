@@ -1,6 +1,7 @@
-import { Ticket, FeedbackEntry, PersonaId, TicketStatus, PriorityLevel, BuildReport, Tag } from "./types";
+import { Ticket, FeedbackEntry, FeedbackSource, PersonaId, TicketStatus, PriorityLevel, BuildReport, Tag, Seat } from "./types";
 import { validateTransition } from "./status-machine";
 import { getAllPersonas } from "./personas";
+import { normalizeSeats, getSeat, isSeatHeldByOtherHuman } from "./seats";
 import { checkConsensusThreshold, getBuildReadiness, buildBuildReport } from "./consensus-threshold";
 import {
   saveTickets,
@@ -140,6 +141,7 @@ export function createTicket(
     tags,
     feedback: [],
     approvals: [],
+    seats: normalizeSeats(),
   };
   tickets.push(ticket);
   persistState(id);
@@ -235,13 +237,75 @@ export function updateTicketTags(
   return ticket;
 }
 
+// --- Seats (humans + AI stand-ins) ---
+
+/** Normalized seat map for a ticket: one seat per persona, AI-held by default. */
+export function getSeats(ticketId: string): Record<PersonaId, Seat> {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  return normalizeSeats(ticket?.seats);
+}
+
+/**
+ * Claim a persona seat for a human, taking over from the AI stand-in.
+ * Fails (returns null) when another human already holds the seat.
+ */
+export function claimSeat(
+  ticketId: string,
+  personaId: PersonaId,
+  clientId: string,
+  label?: string
+): Seat | null {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  if (!ticket) return null;
+  if (isSeatHeldByOtherHuman(ticket, personaId, clientId)) return null;
+
+  const seat: Seat = {
+    personaId,
+    occupant: "human",
+    claimedBy: clientId,
+    claimedByLabel: label,
+    claimedAt: new Date().toISOString(),
+  };
+  ticket.seats = { ...normalizeSeats(ticket.seats), [personaId]: seat };
+  ticket.updatedAt = new Date().toISOString();
+  persistState(ticketId);
+
+  updateTicketOnServer(ticketId, { seats: ticket.seats }).catch(() => {});
+  return seat;
+}
+
+/**
+ * Release a human-held seat back to its AI stand-in. Only the claiming
+ * client can release it.
+ */
+export function releaseSeat(
+  ticketId: string,
+  personaId: PersonaId,
+  clientId: string
+): Seat | null {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  if (!ticket) return null;
+
+  const current = getSeat(ticket, personaId);
+  if (current.occupant !== "human" || current.claimedBy !== clientId) return null;
+
+  const seat: Seat = { personaId, occupant: "ai" };
+  ticket.seats = { ...normalizeSeats(ticket.seats), [personaId]: seat };
+  ticket.updatedAt = new Date().toISOString();
+  persistState(ticketId);
+
+  updateTicketOnServer(ticketId, { seats: ticket.seats }).catch(() => {});
+  return seat;
+}
+
 // --- Feedback ---
 
 export function addFeedback(
   ticketId: string,
   personaId: PersonaId,
   content: string,
-  approved: boolean
+  approved: boolean,
+  source: FeedbackSource = "human"
 ): FeedbackEntry | null {
   const ticket = tickets.find((t) => t.id === ticketId);
   if (!ticket) return null;
@@ -254,6 +318,7 @@ export function addFeedback(
     content,
     createdAt: new Date().toISOString(),
     approved,
+    source,
   };
 
   ticket.feedback.push(entry);
@@ -303,6 +368,7 @@ export function addFeedback(
         content: entry.content,
         createdAt: entry.createdAt,
         approved: entry.approved,
+        source: entry.source,
       },
       ticketSnapshot: {
         id: ticket.id,

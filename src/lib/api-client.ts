@@ -5,7 +5,7 @@
  * Falls back gracefully if the server is unreachable (offline/reset).
  */
 
-import { Ticket, FeedbackEntry, PersonaId, PriorityLevel, Tag, TicketStatus } from "./types";
+import { Ticket, FeedbackEntry, FeedbackSource, PersonaId, PriorityLevel, SeatMap, Tag, TicketStatus } from "./types";
 
 const API_BASE = "/api";
 
@@ -54,7 +54,7 @@ export async function createTicketOnServer(
 
 export async function updateTicketOnServer(
   id: string,
-  updates: { title?: string; description?: string; dueDate?: string | null; priority?: PriorityLevel; status?: TicketStatus; tags?: Tag[] },
+  updates: { title?: string; description?: string; dueDate?: string | null; priority?: PriorityLevel; status?: TicketStatus; tags?: Tag[]; seats?: SeatMap },
 ): Promise<Ticket | null> {
   const data = await fetchJson<{ ticket: Ticket }>(`${API_BASE}/tickets?id=${encodeURIComponent(id)}`, {
     method: "PATCH",
@@ -77,10 +77,11 @@ export async function addFeedbackOnServer(
   personaId: PersonaId,
   content: string,
   approved: boolean,
+  source: FeedbackSource = "human",
 ): Promise<{ feedback: FeedbackEntry; ticket: { id: string; status: string; approvals: string[]; feedback: FeedbackEntry[] } | null } | null> {
   const data = await fetchJson<any>(`${API_BASE}/feedback`, {
     method: "POST",
-    body: JSON.stringify({ ticketId, personaId, content, approved }),
+    body: JSON.stringify({ ticketId, personaId, content, approved, source }),
   });
   return data ?? null;
 }
