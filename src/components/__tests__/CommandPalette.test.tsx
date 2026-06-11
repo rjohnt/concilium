@@ -252,12 +252,12 @@ describe("CommandPalette", () => {
     const input = screen.getByPlaceholderText("Type a command...");
 
     await act(async () => {
-      fireEvent.change(input, { target: { value: "vin" } });
+      fireEvent.change(input, { target: { value: "new" } });
     });
 
     const options = screen.getAllByRole("option");
     expect(options).toHaveLength(1);
-    expect(options[0]).toHaveTextContent("VIN Decoder");
+    expect(options[0]).toHaveTextContent("New Ticket");
   });
 
   it("shows empty state for no match", async () => {
@@ -285,7 +285,6 @@ describe("CommandPalette", () => {
 
     expect(screen.getByText("⌘1")).toBeInTheDocument();
     expect(screen.getByText("⌘N")).toBeInTheDocument();
-    expect(screen.getByText("⌘V")).toBeInTheDocument();
   });
 
   // ── Click navigation ────────────────────────────────────────────────
@@ -293,13 +292,13 @@ describe("CommandPalette", () => {
     render(<CommandPalette />);
     openPalette();
 
-    const vinButton = screen.getByText("VIN Decoder");
+    const newTicketButton = screen.getByText("New Ticket");
 
     act(() => {
-      fireEvent.click(vinButton);
+      fireEvent.click(newTicketButton);
     });
 
-    expect(mockPush).toHaveBeenCalledWith("/vin");
+    expect(mockPush).toHaveBeenCalledWith("/new");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 

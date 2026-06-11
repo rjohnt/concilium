@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { Persona, PersonaId } from "@/lib/types";
+import { useEffect, useState } from "react";
+import { PersonaId, Seat } from "@/lib/types";
 import { getAllPersonas } from "@/lib/personas";
-import { X, Sparkles, ArrowRight } from "lucide-react";
+import { getPreferredRole } from "@/lib/seats";
+import { Sparkles, ArrowRight, Bot, User, Lock } from "lucide-react";
 import { PersonaIcon } from "./PersonaIcon";
 
 const PERSONA_BORDER_COLORS: Record<PersonaId, string> = {
@@ -41,27 +42,74 @@ const PERSONA_BG_GLOW: Record<PersonaId, string> = {
   qa: "bg-amber-500/5",
 };
 
+function SeatBadge({ seat, isMine }: { seat: Seat; isMine: boolean }) {
+  if (seat.occupant === "ai") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-steel/15 border border-blue-steel/30 text-blue-steel text-[10px] font-medium">
+        <Bot size={11} />
+        AI stand-in
+      </span>
+    );
+  }
+  if (isMine) {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-olive/15 border border-olive/30 text-olive text-[10px] font-medium">
+        <User size={11} />
+        You
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-elevated border border-border-visible text-ink-muted text-[10px] font-medium">
+      <Lock size={11} />
+      {seat.claimedByLabel || "Another human"}
+    </span>
+  );
+}
+
 export function JoinSessionModal({
   isOpen,
   onJoin,
   mode = "initial",
+  seats,
+  clientId,
 }: {
   isOpen: boolean;
   onJoin: (personaId: PersonaId) => void;
   mode?: "initial" | "switch";
+  /** Normalized seat map for the ticket (one seat per persona). */
+  seats?: Record<PersonaId, Seat>;
+  /** Stable id of this client, used to recognize seats you already hold. */
+  clientId?: string;
 }) {
   const [selectedId, setSelectedId] = useState<PersonaId | null>(null);
   const [joining, setJoining] = useState(false);
   const personas = getAllPersonas();
 
+  const isLockedSeat = (personaId: PersonaId): boolean => {
+    const seat = seats?.[personaId];
+    return !!seat && seat.occupant === "human" && seat.claimedBy !== clientId;
+  };
+
+  // Preselect the user's remembered role when the modal opens fresh
+  useEffect(() => {
+    if (!isOpen || mode !== "initial") return;
+    const preferred = getPreferredRole();
+    if (preferred && !isLockedSeat(preferred)) {
+      setSelectedId(preferred);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, mode]);
+
   if (!isOpen) return null;
 
   const handleSelect = (personaId: PersonaId) => {
+    if (isLockedSeat(personaId)) return;
     setSelectedId(personaId);
   };
 
   const handleJoin = () => {
-    if (!selectedId) return;
+    if (!selectedId || isLockedSeat(selectedId)) return;
     setJoining(true);
     // Brief cinematic delay before transitioning
     setTimeout(() => {
@@ -69,11 +117,14 @@ export function JoinSessionModal({
     }, 500);
   };
 
-  const title = mode === "switch" ? "Switch Persona" : "Choose Your Role";
+  const title = mode === "switch" ? "Switch Role" : "Choose Your Role";
   const description =
     mode === "switch"
-      ? "Switching personas changes your perspective in this session. You can always switch back."
-      : "Join this ticket session as a stakeholder persona. Your perspective will shape the review — weigh in with the lens of your chosen role.";
+      ? "Switching roles hands your current seat back to its AI stand-in and takes over the new one."
+      : "Every role is held by an AI stand-in until a human takes it over. Claim a seat to weigh in yourself — the AI covers the rest.";
+
+  const selectedSeat = selectedId ? seats?.[selectedId] : undefined;
+  const takingOverFromAi = !!selectedSeat && selectedSeat.occupant === "ai";
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain p-4 sm:flex sm:items-center sm:justify-center">
@@ -101,16 +152,23 @@ export function JoinSessionModal({
 
         {/* Persona cards grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
-          {personas.map((persona, i) => (
+          {personas.map((persona, i) => {
+            const seat = seats?.[persona.id] ?? { personaId: persona.id, occupant: "ai" as const };
+            const locked = isLockedSeat(persona.id);
+            const isMine = seat.occupant === "human" && seat.claimedBy === clientId;
+            return (
             <button
               key={persona.id}
               onClick={() => handleSelect(persona.id)}
-              disabled={joining}
-              className={`group relative text-left p-4 sm:p-5 rounded-xl border transition-all duration-300 cursor-pointer
+              disabled={joining || locked}
+              className={`group relative text-left p-4 sm:p-5 rounded-xl border transition-all duration-300
                 bg-elevated hover:bg-elevated
+                ${locked ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
                 ${
                   selectedId === persona.id
                     ? `border-2 ${PERSONA_BORDER_COLORS[persona.id].split(" ")[0]} ring-2 ${PERSONA_RING_COLORS[persona.id]} ${PERSONA_GLOW_COLORS[persona.id]} shadow-xl scale-[1.02]`
+                    : locked
+                    ? `border-border-subtle`
                     : `border-border-visible hover:border-border-visible/60 hover:shadow-lg hover:scale-[1.01]`
                 }
                 animate-in fade-in slide-in-from-bottom-4
@@ -131,16 +189,19 @@ export function JoinSessionModal({
                 {/* Icon + Label row */}
                 <div className="flex items-center gap-3 mb-3">
                   <span className="text-3xl"><PersonaIcon personaId={persona.id} size={32} /></span>
-                  <div>
-                    <h3
-                      className={`text-lg font-semibold ${
-                        selectedId === persona.id
-                          ? "text-ink-primary"
-                          : "text-ink-secondary group-hover:text-ink-primary"
-                      } transition-colors`}
-                    >
-                      {persona.label}
-                    </h3>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <h3
+                        className={`text-lg font-semibold ${
+                          selectedId === persona.id
+                            ? "text-ink-primary"
+                            : "text-ink-secondary group-hover:text-ink-primary"
+                        } transition-colors`}
+                      >
+                        {persona.label}
+                      </h3>
+                      <SeatBadge seat={seat} isMine={isMine} />
+                    </div>
                     <p
                       className={`text-xs ${
                         selectedId === persona.id
@@ -164,12 +225,13 @@ export function JoinSessionModal({
                 {selectedId === persona.id && (
                   <div className="mt-3 flex items-center gap-1.5 text-sm font-medium text-gold">
                     <span className="w-2 h-2 rounded-full bg-gold animate-pulse" />
-                    Selected
+                    {seat.occupant === "ai" ? "Taking over from AI stand-in" : "Selected"}
                   </div>
                 )}
               </div>
             </button>
-          ))}
+            );
+          })}
         </div>
 
         {/* Action button */}
@@ -189,7 +251,11 @@ export function JoinSessionModal({
               </>
             ) : (
               <>
-                {mode === "switch" ? "Switch to" : "Join as"}{" "}
+                {takingOverFromAi
+                  ? "Take over as"
+                  : mode === "switch"
+                  ? "Switch to"
+                  : "Join as"}{" "}
                 {selectedId
                   ? personas.find((p) => p.id === selectedId)?.label
                   : "..."}
@@ -203,7 +269,7 @@ export function JoinSessionModal({
         <p className="text-center text-xs text-ink-ghost mt-6">
           {mode === "switch"
             ? "Your current feedback will be preserved when switching."
-            : "You can switch your persona at any time during the session."}
+            : "Seats held by other humans are locked. You can switch roles at any time."}
         </p>
       </div>
     </div>

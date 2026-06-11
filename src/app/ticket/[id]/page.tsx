@@ -11,6 +11,7 @@ import { formatRelativeTime, formatAbsoluteDate } from "@/lib/timeAgo";
 import { FeedbackPanel } from "@/components/FeedbackPanel";
 import { BuildTrigger } from "@/components/BuildTrigger";
 import { BuildReportInline } from "@/components/BuildReportInline";
+import { BuildIterationPanel } from "@/components/BuildIterationPanel";
 import { PersonaBadge } from "@/components/PersonaBadge";
 import { JoinSessionModal } from "@/components/JoinSessionModal";
 import { CopyButton } from "@/components/CopyButton";
@@ -490,6 +491,17 @@ export default function TicketDetailPage() {
             ticket={ticket}
             onBuildUpdated={() => loadTicket()}
             onRetry={handleRetryBuild}
+          />
+        </div>
+      )}
+
+      {/* Build review loop — artifacts, change requests, rebuild */}
+      {ticket.buildReport && ticket.buildReport.status !== "building" && (
+        <div className="mt-6">
+          <BuildIterationPanel
+            ticket={ticket}
+            activePersona={sessionPersona}
+            onUpdated={() => loadTicket()}
           />
         </div>
       )}

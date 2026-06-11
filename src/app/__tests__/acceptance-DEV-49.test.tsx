@@ -61,6 +61,9 @@ vi.mock("@/lib/store", () => ({
     approved: 0,
     remaining: ["engineer", "designer", "product-owner", "qa"] as const,
   })),
+  getSeats: vi.fn(() => ({})),
+  claimSeat: vi.fn(),
+  releaseSeat: vi.fn(),
 }));
 
 // Mock personas

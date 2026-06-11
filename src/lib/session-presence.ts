@@ -44,14 +44,24 @@ function generateUUID(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+// Fallback when localStorage is unavailable (private mode, restricted envs)
+let inMemoryClientId: string | null = null;
+
 export function getClientId(): string {
   if (typeof window === "undefined") return "server";
-  let id = localStorage.getItem(CLIENT_ID_KEY);
-  if (!id) {
-    id = generateUUID();
-    localStorage.setItem(CLIENT_ID_KEY, id);
+  try {
+    let id = localStorage.getItem(CLIENT_ID_KEY);
+    if (!id) {
+      id = generateUUID();
+      localStorage.setItem(CLIENT_ID_KEY, id);
+    }
+    return id;
+  } catch {
+    if (!inMemoryClientId) {
+      inMemoryClientId = generateUUID();
+    }
+    return inMemoryClientId;
   }
-  return id;
 }
 
 // ── Presence Channel ────────────────────────────────────────────────────────

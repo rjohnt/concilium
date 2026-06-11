@@ -64,21 +64,6 @@ describe("Breadcrumb", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("is hidden on /vin", () => {
-    const { container } = renderBreadcrumb("/vin");
-    expect(container.firstChild).toBeNull();
-  });
-
-  it("is hidden on /share", () => {
-    const { container } = renderBreadcrumb("/share");
-    expect(container.firstChild).toBeNull();
-  });
-
-  it("is hidden on /share/a1b2c3d4-e5f6-4000-8000-000000000001 (prefix match)", () => {
-    const { container } = renderBreadcrumb("/share/a1b2c3d4-e5f6-4000-8000-000000000001");
-    expect(container.firstChild).toBeNull();
-  });
-
   // --- Deep page rendering ---
 
   it("renders on /ticket/TIX-001: Dashboard > Ticket > TIX-001", () => {

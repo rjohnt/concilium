@@ -3,6 +3,11 @@ import { getPersona, getAllPersonas } from "./personas";
 import { getTicket, getFeedbackHistory } from "./server-db";
 import { checkConsensusThreshold } from "./consensus-threshold";
 import { callDeepSeek } from "./llm";
+import {
+  buildPersonaSystemPrompt,
+  buildTicketContext,
+  buildFeedbackContext,
+} from "./persona-prompts";
 
 // === Mediator Engine v2 — LLM-Powered ===
 //
@@ -104,35 +109,8 @@ export async function continueMediation(
 }
 
 // === LLM Prompt Building ===
-
-function buildPersonaOverview(persona: Persona): string {
-  return [
-    `Persona: ${persona.label} ${persona.emoji}`,
-    `Expertise: ${persona.expertise}`,
-    `Focus areas: ${persona.promptTemplate.replace("Provide your assessment:", "").trim()}`,
-  ].join("\n");
-}
-
-function buildTicketOverview(ticket: Ticket): string {
-  const lines = [
-    `Ticket: ${ticket.id}`,
-    `Title: ${ticket.title}`,
-    `Description: ${ticket.description}`,
-    `Priority: ${ticket.priority === 0 ? "Urgent" : ticket.priority === 1 ? "High" : ticket.priority === 2 ? "Medium" : "Low"}`,
-  ];
-  return lines.join("\n");
-}
-
-function buildFeedbackHistory(history: FeedbackEntry[], excludePersona: PersonaId): string {
-  if (history.length === 0) return "No previous feedback.";
-  return history
-    .filter((f) => f.personaId !== excludePersona)
-    .map(
-      (f, i) =>
-        `[#${i + 1}] ${f.personaId} (${f.approved ? "approved ✓" : "pending"}): ${f.content.slice(0, 300)}`
-    )
-    .join("\n\n");
-}
+// Persona framing and context blocks are shared with the AI stand-ins via
+// persona-prompts.ts so the eval harness covers both paths.
 
 async function generateLLMResponse(
   ticket: Ticket,
@@ -142,25 +120,9 @@ async function generateLLMResponse(
   isContinuation: boolean,
   previousResponse?: MediatorResponse
 ): Promise<MediatorResponse> {
-  const systemPrompt = `You are the ${persona.label} (${persona.emoji}) persona in a collaborative ticket-building session called "Concilium".
+  const systemPrompt = buildPersonaSystemPrompt(persona);
 
-Your role: Weigh in on feature tickets from the perspective of your expertise area. You are not a generic assistant — you are a specific stakeholder with strong opinions and deep knowledge in your domain.
-
-Persona context:
-${buildPersonaOverview(persona)}
-
-Rules:
-1. Respond strictly as this persona — use their voice, concerns, and perspective.
-2. Be constructive but honest. If something concerns you, flag it. If it looks good, say so.
-3. Provide a refined feedback statement that frames the user's input through your persona lens.
-4. Surface concrete concerns specific to your domain.
-5. Give actionable recommendations.
-6. Ask follow-up questions that probe deeper into your area of expertise.
-7. Evaluate whether the proposal deserves approval from your perspective.
-8. Suggest which persona should weigh in next based on who hasn't contributed yet.
-9. Return ONLY valid JSON matching the specified schema — no markdown, no explanation.`;
-
-  const existingFeedback = buildFeedbackHistory(context.sessionHistory, persona.id);
+  const existingFeedback = buildFeedbackContext(context.sessionHistory, persona.id);
   const allPersonas = getAllPersonas();
   const personaStatus = allPersonas
     .map(
@@ -205,7 +167,7 @@ Rules:
     // Fresh mediation — full ticket context
     userPrompt = [
       `## Ticket Context`,
-      buildTicketOverview(ticket),
+      buildTicketContext(ticket),
       ``,
       `## Existing Feedback from Other Personas`,
       existingFeedback,

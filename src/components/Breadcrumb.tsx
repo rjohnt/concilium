@@ -9,9 +9,9 @@ interface BreadcrumbProps {
   className?: string;
 }
 
-const SHALLOW_PAGES = new Set(["/", "/new", "/login", "/signup", "/vin", "/share"]);
+const SHALLOW_PAGES = new Set(["/", "/new", "/login", "/signup"]);
 
-const SHALLOW_PREFIXES = ["/share/"];
+const SHALLOW_PREFIXES: string[] = [];
 
 function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);

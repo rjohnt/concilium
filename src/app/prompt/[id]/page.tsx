@@ -2,8 +2,10 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Ticket, PersonaId } from "@/lib/types";
-import { seedData, getTicket, getConsensusProgress } from "@/lib/store";
+import { Ticket, PersonaId, Seat } from "@/lib/types";
+import { seedData, getTicket, getConsensusProgress, getSeats, claimSeat, releaseSeat } from "@/lib/store";
+import { setPreferredRole } from "@/lib/seats";
+import { useAuth } from "@/lib/auth-context";
 import { getAllPersonas, getPersona } from "@/lib/personas";
 import { formatRelativeTime, formatAbsoluteDate } from "@/lib/timeAgo";
 import { SessionPrompt } from "@/components/SessionPrompt";
@@ -25,12 +27,16 @@ import {
   BellRing,
   Users,
   Settings,
+  Bot,
 } from "lucide-react";
 import { PersonaIcon } from "@/components/PersonaIcon";
 import { SessionParticipants } from "@/components/SessionParticipants";
+import { StandinPanel } from "@/components/StandinPanel";
+import { MediatorPanel } from "@/components/MediatorPanel";
 import {
   joinSession,
   updateOwnPersona,
+  getClientId,
 } from "@/lib/session-presence";
 import {
   getUnreadCount,
@@ -43,6 +49,7 @@ import Link from "next/link";
 export default function PromptSessionPage() {
   const params = useParams();
   const router = useRouter();
+  const { user } = useAuth();
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState(true);
   const [sessionPersona, setSessionPersona] = useState<PersonaId | null>(null);
@@ -50,11 +57,16 @@ export default function PromptSessionPage() {
   const [notifCount, setNotifCount] = useState(0);
   const [notifPermitted, setNotifPermitted] = useState(false);
   const [showNotificationPrefs, setShowNotificationPrefs] = useState(false);
+  const [seats, setSeats] = useState<Record<PersonaId, Seat> | undefined>(undefined);
+
+  // Display name for seat claims: email local-part when signed in
+  const humanLabel = user?.email ? user.email.split("@")[0] : "Human";
 
   const loadTicket = useCallback(() => {
     seedData();
     const t = getTicket(params.id as string);
     setTicket(t || null);
+    setSeats(getSeats(params.id as string));
     setLoading(false);
   }, [params.id]);
 
@@ -85,23 +97,23 @@ export default function PromptSessionPage() {
     }
   }, []);
 
-  // Cleanup session presence on unmount
-  useEffect(() => {
-    return () => {
-      if (sessionPersona) {
-        // Leave session via the joinSession cleanup (called on component unmount)
-        // The joinSession itself returns a cleanup, but we can't store it here easily.
-      }
-    };
-  }, []);
-
   const handleJoinSession = (personaId: PersonaId) => {
+    const ticketId = params.id as string;
+
+    // Hand any previously held seat back to its AI stand-in, then claim the new one
+    if (sessionPersona && sessionPersona !== personaId) {
+      releaseSeat(ticketId, sessionPersona, getClientId());
+    }
+    claimSeat(ticketId, personaId, getClientId(), humanLabel);
+    setPreferredRole(personaId);
+    setSeats(getSeats(ticketId));
+
     setSessionPersona(personaId);
     setShowJoinModal(false);
 
     // Join session presence
     const persona = getAllPersonas().find((p) => p.id === personaId);
-    joinSession(params.id as string, personaId, persona?.label);
+    joinSession(ticketId, personaId, persona?.label);
 
     // Request notification permission on first join
     requestNotificationPermission().then((granted) => {
@@ -110,6 +122,15 @@ export default function PromptSessionPage() {
   };
 
   const handlePersonaSelect = (personaId: PersonaId) => {
+    const ticketId = params.id as string;
+
+    if (sessionPersona && sessionPersona !== personaId) {
+      releaseSeat(ticketId, sessionPersona, getClientId());
+    }
+    claimSeat(ticketId, personaId, getClientId(), humanLabel);
+    setPreferredRole(personaId);
+    setSeats(getSeats(ticketId));
+
     setSessionPersona(personaId);
     setShowJoinModal(false);
 
@@ -118,6 +139,14 @@ export default function PromptSessionPage() {
   };
 
   const handleSwitchPersona = () => {
+    setShowJoinModal(true);
+  };
+
+  const handleReleaseSeat = () => {
+    if (!sessionPersona) return;
+    releaseSeat(params.id as string, sessionPersona, getClientId());
+    setSeats(getSeats(params.id as string));
+    setSessionPersona(null);
     setShowJoinModal(true);
   };
 
@@ -151,6 +180,8 @@ export default function PromptSessionPage() {
         isOpen={showJoinModal}
         onJoin={handleJoinSession}
         mode={sessionPersona ? "switch" : "initial"}
+        seats={seats}
+        clientId={getClientId()}
       />
 
       {/* Top bar */}
@@ -222,6 +253,13 @@ export default function PromptSessionPage() {
                   title="Switch persona"
                 >
                   <RefreshCw size={14} className="text-ink-secondary" />
+                </button>
+                <button
+                  onClick={handleReleaseSeat}
+                  className="p-1 rounded hover:bg-overlay transition-colors"
+                  title="Hand this seat back to its AI stand-in"
+                >
+                  <Bot size={14} className="text-ink-secondary" />
                 </button>
               </div>
             ) : (
@@ -320,6 +358,12 @@ export default function PromptSessionPage() {
                 onPersonaSelect={handlePersonaSelect}
               />
             </div>
+
+            {/* AI stand-ins for unclaimed seats */}
+            <StandinPanel ticket={ticket} onFeedbackImported={handleFeedbackUpdate} />
+
+            {/* Mediator facilitator agent */}
+            <MediatorPanel ticket={ticket} />
           </div>
         </div>
 

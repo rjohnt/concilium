@@ -1,6 +1,7 @@
-import { Ticket, FeedbackEntry, PersonaId, TicketStatus, PriorityLevel, BuildReport, Tag } from "./types";
+import { Ticket, FeedbackEntry, FeedbackSource, PersonaId, TicketStatus, PriorityLevel, BuildReport, BuildChangeRequest, Tag, Seat } from "./types";
 import { validateTransition } from "./status-machine";
 import { getAllPersonas } from "./personas";
+import { normalizeSeats, getSeat, isSeatHeldByOtherHuman } from "./seats";
 import { checkConsensusThreshold, getBuildReadiness, buildBuildReport } from "./consensus-threshold";
 import {
   saveTickets,
@@ -140,6 +141,7 @@ export function createTicket(
     tags,
     feedback: [],
     approvals: [],
+    seats: normalizeSeats(),
   };
   tickets.push(ticket);
   persistState(id);
@@ -235,13 +237,75 @@ export function updateTicketTags(
   return ticket;
 }
 
+// --- Seats (humans + AI stand-ins) ---
+
+/** Normalized seat map for a ticket: one seat per persona, AI-held by default. */
+export function getSeats(ticketId: string): Record<PersonaId, Seat> {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  return normalizeSeats(ticket?.seats);
+}
+
+/**
+ * Claim a persona seat for a human, taking over from the AI stand-in.
+ * Fails (returns null) when another human already holds the seat.
+ */
+export function claimSeat(
+  ticketId: string,
+  personaId: PersonaId,
+  clientId: string,
+  label?: string
+): Seat | null {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  if (!ticket) return null;
+  if (isSeatHeldByOtherHuman(ticket, personaId, clientId)) return null;
+
+  const seat: Seat = {
+    personaId,
+    occupant: "human",
+    claimedBy: clientId,
+    claimedByLabel: label,
+    claimedAt: new Date().toISOString(),
+  };
+  ticket.seats = { ...normalizeSeats(ticket.seats), [personaId]: seat };
+  ticket.updatedAt = new Date().toISOString();
+  persistState(ticketId);
+
+  updateTicketOnServer(ticketId, { seats: ticket.seats }).catch(() => {});
+  return seat;
+}
+
+/**
+ * Release a human-held seat back to its AI stand-in. Only the claiming
+ * client can release it.
+ */
+export function releaseSeat(
+  ticketId: string,
+  personaId: PersonaId,
+  clientId: string
+): Seat | null {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  if (!ticket) return null;
+
+  const current = getSeat(ticket, personaId);
+  if (current.occupant !== "human" || current.claimedBy !== clientId) return null;
+
+  const seat: Seat = { personaId, occupant: "ai" };
+  ticket.seats = { ...normalizeSeats(ticket.seats), [personaId]: seat };
+  ticket.updatedAt = new Date().toISOString();
+  persistState(ticketId);
+
+  updateTicketOnServer(ticketId, { seats: ticket.seats }).catch(() => {});
+  return seat;
+}
+
 // --- Feedback ---
 
 export function addFeedback(
   ticketId: string,
   personaId: PersonaId,
   content: string,
-  approved: boolean
+  approved: boolean,
+  source: FeedbackSource = "human"
 ): FeedbackEntry | null {
   const ticket = tickets.find((t) => t.id === ticketId);
   if (!ticket) return null;
@@ -254,6 +318,7 @@ export function addFeedback(
     content,
     createdAt: new Date().toISOString(),
     approved,
+    source,
   };
 
   ticket.feedback.push(entry);
@@ -303,6 +368,7 @@ export function addFeedback(
         content: entry.content,
         createdAt: entry.createdAt,
         approved: entry.approved,
+        source: entry.source,
       },
       ticketSnapshot: {
         id: ticket.id,
@@ -316,6 +382,49 @@ export function addFeedback(
   }
 
   return entry;
+}
+
+/**
+ * Merge feedback entries generated server-side (AI stand-ins) into the local
+ * store without re-posting them to the server. Recomputes approvals and
+ * status transitions the same way addFeedback does.
+ */
+export function importServerFeedback(
+  ticketId: string,
+  entries: FeedbackEntry[]
+): number {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  if (!ticket || entries.length === 0) return 0;
+
+  const existingIds = new Set(ticket.feedback.map((f) => f.id));
+  let imported = 0;
+
+  for (const entry of entries) {
+    if (existingIds.has(entry.id)) continue;
+    ticket.feedback.push({ ...entry, ticketId });
+    imported++;
+
+    if (entry.approved && !ticket.approvals.includes(entry.personaId)) {
+      ticket.approvals.push(entry.personaId);
+    } else if (!entry.approved) {
+      ticket.approvals = ticket.approvals.filter((p) => p !== entry.personaId);
+    }
+  }
+
+  if (imported === 0) return 0;
+
+  ticket.updatedAt = new Date().toISOString();
+
+  if (ticket.status === "draft" && ticket.feedback.length > 0) {
+    ticket.status = "in-review";
+  }
+  const justReachedConsensus = autoTransitionToConsensus(ticket.id);
+  if (!justReachedConsensus) {
+    autoTransitionToBuilding(ticket.id);
+  }
+
+  persistState(ticketId);
+  return imported;
 }
 
 export function getFeedbackHistory(
@@ -550,6 +659,89 @@ export function completeBuild(ticketId: string): Ticket | null {
   }
 
   return ticket;
+}
+
+/**
+ * File a role-scoped change request against the ticket's completed build.
+ * Persists to the server (the next build round consumes it as delta context)
+ * and mirrors it into the local report.
+ */
+export async function requestBuildChanges(
+  ticketId: string,
+  personaId: PersonaId,
+  content: string
+): Promise<BuildChangeRequest | null> {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  if (!ticket || !ticket.buildReport || !content.trim()) return null;
+
+  let changeRequest: BuildChangeRequest | null = null;
+
+  // Server first — it's the source of truth the rebuild reads from
+  try {
+    const response = await fetch("/api/change-request", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ticketId, personaId, content }),
+    });
+    if (response.ok) {
+      const data = await response.json();
+      changeRequest = data.changeRequest ?? null;
+    }
+  } catch {
+    // Server unreachable — fall back to a local-only request
+  }
+
+  if (!changeRequest) {
+    changeRequest = {
+      id: `CR-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+      personaId,
+      content: content.trim(),
+      createdAt: new Date().toISOString(),
+    };
+  }
+
+  ticket.buildReport.changeRequests = [
+    ...(ticket.buildReport.changeRequests ?? []),
+    changeRequest,
+  ];
+  ticket.updatedAt = new Date().toISOString();
+  persistState(ticketId);
+  return changeRequest;
+}
+
+/** Open (not yet consumed by a rebuild) change requests on the latest build. */
+export function getOpenChangeRequests(ticketId: string): BuildChangeRequest[] {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  return (ticket?.buildReport?.changeRequests ?? []).filter((cr) => !cr.resolvedByBuildId);
+}
+
+/**
+ * Re-kick the build executor with the open change requests as delta context.
+ * Valid on a done ticket with a completed build; moves it back to building.
+ */
+export async function rebuildWithChanges(ticketId: string): Promise<BuildReport | null> {
+  const ticket = tickets.find((t) => t.id === ticketId);
+  if (!ticket || !ticket.buildReport) return null;
+  if (ticket.status !== "done" && ticket.status !== "building") return null;
+  if (getOpenChangeRequests(ticketId).length === 0) return null;
+
+  ticket.status = "building";
+  ticket.buildReport.status = "building";
+  ticket.updatedAt = new Date().toISOString();
+  persistState(ticketId);
+
+  const report = await fetchBuildFromAPI(ticketId);
+  if (report) {
+    setBuildReport(ticketId, report);
+    completeBuild(ticketId);
+    return report;
+  }
+
+  // API failed — restore the previous completed state
+  ticket.status = "done";
+  ticket.buildReport.status = "completed";
+  persistState(ticketId);
+  return null;
 }
 
 /**

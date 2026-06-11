@@ -93,6 +93,7 @@ export async function PATCH(request: NextRequest) {
       priority: body.priority,
       status: body.status,
       tags: body.tags,
+      seats: body.seats,
     });
 
     if (!ticket) {

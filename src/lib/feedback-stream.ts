@@ -22,6 +22,7 @@ export interface FeedbackStreamEvent {
     content: string;
     createdAt: string;
     approved: boolean;
+    source?: string;
   };
   ticketSnapshot: {
     id: string;
