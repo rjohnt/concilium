@@ -61,14 +61,19 @@ Brand strategy, voice & tone, visual identity, and logo concepts live in
 - **Framework**: Next.js 16 (App Router) + React 19 + TypeScript 6
 - **Styling**: Tailwind CSS 3.4 (MagicPath v2 light/indigo dashboard, dark
   parchment session surfaces)
-- **State**: client store (`src/lib/store.ts`) with localStorage persistence,
-  synced to a server-side SQLite DB (`src/lib/server-db.ts`)
+- **State**: client store (`src/lib/store.ts`) with localStorage as a local
+  cache, synced to a server data layer (`src/lib/server-db.ts`) that is an
+  async facade over two backends — **Supabase Postgres** when configured
+  (source of truth) or local **SQLite** as a zero-setup dev/CI fallback
+  (`src/lib/db/`).
 - **Auth**: Supabase (dev bypass when env vars are absent)
 - **AI**: DeepSeek V4 Flash/Pro via `src/lib/llm.ts`; prompts versioned in
   `src/lib/persona-prompts.ts` + `src/lib/mediator-persona.ts`
-- **Realtime (current)**: BroadcastChannel — cross-tab only. The planned
-  migration is Supabase Realtime (Broadcast/Presence/Postgres Changes) with
-  Postgres replacing both SQLite and the localStorage source of truth.
+- **Realtime**: `src/lib/realtime-transport.ts` — Supabase Broadcast
+  (cross-user, over websocket) when configured, else BroadcastChannel
+  (cross-tab). Powers presence, the feedback stream, and cross-tab sync. When
+  Supabase is configured, the store also subscribes to Postgres Changes
+  (`src/lib/postgres-sync.ts`) so other users' writes appear without a refresh.
 - **Testing**: Vitest (`npm test`); LLM prompt evals (`npm run evals`, see
   `scripts/evals/README.md`)
 - **Deploy**: Railway (`railway.json`)
@@ -83,16 +88,18 @@ npm run evals    # LLM prompt evals (requires DEEPSEEK_API_KEY)
 ```
 
 Env vars: `DEEPSEEK_API_KEY` (mediator/stand-ins/builds),
-`NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` (auth),
-`CONCILIUM_BUILD_EXECUTOR`, `CONCILIUM_BUILD_WORKSPACE` (build executor).
+`NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` (auth + realtime +
+client reads), `SUPABASE_SERVICE_ROLE_KEY` (server-side Postgres data layer;
+when absent the server uses local SQLite), `CONCILIUM_BUILD_EXECUTOR`,
+`CONCILIUM_BUILD_WORKSPACE` (build executor).
 
 ## Roadmap
 
 1. ~~Seat model: humans + AI stand-ins, role claim UI, occupancy dashboard~~ ✅
 2. ~~Agentic stand-ins with eval harness; Mediator as dedicated facilitator~~ ✅
 3. ~~Pluggable build executor (local Claude Code sandbox) + artifact review loop~~ ✅
-4. Supabase consolidation: Postgres as source of truth, Realtime replacing
-   BroadcastChannel, true multi-user seats/presence
+4. ~~Supabase consolidation: Postgres as source of truth, Realtime (Broadcast +
+   Postgres Changes) replacing BroadcastChannel, true multi-user sync~~ ✅
 5. Objection-driven consensus: concerns as first-class blocking entities;
    consensus = no open blockers + required sign-offs
 6. Richer artifacts: Playwright runs/recordings, deploy previews
