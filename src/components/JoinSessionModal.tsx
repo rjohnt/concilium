@@ -142,7 +142,7 @@ export function JoinSessionModal({
             <Sparkles size={14} />
             {mode === "switch" ? "Switch Role" : "Session Join"}
           </div>
-          <h2 className="text-3xl font-bold text-ink-primary mb-2">
+          <h2 className="text-2xl sm:text-3xl font-bold text-ink-primary mb-2">
             {title}
           </h2>
           <p className="text-ink-muted max-w-lg mx-auto leading-relaxed">
