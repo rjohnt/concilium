@@ -27,6 +27,7 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
   title: "Concilium — Multiplayer AI-Assisted Tickets",
   description:
     "Replace JIRA's throw-it-over-the-wall workflow with AI-mediated stakeholder collaboration.",
