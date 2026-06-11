@@ -6,7 +6,7 @@ export const PERSONAS: Record<PersonaId, Persona> = {
     id: "engineer",
     label: "Engineer",
     emoji: "⚙️",
-    color: "bg-[#7ec8e3]",
+    color: "bg-[#1E9C86]",
     expertise:
       "Technical feasibility, architecture, implementation approach, and code quality.",
     promptTemplate: `You are weighing in as the Engineer on this feature ticket.
@@ -23,7 +23,7 @@ Provide your assessment:`,
     id: "designer",
     label: "Designer",
     emoji: "🎨",
-    color: "bg-[#c5a3cf]",
+    color: "bg-[#7A57D1]",
     expertise:
       "User experience, visual design, interaction patterns, and accessibility.",
     promptTemplate: `You are weighing in as the Designer on this feature ticket.
@@ -40,7 +40,7 @@ Provide your assessment:`,
     id: "product-owner",
     label: "Product Owner",
     emoji: "📋",
-    color: "bg-[#a3d9a5]",
+    color: "bg-[#D9962A]",
     expertise:
       "Business value, priority, scope definition, and stakeholder alignment.",
     promptTemplate: `You are weighing in as the Product Owner on this feature ticket.
@@ -57,7 +57,7 @@ Provide your assessment:`,
     id: "qa",
     label: "QA",
     emoji: "🧪",
-    color: "bg-[#f5cba7]",
+    color: "bg-[#2F82C7]",
     expertise:
       "Edge cases, test scenarios, acceptance criteria, and quality gates.",
     promptTemplate: `You are weighing in as QA on this feature ticket.

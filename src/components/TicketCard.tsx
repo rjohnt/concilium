@@ -17,7 +17,7 @@ import { Clock, MessageSquare, Calendar } from "lucide-react";
 type MPStatus = "draft" | "in-review" | "consensus" | "building" | "done";
 
 const STATUS_CONFIG: Record<MPStatus, { label: string; color: string; bg: string; border: string }> = {
-  draft:       { label: "Draft",     color: "#64748B", bg: "#F1F5F9", border: "#CBD5E1" },
+  draft:       { label: "Draft",     color: "var(--ink-500)", bg: "var(--warm-150)", border: "var(--warm-300)" },
   "in-review": { label: "Review",    color: "#D97706", bg: "#FFFBEB", border: "#FCD34D" },
   consensus:   { label: "Consensus", color: "#059669", bg: "#ECFDF5", border: "#6EE7B7" },
   building:    { label: "Building",  color: "#2563EB", bg: "#EFF6FF", border: "#93C5FD" },
@@ -28,8 +28,8 @@ const PRIORITY_CONFIG: Record<number, { color: string; bg: string; border: strin
   0: { color: "#DC2626", bg: "#FEF2F2", border: "#FECACA" },
   1: { color: "#EA580C", bg: "#FFF7ED", border: "#FDBA74" },
   2: { color: "#2563EB", bg: "#EFF6FF", border: "#93C5FD" },
-  3: { color: "#64748B", bg: "#F1F5F9", border: "#CBD5E1" },
-  4: { color: "#94A3B8", bg: "#F8FAFC", border: "#E2E8F0" },
+  3: { color: "var(--ink-500)", bg: "var(--warm-150)", border: "var(--warm-300)" },
+  4: { color: "var(--ink-400)", bg: "var(--warm-50)", border: "var(--warm-200)" },
 };
 
 const ASSIGNEE_COLORS = ["#2563EB", "#7C3AED", "#0891B2", "#059669", "#DC2626"];
@@ -83,22 +83,22 @@ export function TicketCard({
       <Link
         href={`/ticket/${ticket.id}`}
         className={`block rounded-xl p-5 transition-all duration-200 border group cursor-pointer ${
-          selected ? "ring-2 ring-brand-500/70 border-brand-300" : "border-border-subtle hover:border-[#CBD5E1]"
+          selected ? "ring-2 ring-brand-500/70 border-brand-300" : "border-border-subtle hover:border-[var(--warm-300)]"
         }`}
         style={{
           background: isHovered && !selected ? "var(--color-elevated)" : "var(--color-raised)",
           boxShadow: selected
-            ? "0 4px 12px rgba(79,70,229,0.12)"
+            ? "var(--shadow-md)"
             : isHovered
-              ? "0 2px 12px 0 rgba(30,41,59,0.10)"
-              : "0 1px 3px 0 rgba(30,41,59,0.05)",
+              ? "var(--shadow-md)"
+              : "var(--shadow-xs)",
         }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Row 1: ID + Badges */}
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-[11px] font-semibold tracking-[0.08em] uppercase" style={{ color: "#94A3B8" }}>
+          <span className="text-[11px] font-semibold tracking-[0.08em] uppercase" style={{ color: "var(--ink-400)" }}>
             {ticket.id}
           </span>
           {/* Status badge — exact MagicPath v2 styling */}
@@ -137,7 +137,7 @@ export function TicketCard({
           />
         ) : (
           <h3
-            className="text-sm font-semibold tracking-[-0.01em] text-[#0F172A] group-hover:text-brand-600 transition-colors truncate cursor-text focus:outline-none focus:ring-2 focus:ring-brand-500/50 rounded"
+            className="text-sm font-semibold tracking-[-0.01em] text-[var(--ink-900)] group-hover:text-brand-600 transition-colors truncate cursor-text focus:outline-none focus:ring-2 focus:ring-brand-500/50 rounded"
             onClick={startEditing}
             tabIndex={0}
             onKeyDown={(e) => {
@@ -150,7 +150,7 @@ export function TicketCard({
 
         {/* Description */}
         {ticket.description && (
-          <p className="text-xs mt-1.5 leading-relaxed line-clamp-2" style={{ color: "#64748B" }}>
+          <p className="text-xs mt-1.5 leading-relaxed line-clamp-2" style={{ color: "var(--ink-500)" }}>
             {ticket.description}
           </p>
         )}
@@ -159,21 +159,21 @@ export function TicketCard({
         {!SHOW_CONSENSUS_DOTS.includes(ticket.status as MPStatus) && (
           <div className="mt-3">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[11px] font-medium" style={{ color: "#94A3B8" }}>Consensus</span>
-              <span className="text-[11px]" style={{ color: "#94A3B8" }}>{ticket.approvals.length}/{allPersonas.length}</span>
+              <span className="text-[11px] font-medium" style={{ color: "var(--ink-400)" }}>Consensus</span>
+              <span className="text-[11px]" style={{ color: "var(--ink-400)" }}>{ticket.approvals.length}/{allPersonas.length}</span>
             </div>
-            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "#E2E8F0" }}>
-              <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progress * 100}%`, background: "#6366F1" }} />
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--warm-200)" }}>
+              <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progress * 100}%`, background: "var(--coral-500)" }} />
             </div>
           </div>
         )}
 
         {SHOW_CONSENSUS_DOTS.includes(ticket.status as MPStatus) && (
           <div className="mt-2.5 flex items-center gap-2" title={`${ticket.approvals.length} of ${allPersonas.length} approved`}>
-            <span className="text-[11px] font-medium" style={{ color: "#94A3B8" }}>Consensus</span>
+            <span className="text-[11px] font-medium" style={{ color: "var(--ink-400)" }}>Consensus</span>
             <div className="flex items-center gap-1">
               {allPersonas.map((p) => (
-                <PersonaIcon key={p.id} personaId={p.id} size={13} className={ticket.approvals.includes(p.id) ? "text-[#059669]" : "text-[#CBD5E1]"} />
+                <PersonaIcon key={p.id} personaId={p.id} size={13} className={ticket.approvals.includes(p.id) ? "text-[#059669]" : "text-[var(--warm-300)]"} />
               ))}
             </div>
           </div>
@@ -193,7 +193,7 @@ export function TicketCard({
         })()}
 
         {/* Bottom row: personas + metadata */}
-        <div className="mt-3 flex flex-col gap-2 pt-3 sm:flex-row sm:items-center sm:justify-between" style={{ borderTop: "1px solid #E2E8F0" }}>
+        <div className="mt-3 flex flex-col gap-2 pt-3 sm:flex-row sm:items-center sm:justify-between" style={{ borderTop: "1px solid var(--warm-200)" }}>
           <div className="flex flex-wrap items-center gap-1.5" data-testid="ticket-persona-badges">
             {allPersonas.map((p) => (
               <div key={p.id} className="shrink-0">
@@ -201,7 +201,7 @@ export function TicketCard({
               </div>
             ))}
           </div>
-          <div className="flex items-center gap-3 text-[11px]" style={{ color: "#94A3B8" }}>
+          <div className="flex items-center gap-3 text-[11px]" style={{ color: "var(--ink-400)" }}>
             <span className="flex items-center gap-1">
               <MessageSquare size={11} />
               {ticket.feedback.length}
