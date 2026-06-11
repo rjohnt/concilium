@@ -1,0 +1,19 @@
+<svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <title>Concilium — The Seal (consensus = sealed)</title>
+  <!-- Outer seal rim -->
+  <circle cx="64" cy="64" r="56" stroke="#6366F1" stroke-width="4"/>
+  <circle cx="64" cy="64" r="44" stroke="#6366F1" stroke-width="2" opacity="0.6"/>
+  <!-- Radial ticks between rims -->
+  <g stroke="#6366F1" stroke-width="2" opacity="0.6">
+    <path d="M 64 10 L 64 18"/>
+    <path d="M 64 110 L 64 118"/>
+    <path d="M 10 64 L 18 64"/>
+    <path d="M 110 64 L 118 64"/>
+    <path d="M 25.8 25.8 L 31.5 31.5"/>
+    <path d="M 96.5 96.5 L 102.2 102.2"/>
+    <path d="M 102.2 25.8 L 96.5 31.5"/>
+    <path d="M 31.5 96.5 L 25.8 102.2"/>
+  </g>
+  <!-- The C, struck like a stamp -->
+  <path d="M 88 45 A 30 30 0 1 0 88 83" stroke="#6366F1" stroke-width="11" stroke-linecap="round"/>
+</svg>

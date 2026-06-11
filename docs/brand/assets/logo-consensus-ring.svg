@@ -1,0 +1,18 @@
+<svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <title>Concilium — Consensus Ring (round table, four seats; one seat claimed)</title>
+  <!-- Table -->
+  <circle cx="64" cy="64" r="16" stroke="#6366F1" stroke-width="3" opacity="0.55"/>
+  <circle cx="64" cy="64" r="3.5" fill="#6366F1"/>
+  <!-- Ring segments between seats -->
+  <g stroke="#6366F1" stroke-width="5" stroke-linecap="round">
+    <path d="M 74.6 21.3 A 44 44 0 0 1 106.7 53.4"/>
+    <path d="M 106.7 74.6 A 44 44 0 0 1 74.6 106.7"/>
+    <path d="M 53.4 106.7 A 44 44 0 0 1 21.3 74.6"/>
+    <path d="M 21.3 53.4 A 44 44 0 0 1 53.4 21.3"/>
+  </g>
+  <!-- Seats: top seat claimed (filled), others held by stand-ins (open) -->
+  <circle cx="64" cy="20" r="7" fill="#6366F1"/>
+  <circle cx="108" cy="64" r="6" stroke="#6366F1" stroke-width="4"/>
+  <circle cx="64" cy="108" r="6" stroke="#6366F1" stroke-width="4"/>
+  <circle cx="20" cy="64" r="6" stroke="#6366F1" stroke-width="4"/>
+</svg>
