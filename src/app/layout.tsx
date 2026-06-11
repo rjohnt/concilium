@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
@@ -27,9 +27,15 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
   title: "Concilium — Multiplayer AI-Assisted Tickets",
   description:
     "Replace JIRA's throw-it-over-the-wall workflow with AI-mediated stakeholder collaboration.",
+};
+
+export const viewport: Viewport = {
+  // Matches the warm app background so the mobile browser chrome blends in.
+  themeColor: "#FCFAF6",
 };
 
 export default function RootLayout({

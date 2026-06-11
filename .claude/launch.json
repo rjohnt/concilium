@@ -6,12 +6,6 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 3000
-    },
-    {
-      "name": "variant-static",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["--yes", "serve", "marketing/variants", "-l", "4601", "--no-clipboard"],
-      "port": 4601
     }
   ]
 }

@@ -186,27 +186,27 @@ export default function PromptSessionPage() {
 
       {/* Top bar */}
       <header className="flex-shrink-0 border-b border-border-subtle bg-raised/80 backdrop-blur-sm">
-        <div className="flex items-center justify-between h-14 px-6">
-          <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between h-14 px-3 sm:px-6 gap-2">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
             <Link
               href={`/ticket/${ticket.id}`}
-              className="flex items-center gap-1.5 text-sm text-ink-secondary hover:text-ink-primary transition-colors"
+              className="flex items-center gap-1.5 text-sm text-ink-secondary hover:text-ink-primary transition-colors flex-shrink-0"
             >
               <ArrowLeft size={16} />
               <span className="hidden sm:inline">Back to Ticket</span>
             </Link>
-            <div className="h-5 w-px bg-border-subtle" />
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-mono text-ink-muted">
+            <div className="h-5 w-px bg-border-subtle flex-shrink-0" />
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-sm font-mono text-ink-muted flex-shrink-0">
                 {ticket.id}
               </span>
-              <span className="text-sm font-medium text-ink-primary truncate max-w-[200px] sm:max-w-md">
+              <span className="text-sm font-medium text-ink-primary truncate sm:max-w-md">
                 {ticket.title}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
             {/* Notification preferences gear */}
             <button
               onClick={() => setShowNotificationPrefs(true)}
@@ -242,9 +242,9 @@ export default function PromptSessionPage() {
 
             {/* Active persona */}
             {activePersonaObj ? (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-elevated/60 border border-border-visible/50">
+              <div className="flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-lg bg-elevated/60 border border-border-visible/50">
                 <PersonaIcon personaId={activePersonaObj.id} size={18} />
-                <span className="text-sm font-medium text-ink-primary">
+                <span className="text-sm font-medium text-ink-primary hidden sm:inline">
                   {activePersonaObj.label}
                 </span>
                 <button
@@ -275,11 +275,11 @@ export default function PromptSessionPage() {
         </div>
       </header>
 
-      {/* Main content: two-panel layout */}
+      {/* Main content: two-panel layout (stacks on mobile) */}
       <PromptErrorBoundary>
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden min-h-0">
         {/* Left panel: ticket info + consensus */}
-        <div className="w-80 lg:w-96 flex-shrink-0 border-r border-border-subtle bg-base/40 overflow-y-auto p-6">
+        <div className="w-full lg:w-80 xl:w-96 flex-shrink-0 border-b lg:border-b-0 lg:border-r border-border-subtle bg-base/40 lg:overflow-y-auto p-4 sm:p-6">
           <div className="space-y-6">
             {/* Session title */}
             <div>
@@ -368,9 +368,9 @@ export default function PromptSessionPage() {
         </div>
 
         {/* Right panel: prompt input + chat timeline */}
-        <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="flex-1 lg:overflow-hidden flex flex-col min-h-[60vh] lg:min-h-0">
           {sessionPersona ? (
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 lg:overflow-y-auto p-4 sm:p-6">
               <SessionPrompt ticket={ticket} activePersona={sessionPersona} />
             </div>
           ) : (

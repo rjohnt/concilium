@@ -49,20 +49,26 @@ export interface MediatorResponse {
   };
 }
 
-function buildContext(ticketId: string, personaId: PersonaId): MediatorContext | null {
-  const ticket = getTicket(ticketId);
+async function buildContext(
+  ticketId: string,
+  personaId: PersonaId
+): Promise<{ context: MediatorContext; ticket: Ticket } | null> {
+  const ticket = await getTicket(ticketId);
   if (!ticket) return null;
 
-  const history = getFeedbackHistory(ticketId);
+  const history = await getFeedbackHistory(ticketId);
   const consensus = checkConsensusThreshold(ticket);
 
   return {
-    ticketId,
-    personaId,
-    sessionHistory: history,
-    consensusReached: consensus.reached,
-    approvedCount: ticket.approvals.length,
-    totalPersonas: getAllPersonas().length,
+    ticket,
+    context: {
+      ticketId,
+      personaId,
+      sessionHistory: history,
+      consensusReached: consensus.reached,
+      approvedCount: ticket.approvals.length,
+      totalPersonas: getAllPersonas().length,
+    },
   };
 }
 
@@ -74,10 +80,10 @@ export async function mediate(
   personaId: PersonaId,
   userMessage: string
 ): Promise<{ response: MediatorResponse; context: MediatorContext } | null> {
-  const context = buildContext(ticketId, personaId);
-  if (!context) return null;
+  const built = await buildContext(ticketId, personaId);
+  if (!built) return null;
+  const { context, ticket } = built;
 
-  const ticket = getTicket(ticketId)!;
   const persona = getPersona(personaId);
   if (!persona) return null;
 
@@ -96,10 +102,10 @@ export async function continueMediation(
   userMessage: string,
   previousResponse: MediatorResponse
 ): Promise<{ response: MediatorResponse; context: MediatorContext } | null> {
-  const context = buildContext(ticketId, personaId);
-  if (!context) return null;
+  const built = await buildContext(ticketId, personaId);
+  if (!built) return null;
+  const { context, ticket } = built;
 
-  const ticket = getTicket(ticketId)!;
   const persona = getPersona(personaId);
   if (!persona) return null;
 
@@ -214,7 +220,7 @@ async function generateLLMResponse(
   }
 
   // Find next persona
-  const suggestedNextPersona = findNextPersona(context);
+  const suggestedNextPersona = findNextPersona(context, ticket);
 
   return {
     refinedFeedback: String(parsed.refinedFeedback ?? "No feedback generated.").trim(),
@@ -241,10 +247,8 @@ function safeArray(value: unknown): string[] {
   return [];
 }
 
-function findNextPersona(context: MediatorContext): PersonaId | null {
+function findNextPersona(context: MediatorContext, ticket: Ticket): PersonaId | null {
   const allPersonas = getAllPersonas();
-  const ticket = getTicket(context.ticketId);
-  if (!ticket) return null;
 
   const personasWithFeedback = new Set(
     context.sessionHistory.map((f) => f.personaId)

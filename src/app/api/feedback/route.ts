@@ -23,12 +23,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const ticket = serverDb.getTicket(ticketId);
+    const ticket = await serverDb.getTicket(ticketId);
     if (!ticket) {
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
-    const feedback = serverDb.getFeedbackHistory(ticketId);
+    const feedback = await serverDb.getFeedbackHistory(ticketId);
 
     return NextResponse.json({
       feedback,
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
     const approved = body.approved === true;
     const source = body.source === "ai-standin" ? "ai-standin" : "human";
 
-    const entry = serverDb.addFeedback(
+    const entry = await serverDb.addFeedback(
       body.ticketId,
       body.personaId as PersonaId,
       body.content,
@@ -83,8 +83,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Return the full ticket state so the client can sync
-    const ticket = serverDb.getTicket(body.ticketId);
-    const feedback = serverDb.getFeedbackHistory(body.ticketId);
+    const ticket = await serverDb.getTicket(body.ticketId);
+    const feedback = await serverDb.getFeedbackHistory(body.ticketId);
 
     return NextResponse.json(
       {

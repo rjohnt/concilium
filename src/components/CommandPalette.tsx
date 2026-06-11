@@ -1,50 +1,130 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import {
   Search,
   LayoutDashboard,
   PlusCircle,
+  FileText,
+  Sparkles,
+  Share2,
+  Users,
+  ExternalLink,
 } from "lucide-react";
 import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
+import { getTickets, getTicket } from "@/lib/store";
+import { generateAgentPrompt } from "@/lib/agent-prompt";
+import { useToast } from "@/components/Toast";
+import type { Ticket } from "@/lib/types";
 
 interface Command {
   label: string;
   shortcut?: string;
-  href: string;
+  /** Navigate here when selected. */
+  href?: string;
+  /** Or run this action when selected (takes precedence over href). */
+  run?: () => void;
   icon: React.ComponentType<{ size?: number; className?: string }>;
 }
 
-const commands: Command[] = [
+const STATIC_COMMANDS: Command[] = [
   { label: "Go to Dashboard", shortcut: "⌘1", href: "/", icon: LayoutDashboard },
   { label: "New Ticket", shortcut: "⌘N", href: "/new", icon: PlusCircle },
 ];
+
+// How many tickets to show when the query is empty / when filtering.
+const RECENT_LIMIT = 5;
+const MATCH_LIMIT = 8;
 
 export function CommandPalette() {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const pathname = usePathname();
+  const { addToast } = useToast();
 
   // ── Refs for values read inside the keyboard-navigation listener ──
   // Using refs avoids re-attaching the event listener on every keystroke.
-  const filteredCommandsRef = useRef(commands);
+  const filteredCommandsRef = useRef<Command[]>(STATIC_COMMANDS);
   const selectedIndexRef = useRef(0);
 
+  const copyToClipboard = useCallback(
+    (text: string, title: string) => {
+      if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) return;
+      navigator.clipboard.writeText(text).then(
+        () => addToast({ variant: "success", title }),
+        () => addToast({ variant: "error", title: "Couldn't copy to clipboard" })
+      );
+    },
+    [addToast]
+  );
+
+  // Actions for the ticket you're currently viewing — so the page's scattered
+  // buttons (Share, Consensus, Prompt Session…) are reachable from one place.
+  const contextCommands = useMemo<Command[]>(() => {
+    const match = pathname?.match(/^\/ticket\/([^/]+)/);
+    const id = match?.[1];
+    if (!id) return [];
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    return [
+      {
+        label: `Copy agent prompt — ${id}`,
+        icon: Sparkles,
+        run: () => {
+          const t = getTicket(id);
+          if (t) copyToClipboard(generateAgentPrompt(t), "Agent prompt copied");
+        },
+      },
+      {
+        label: `Copy share link — ${id}`,
+        icon: Share2,
+        run: () => copyToClipboard(`${origin}/share/${id}`, "Public link copied"),
+      },
+      { label: `Open public share page — ${id}`, href: `/share/${id}`, icon: ExternalLink },
+      { label: `Open consensus room — ${id}`, href: `/consensus/${id}`, icon: Users },
+      { label: `Open prompt session — ${id}`, href: `/prompt/${id}`, icon: Sparkles },
+    ];
+  }, [pathname, copyToClipboard]);
+
+  // Tickets as jump-to commands (most-recently-updated first).
+  const ticketCommands = useMemo<Command[]>(
+    () =>
+      tickets.map((t) => ({
+        label: `${t.id} · ${t.title}`,
+        href: `/ticket/${t.id}`,
+        icon: FileText,
+      })),
+    [tickets]
+  );
+
   const filteredCommands = useMemo(() => {
-    if (!query.trim()) return commands;
-    const q = query.toLowerCase();
-    return commands.filter((cmd) => cmd.label.toLowerCase().includes(q));
-  }, [query]);
+    const q = query.toLowerCase().trim();
+    const actions = [...contextCommands, ...STATIC_COMMANDS];
+    if (!q) {
+      return [...actions, ...ticketCommands.slice(0, RECENT_LIMIT)];
+    }
+    const actionMatches = actions.filter((cmd) => cmd.label.toLowerCase().includes(q));
+    const ticketMatches = ticketCommands
+      .filter((cmd) => cmd.label.toLowerCase().includes(q))
+      .slice(0, MATCH_LIMIT);
+    return [...actionMatches, ...ticketMatches];
+  }, [query, ticketCommands, contextCommands]);
 
   // Keep refs in sync
   filteredCommandsRef.current = filteredCommands;
   selectedIndexRef.current = selectedIndex;
 
   const open = useCallback(() => {
+    // Snapshot tickets when opening, most-recently-updated first.
+    const loaded = [...getTickets()].sort(
+      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+    setTickets(loaded);
     setIsOpen(true);
     setQuery("");
     setSelectedIndex(0);
@@ -53,6 +133,19 @@ export function CommandPalette() {
   const close = useCallback(() => {
     setIsOpen(false);
   }, []);
+
+  // Execute a command: run its action, or navigate. Always closes first.
+  const runCommand = useCallback(
+    (command: Command) => {
+      close();
+      if (command.run) command.run();
+      else if (command.href) router.push(command.href);
+    },
+    [close, router]
+  );
+  // Ref so the stable keyboard listener can call the latest runCommand.
+  const runCommandRef = useRef(runCommand);
+  runCommandRef.current = runCommand;
 
   // Global Cmd+K / Ctrl+K to open (single listener, cross-platform)
   useKeyboardShortcut("k", open, "metaOrCtrl");
@@ -112,9 +205,7 @@ export function CommandPalette() {
         case "Enter":
           event.preventDefault();
           if (cmds[idx]) {
-            const href = cmds[idx].href;
-            close();
-            router.push(href);
+            runCommandRef.current(cmds[idx]);
           }
           break;
 
@@ -181,7 +272,7 @@ export function CommandPalette() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Type a command..."
+            placeholder="Search tickets or run a command…"
             aria-activedescendant={activeDescendantId ?? ""}
             className="w-full bg-transparent text-ink-primary text-sm placeholder:text-ink-muted outline-none"
           />
@@ -194,7 +285,7 @@ export function CommandPalette() {
         <div ref={listRef} className="py-1">
           {filteredCommands.length === 0 ? (
             <div className="px-4 py-8 text-center text-sm text-ink-muted">
-              No commands found
+              No tickets or commands match &ldquo;{query}&rdquo;
             </div>
           ) : (
             filteredCommands.map((command, index) => (
@@ -203,10 +294,7 @@ export function CommandPalette() {
                 id={`command-${index}`}
                 role="option"
                 aria-selected={index === selectedIndex}
-                onClick={() => {
-                  close();
-                  router.push(command.href);
-                }}
+                onClick={() => runCommand(command)}
                 onMouseEnter={() => setSelectedIndex(index)}
                 className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
                   index === selectedIndex

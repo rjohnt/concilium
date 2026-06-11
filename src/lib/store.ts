@@ -10,6 +10,7 @@ import {
   STORAGE_KEY,
 } from "./persistence";
 import { broadcastTicketUpdate, broadcastFullSync, onTicketUpdate } from "./crossTabSync";
+import { subscribeToPostgresChanges } from "./postgres-sync";
 import {
   fetchAllTickets,
   fetchTicket as apiFetchTicket,
@@ -46,6 +47,11 @@ let tickets: Ticket[] = initial.tickets;
 let nextTicketId = initial.nextTicketId;
 let nextFeedbackId = initial.nextFeedbackId;
 let nextBuildReportId = initial.nextBuildReportId;
+
+// Tickets created locally that the server may not have confirmed yet. Kept
+// across authoritative server pulls so an optimistic create isn't dropped in
+// the window before its fire-and-forget API write lands.
+const pendingTicketIds = new Set<string>();
 
 // --- Debounced persistence ---
 
@@ -86,6 +92,68 @@ function reloadFromStorage(): void {
   nextBuildReportId = state.nextBuildReportId;
 }
 
+function recalcNextIds(): void {
+  const maxTicketNum = tickets.reduce((max, t) => {
+    const m = parseInt(t.id.replace("TIX-", ""), 10);
+    return isNaN(m) ? max : Math.max(max, m);
+  }, 0);
+  nextTicketId = Math.max(nextTicketId, maxTicketNum + 1);
+
+  const maxFeedbackNum = tickets.reduce((max, t) => {
+    return t.feedback.reduce((fm, f) => {
+      const n = parseInt(f.id.replace("FB-", ""), 10);
+      return isNaN(n) ? fm : Math.max(fm, n);
+    }, max);
+  }, 0);
+  nextFeedbackId = Math.max(nextFeedbackId, maxFeedbackNum + 1);
+}
+
+/**
+ * Replace local state with the authoritative server snapshot. The server is
+ * the source of truth, so server rows win; but any locally-created ticket the
+ * server hasn't confirmed yet (still in pendingTicketIds) is preserved so an
+ * optimistic create doesn't flicker out before its API write lands. A ticket
+ * the server omits AND that isn't pending is treated as deleted elsewhere.
+ */
+function applyServerTickets(serverTickets: Ticket[]): void {
+  cancelPendingPersist();
+  const serverIds = new Set(serverTickets.map((t) => t.id));
+  // Drop confirmation tracking for anything the server now knows about.
+  for (const id of serverIds) pendingTicketIds.delete(id);
+
+  const unconfirmedLocal = tickets.filter(
+    (t) => !serverIds.has(t.id) && pendingTicketIds.has(t.id)
+  );
+  tickets = [...serverTickets, ...unconfirmedLocal];
+  recalcNextIds();
+  persistState();
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("tickets-changed"));
+  }
+}
+
+let pullInFlight = false;
+
+/**
+ * Pull the authoritative ticket list from the server and apply it locally.
+ * Used by the realtime postgres-changes subscription so other users' writes
+ * appear without a manual refresh. No-ops while a pull is already running.
+ */
+export async function pullFromServer(): Promise<void> {
+  if (pullInFlight) return;
+  pullInFlight = true;
+  try {
+    const serverTickets = await syncPullAll();
+    if (serverTickets && serverTickets.length > 0) {
+      applyServerTickets(serverTickets);
+    }
+  } catch {
+    // Server unreachable — keep local state
+  } finally {
+    pullInFlight = false;
+  }
+}
+
 // --- Cross-tab sync via storage event and BroadcastChannel ---
 
 if (typeof window !== "undefined") {
@@ -97,14 +165,22 @@ if (typeof window !== "undefined") {
     }
   });
 
-  // BroadcastChannel: immediate sync for same-origin tabs (including the
-  // emitting tab, which doesn't receive the storage event above).
+  // Transport (Supabase Broadcast / BroadcastChannel): immediate signal of a
+  // peer's write. With BroadcastChannel this is same-browser tabs; with
+  // Supabase it's other users too. localStorage is the shared store for the
+  // BroadcastChannel case, so reload from it.
   onTicketUpdate(() => {
     cancelPendingPersist();
     reloadFromStorage();
     // Let in-tab listeners know state has changed without waiting for
     // the 50 ms debounce window that persistState() would have used.
     window.dispatchEvent(new CustomEvent("tickets-changed"));
+  });
+
+  // Postgres Changes: when the shared database changes (any user), re-pull the
+  // authoritative snapshot. No-op unless Supabase is configured.
+  subscribeToPostgresChanges(() => {
+    void pullFromServer();
   });
 }
 
@@ -144,11 +220,17 @@ export function createTicket(
     seats: normalizeSeats(),
   };
   tickets.push(ticket);
+  pendingTicketIds.add(id);
   persistState(id);
 
-  // Fire-and-forget server sync
-  createTicketOnServer(title, description, priority, dueDate, tags)
-    .catch(() => { /* server unreachable — fine */ });
+  // Fire-and-forget server sync (passes the local id so server agrees on it);
+  // confirm the ticket once the server acknowledges so an authoritative pull
+  // no longer treats it as unconfirmed-local.
+  createTicketOnServer(title, description, priority, dueDate, tags, id)
+    .then((created) => {
+      if (created) pendingTicketIds.delete(id);
+    })
+    .catch(() => { /* server unreachable — stays pending, retried on next pull */ });
 
   return ticket;
 }
@@ -808,24 +890,8 @@ export function seedData(): void {
     // Fire-and-forget: try to pull from server, seed with local data if empty
     syncPullAll().then((serverTickets) => {
       if (serverTickets && serverTickets.length > 0) {
-        // Server has data — overwrite localStorage with server state
-        cancelPendingPersist();
-        tickets = serverTickets;
-        // Recalculate next IDs
-        const maxTicketNum = tickets.reduce((max, t) => {
-          const m = parseInt(t.id.replace("TIX-", ""), 10);
-          return isNaN(m) ? max : Math.max(max, m);
-        }, 0);
-        nextTicketId = maxTicketNum + 1;
-        const maxFeedbackNum = tickets.reduce((max, t) => {
-          return t.feedback.reduce((fm, f) => {
-            const n = parseInt(f.id.replace("FB-", ""), 10);
-            return isNaN(n) ? fm : Math.max(fm, n);
-          }, max);
-        }, 0);
-        nextFeedbackId = maxFeedbackNum + 1;
-        persistState();
-        window.dispatchEvent(new CustomEvent("tickets-changed"));
+        // Server has data — it's authoritative
+        applyServerTickets(serverTickets);
         return;
       }
 

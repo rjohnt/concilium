@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       return applyRateLimitHeaders(response, rateLimitResult);
     }
 
-    const ticket = getTicket(body.ticketId);
+    const ticket = await getTicket(body.ticketId);
     if (!ticket) {
       const response = NextResponse.json({ error: "Ticket not found" }, { status: 404 });
       return applyRateLimitHeaders(response, rateLimitResult);
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
       if (result) results.push(result);
     }
 
-    const updatedTicket = getTicket(body.ticketId);
+    const updatedTicket = await getTicket(body.ticketId);
     const response = NextResponse.json({
       results,
       ticket: updatedTicket
