@@ -1,16 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  ArrowRight,
-  Check,
-  Code,
-  Compass,
-  Microscope,
-  PenTool,
-  Play,
-  Sparkles,
-  type LucideIcon,
-} from "lucide-react";
+import { ArrowRight, Check, Play, Sparkles } from "lucide-react";
+import CouncilDemo from "./CouncilDemo";
+import { PersonaAvatar, ROLE, ROLE_ORDER } from "./persona-kit";
 import styles from "./welcome.module.css";
 
 export const metadata: Metadata = {
@@ -18,113 +10,6 @@ export const metadata: Metadata = {
   description:
     "Concilium puts AI personas — Engineer, Designer, Product Owner & QA — around your tickets. They weigh in; you steer; approvals reach consensus.",
 };
-
-/* ------------------------------------------------------------------ */
-/* Persona meta — repo roles mapped onto the marketing kit's palette   */
-/* ------------------------------------------------------------------ */
-
-type RoleKey = "engineer" | "designer" | "product" | "qa";
-
-interface RoleMeta {
-  label: string;
-  name: string;
-  color: string;
-  icon: LucideIcon;
-  blurb: string;
-}
-
-const ROLE: Record<RoleKey, RoleMeta> = {
-  engineer: {
-    label: "Engineer",
-    name: "Ada",
-    color: "var(--persona-eng-500)",
-    icon: Code,
-    blurb: "Scaffolds services, writes the code, opens the PR.",
-  },
-  designer: {
-    label: "Designer",
-    name: "Iris",
-    color: "var(--persona-des-500)",
-    icon: PenTool,
-    blurb: "Shapes the surface, builds the empty-states, keeps it warm.",
-  },
-  product: {
-    label: "Product Owner",
-    name: "Pam",
-    color: "var(--persona-prod-500)",
-    icon: Compass,
-    blurb: "Holds the thread, writes the spec, keeps the goal in view.",
-  },
-  qa: {
-    label: "QA",
-    name: "Ray",
-    color: "var(--persona-res-500)",
-    icon: Microscope,
-    blurb: "Checks the edge cases, writes the criteria, validates.",
-  },
-};
-
-const ROLE_ORDER: RoleKey[] = ["engineer", "designer", "product", "qa"];
-
-/* ------------------------------------------------------------------ */
-/* Local helper components (marketing-only recreations of the DS)      */
-/* ------------------------------------------------------------------ */
-
-const AVATAR_SIZES = { sm: 30, md: 40, lg: 52 } as const;
-
-function PersonaAvatar({
-  role,
-  size = "md",
-  tagIcon = false,
-}: {
-  role: RoleKey;
-  size?: keyof typeof AVATAR_SIZES;
-  tagIcon?: boolean;
-}) {
-  const meta = ROLE[role];
-  const px = AVATAR_SIZES[size];
-  const TagIcon = meta.icon;
-  const initials = meta.name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((p) => p[0])
-    .join("")
-    .toUpperCase();
-  return (
-    <span
-      className={styles.pav}
-      style={
-        {
-          "--pav-size": `${px}px`,
-          "--pav-color": meta.color,
-        } as React.CSSProperties
-      }
-    >
-      <span className={styles.pavFace} style={{ fontSize: Math.round(px * 0.4) }}>
-        {initials}
-      </span>
-      {tagIcon && (
-        <span className={styles.pavTag}>
-          <TagIcon strokeWidth={2.5} />
-        </span>
-      )}
-    </span>
-  );
-}
-
-function PersonaBadge({ role }: { role: RoleKey }) {
-  const meta = ROLE[role];
-  return (
-    <span
-      className={`${styles.pbadge} ${styles.pbadgeOutline}`}
-      style={{ "--pb-color": meta.color } as React.CSSProperties}
-    >
-      <span className={styles.pbadgeDot} />
-      {meta.label}
-    </span>
-  );
-}
 
 /* ------------------------------------------------------------------ */
 /* Sections                                                            */
@@ -162,45 +47,6 @@ function Nav() {
   );
 }
 
-function HeroViz() {
-  const rows: { role: RoleKey; tx: string }[] = [
-    {
-      role: "product",
-      tx: "Goal: ship the share page — buyers see ticket status without signing in.",
-    },
-    {
-      role: "qa",
-      tx: "Edge case: an expired link should explain itself, not 404.",
-    },
-    {
-      role: "designer",
-      tx: "On it — designing an empty-state that keeps the page warm ✨",
-    },
-  ];
-  return (
-    <div className={styles.heroviz}>
-      <div className={styles.herovizBar}>
-        <span className={styles.herovizDot} style={{ background: "var(--persona-prod-400)" }} />
-        <span className={styles.herovizDot} style={{ background: "var(--persona-des-400)" }} />
-        <span className={styles.herovizDot} style={{ background: "var(--persona-eng-400)" }} />
-        <span className={styles.herovizLabel}>TKT-128 · council</span>
-      </div>
-      {rows.map((r) => (
-        <div className={styles.herovizMsg} key={r.role}>
-          <PersonaAvatar role={r.role} size="sm" tagIcon />
-          <div className={styles.herovizBody}>
-            <div className={styles.herovizName}>
-              {ROLE[r.role].name}
-              <PersonaBadge role={r.role} />
-            </div>
-            <div className={styles.herovizText}>{r.tx}</div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function Hero() {
   return (
     <div className={styles.wrap}>
@@ -235,7 +81,7 @@ function Hero() {
             bring your own keys
           </div>
         </div>
-        <HeroViz />
+        <CouncilDemo />
       </div>
     </div>
   );
