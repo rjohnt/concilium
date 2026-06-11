@@ -102,12 +102,20 @@ export function summarizeSeatOccupancy(tickets: Ticket[]): SeatOccupancySummary 
 
 export function getPreferredRole(): PersonaId | null {
   if (typeof window === "undefined") return null;
-  const value = localStorage.getItem(PREFERRED_ROLE_KEY);
-  const valid = getAllPersonas().some((p) => p.id === value);
-  return valid ? (value as PersonaId) : null;
+  try {
+    const value = localStorage.getItem(PREFERRED_ROLE_KEY);
+    const valid = getAllPersonas().some((p) => p.id === value);
+    return valid ? (value as PersonaId) : null;
+  } catch {
+    return null;
+  }
 }
 
 export function setPreferredRole(personaId: PersonaId): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem(PREFERRED_ROLE_KEY, personaId);
+  try {
+    localStorage.setItem(PREFERRED_ROLE_KEY, personaId);
+  } catch {
+    // localStorage unavailable — preference just won't stick
+  }
 }
