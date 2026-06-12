@@ -22,6 +22,8 @@ import {
   PriorityLevel,
   Tag,
   SeatMap,
+  Project,
+  SandboxProvider,
 } from "../types";
 import { checkConsensusThreshold } from "../consensus-threshold";
 
@@ -61,6 +63,18 @@ interface TicketRow {
   due_date: string | null;
   tags: Tag[];
   seats: SeatMap;
+  project_id: string | null;
+  branch_override: string | null;
+}
+
+interface ProjectRow {
+  id: string;
+  name: string;
+  repo_url: string | null;
+  default_branch: string;
+  sandbox_provider: string;
+  create_pr: boolean;
+  created_at: string;
 }
 
 interface FeedbackRow {
@@ -144,6 +158,8 @@ function assembleTicket(
     dueDate: row.due_date || undefined,
     tags: row.tags ?? [],
     seats: row.seats ?? {},
+    projectId: row.project_id ?? null,
+    branchOverride: row.branch_override ?? null,
     feedback,
     approvals,
     buildReport,
@@ -233,7 +249,7 @@ export async function getTicket(id: string): Promise<Ticket | undefined> {
   return assembleTicket(rows[0], feedback, buildReport);
 }
 
-async function nextId(table: "tickets" | "feedback", prefix: string): Promise<string> {
+async function nextId(table: "tickets" | "feedback" | "projects", prefix: string): Promise<string> {
   const db = getClient();
   const result = await db.from(table).select("*", { count: "exact", head: true });
   if (result.error) throw new Error(`Supabase count failed: ${result.error.message}`);
@@ -294,6 +310,8 @@ export async function updateTicket(
     status?: TicketStatus;
     tags?: Tag[];
     seats?: SeatMap;
+    projectId?: string | null;
+    branchOverride?: string | null;
   }
 ): Promise<Ticket | undefined> {
   const db = getClient();
@@ -306,6 +324,8 @@ export async function updateTicket(
   if (updates.status !== undefined) patch.status = updates.status;
   if (updates.tags !== undefined) patch.tags = updates.tags;
   if (updates.seats !== undefined) patch.seats = updates.seats;
+  if (updates.projectId !== undefined) patch.project_id = updates.projectId || null;
+  if (updates.branchOverride !== undefined) patch.branch_override = updates.branchOverride || null;
 
   const result = await db.from("tickets").update(patch).eq("id", ticketId).select("id");
   if (result.error) throw new Error(`Supabase tickets update failed: ${result.error.message}`);
@@ -441,6 +461,96 @@ export async function completeBuild(ticketId: string): Promise<Ticket | undefine
     .eq("ticket_id", ticketId);
 
   return getTicket(ticketId);
+}
+
+// ─── Projects ────────────────────────────────────────────────────────────────
+
+function rowToProject(row: ProjectRow): Project {
+  return {
+    id: row.id,
+    name: row.name,
+    repoUrl: row.repo_url || null,
+    defaultBranch: row.default_branch || "main",
+    sandboxProvider: (row.sandbox_provider || "local") as SandboxProvider,
+    createPr: !!row.create_pr,
+    createdAt: row.created_at,
+  };
+}
+
+export async function getProjects(): Promise<Project[]> {
+  const db = getClient();
+  const rows = throwOnError(
+    await db.from("projects").select("*").order("created_at", { ascending: true }),
+    "projects select"
+  ) as ProjectRow[];
+  return rows.map(rowToProject);
+}
+
+export async function getProject(id: string): Promise<Project | undefined> {
+  const db = getClient();
+  const rows = throwOnError(
+    await db.from("projects").select("*").eq("id", id).limit(1),
+    "projects select"
+  ) as ProjectRow[];
+  return rows.length > 0 ? rowToProject(rows[0]) : undefined;
+}
+
+export async function createProject(
+  name: string,
+  options: {
+    repoUrl?: string | null;
+    defaultBranch?: string;
+    sandboxProvider?: SandboxProvider;
+    createPr?: boolean;
+  } = {},
+  id?: string
+): Promise<Project> {
+  const db = getClient();
+  const projectId = id || (await nextId("projects", "PRJ"));
+  const now = new Date().toISOString();
+
+  throwOnError(
+    await db.from("projects").insert({
+      id: projectId,
+      name,
+      repo_url: options.repoUrl || null,
+      default_branch: options.defaultBranch || "main",
+      sandbox_provider: options.sandboxProvider || "local",
+      create_pr: options.createPr ?? false,
+      created_at: now,
+    }),
+    "projects insert"
+  );
+
+  return (await getProject(projectId))!;
+}
+
+export async function updateProject(
+  projectId: string,
+  updates: {
+    name?: string;
+    repoUrl?: string | null;
+    defaultBranch?: string;
+    sandboxProvider?: SandboxProvider;
+    createPr?: boolean;
+  }
+): Promise<Project | undefined> {
+  const db = getClient();
+  const patch: Record<string, unknown> = {};
+
+  if (updates.name !== undefined) patch.name = updates.name;
+  if (updates.repoUrl !== undefined) patch.repo_url = updates.repoUrl || null;
+  if (updates.defaultBranch !== undefined) patch.default_branch = updates.defaultBranch || "main";
+  if (updates.sandboxProvider !== undefined) patch.sandbox_provider = updates.sandboxProvider;
+  if (updates.createPr !== undefined) patch.create_pr = updates.createPr;
+
+  if (Object.keys(patch).length === 0) return getProject(projectId);
+
+  const result = await db.from("projects").update(patch).eq("id", projectId).select("id");
+  if (result.error) throw new Error(`Supabase projects update failed: ${result.error.message}`);
+  if (!result.data || result.data.length === 0) return undefined;
+
+  return getProject(projectId);
 }
 
 // ─── Sync ────────────────────────────────────────────────────────────────────

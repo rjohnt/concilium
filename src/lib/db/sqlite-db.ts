@@ -11,7 +11,7 @@
 import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
-import { Ticket, FeedbackEntry, FeedbackSource, BuildReport, BuildArtifact, BuildChangeRequest, PersonaId, TicketStatus, PriorityLevel, Tag, SeatMap } from "../types";
+import { Ticket, FeedbackEntry, FeedbackSource, BuildReport, BuildArtifact, BuildChangeRequest, PersonaId, TicketStatus, PriorityLevel, Tag, SeatMap, Project, SandboxProvider } from "../types";
 import { checkConsensusThreshold } from "../consensus-threshold";
 
 // ─── Database Path ───────────────────────────────────────────────────────────
@@ -80,6 +80,16 @@ function initSchema(): void {
       consensus_summary    TEXT NOT NULL DEFAULT ''
     );
 
+    CREATE TABLE IF NOT EXISTS projects (
+      id               TEXT PRIMARY KEY,
+      name             TEXT NOT NULL,
+      repo_url         TEXT,
+      default_branch   TEXT NOT NULL DEFAULT 'main',
+      sandbox_provider TEXT NOT NULL DEFAULT 'local',
+      create_pr        INTEGER NOT NULL DEFAULT 0,
+      created_at       TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
     CREATE INDEX IF NOT EXISTS idx_feedback_ticket ON feedback(ticket_id);
     CREATE INDEX IF NOT EXISTS idx_build_reports_ticket ON build_reports(ticket_id);
   `);
@@ -105,6 +115,8 @@ function migrateSchema(d: Database.Database): void {
   addColumnIfMissing("build_reports", "artifacts_json", "artifacts_json TEXT NOT NULL DEFAULT '[]'");
   addColumnIfMissing("build_reports", "change_requests_json", "change_requests_json TEXT NOT NULL DEFAULT '[]'");
   addColumnIfMissing("build_reports", "error_message", "error_message TEXT");
+  addColumnIfMissing("tickets", "project_id", "project_id TEXT REFERENCES projects(id) ON DELETE SET NULL");
+  addColumnIfMissing("tickets", "branch_override", "branch_override TEXT");
 }
 
 // ─── Seed Data ───────────────────────────────────────────────────────────────
@@ -224,6 +236,18 @@ interface TicketRow {
   due_date: string | null;
   tags_json: string;
   seats_json: string;
+  project_id: string | null;
+  branch_override: string | null;
+}
+
+interface ProjectRow {
+  id: string;
+  name: string;
+  repo_url: string | null;
+  default_branch: string;
+  sandbox_provider: string;
+  create_pr: number;
+  created_at: string;
 }
 
 interface FeedbackRow {
@@ -278,6 +302,8 @@ function rowToTicket(row: TicketRow): Ticket {
     dueDate: row.due_date || undefined,
     tags: JSON.parse(row.tags_json || "[]") as Tag[],
     seats: JSON.parse(row.seats_json || "{}") as SeatMap,
+    projectId: row.project_id || null,
+    branchOverride: row.branch_override || null,
     feedback: feedback.map(rowToFeedback),
     approvals,
     buildReport: buildReportRow ? rowToBuildReport(buildReportRow) : undefined,
@@ -366,7 +392,7 @@ export function deleteTicket(id: string): boolean {
 
 export function updateTicket(
   ticketId: string,
-  updates: { title?: string; description?: string; dueDate?: string | null; priority?: PriorityLevel; status?: TicketStatus; tags?: Tag[]; seats?: SeatMap }
+  updates: { title?: string; description?: string; dueDate?: string | null; priority?: PriorityLevel; status?: TicketStatus; tags?: Tag[]; seats?: SeatMap; projectId?: string | null; branchOverride?: string | null }
 ): Ticket | undefined {
   const d = getDb();
   const existing = d.prepare("SELECT * FROM tickets WHERE id = ?").get(ticketId) as TicketRow | undefined;
@@ -403,6 +429,14 @@ export function updateTicket(
   if (updates.seats !== undefined) {
     setClauses.push("seats_json = ?");
     params.push(JSON.stringify(updates.seats));
+  }
+  if (updates.projectId !== undefined) {
+    setClauses.push("project_id = ?");
+    params.push(updates.projectId || null);
+  }
+  if (updates.branchOverride !== undefined) {
+    setClauses.push("branch_override = ?");
+    params.push(updates.branchOverride || null);
   }
 
   params.push(ticketId);
@@ -526,6 +560,110 @@ export function completeBuild(ticketId: string): Ticket | undefined {
 
 export function updateTicketStatus(ticketId: string, status: TicketStatus): Ticket | undefined {
   return updateTicket(ticketId, { status });
+}
+
+// ─── Public API: Projects ────────────────────────────────────────────────────
+
+function rowToProject(row: ProjectRow): Project {
+  return {
+    id: row.id,
+    name: row.name,
+    repoUrl: row.repo_url || null,
+    defaultBranch: row.default_branch || "main",
+    sandboxProvider: (row.sandbox_provider || "local") as SandboxProvider,
+    createPr: row.create_pr === 1,
+    createdAt: row.created_at,
+  };
+}
+
+function nextProjectId(): number {
+  const row = getDb().prepare("SELECT COUNT(*) as count FROM projects").get() as { count: number };
+  return row.count + 1;
+}
+
+export function getProjects(): Project[] {
+  const rows = getDb().prepare("SELECT * FROM projects ORDER BY created_at ASC").all() as ProjectRow[];
+  return rows.map(rowToProject);
+}
+
+export function getProject(id: string): Project | undefined {
+  const row = getDb().prepare("SELECT * FROM projects WHERE id = ?").get(id) as ProjectRow | undefined;
+  return row ? rowToProject(row) : undefined;
+}
+
+export function createProject(
+  name: string,
+  options: {
+    repoUrl?: string | null;
+    defaultBranch?: string;
+    sandboxProvider?: SandboxProvider;
+    createPr?: boolean;
+  } = {},
+  id?: string
+): Project {
+  const d = getDb();
+  const projectId = id || `PRJ-${String(nextProjectId()).padStart(3, "0")}`;
+  const now = new Date().toISOString();
+
+  d.prepare(`
+    INSERT INTO projects (id, name, repo_url, default_branch, sandbox_provider, create_pr, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    projectId,
+    name,
+    options.repoUrl || null,
+    options.defaultBranch || "main",
+    options.sandboxProvider || "local",
+    options.createPr ? 1 : 0,
+    now,
+  );
+
+  return getProject(projectId)!;
+}
+
+export function updateProject(
+  projectId: string,
+  updates: {
+    name?: string;
+    repoUrl?: string | null;
+    defaultBranch?: string;
+    sandboxProvider?: SandboxProvider;
+    createPr?: boolean;
+  }
+): Project | undefined {
+  const d = getDb();
+  const existing = d.prepare("SELECT id FROM projects WHERE id = ?").get(projectId);
+  if (!existing) return undefined;
+
+  const setClauses: string[] = [];
+  const params: unknown[] = [];
+
+  if (updates.name !== undefined) {
+    setClauses.push("name = ?");
+    params.push(updates.name);
+  }
+  if (updates.repoUrl !== undefined) {
+    setClauses.push("repo_url = ?");
+    params.push(updates.repoUrl || null);
+  }
+  if (updates.defaultBranch !== undefined) {
+    setClauses.push("default_branch = ?");
+    params.push(updates.defaultBranch || "main");
+  }
+  if (updates.sandboxProvider !== undefined) {
+    setClauses.push("sandbox_provider = ?");
+    params.push(updates.sandboxProvider);
+  }
+  if (updates.createPr !== undefined) {
+    setClauses.push("create_pr = ?");
+    params.push(updates.createPr ? 1 : 0);
+  }
+
+  if (setClauses.length > 0) {
+    params.push(projectId);
+    d.prepare(`UPDATE projects SET ${setClauses.join(", ")} WHERE id = ?`).run(...params);
+  }
+  return getProject(projectId);
 }
 
 // ─── Cleanup ─────────────────────────────────────────────────────────────────

@@ -233,6 +233,14 @@ export default function TicketDetailPage() {
     if (updated) setTicket({ ...updated });
   };
 
+  const handleUpdateBranchOverride = (newBranch: string | null) => {
+    if (!ticket) return;
+    const trimmed = newBranch?.trim() || null;
+    if ((ticket.branchOverride ?? null) === trimmed) return;
+    const updated = updateTicket(ticket.id, { branchOverride: trimmed });
+    if (updated) setTicket({ ...updated });
+  };
+
   if (loading) {
     return <DetailSkeleton />;
   }
@@ -463,6 +471,42 @@ export default function TicketDetailPage() {
                   </span>
                 );
               })()}
+            </div>
+
+            {/* Build branch override */}
+            <div className="mt-4 pt-4 border-t border-border-subtle">
+              <p className="text-xs font-medium text-ink-muted mb-2">Build Branch</p>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  key={ticket.branchOverride ?? ""}
+                  defaultValue={ticket.branchOverride ?? ""}
+                  placeholder="Project default"
+                  aria-label="Build branch override"
+                  onBlur={(e) => handleUpdateBranchOverride(e.target.value || null)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      (e.target as HTMLInputElement).blur();
+                    }
+                  }}
+                  className="bg-elevated border border-border-visible rounded-lg px-3 py-2 text-sm text-ink-primary placeholder:text-ink-muted/50 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent font-mono"
+                />
+                {ticket.branchOverride && (
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateBranchOverride(null)}
+                    className="px-3 py-2 text-sm text-ink-muted hover:text-ink-primary transition-colors"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              <p className="mt-1.5 text-xs text-ink-muted">
+                {ticket.branchOverride
+                  ? "Builds for this ticket target this branch."
+                  : "Leave empty to build on the project's default branch."}
+              </p>
             </div>
           </div>
 

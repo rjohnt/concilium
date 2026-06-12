@@ -86,6 +86,34 @@ export async function PATCH(request: NextRequest) {
     if (typeof body.title === "string") body.title = sanitize(body.title);
     if (typeof body.description === "string") body.description = sanitize(body.description);
 
+    // Project assignment: null clears, otherwise must be a known PRJ-XXX id
+    if (body.projectId !== undefined && body.projectId !== null) {
+      if (typeof body.projectId !== "string" || !/^PRJ-\d{3}$/.test(body.projectId)) {
+        return NextResponse.json(
+          { error: "Invalid projectId format. Expected: PRJ-XXX" },
+          { status: 400 }
+        );
+      }
+      const project = await serverDb.getProject(body.projectId);
+      if (!project) {
+        return NextResponse.json({ error: "Project not found" }, { status: 404 });
+      }
+    }
+
+    // Branch override: null/empty clears, otherwise a conservative branch name
+    if (body.branchOverride !== undefined && body.branchOverride !== null && body.branchOverride !== "") {
+      if (
+        typeof body.branchOverride !== "string" ||
+        !/^[A-Za-z0-9._/-]{1,200}$/.test(body.branchOverride.trim())
+      ) {
+        return NextResponse.json(
+          { error: "Invalid branchOverride: must be a valid branch name" },
+          { status: 400 }
+        );
+      }
+      body.branchOverride = body.branchOverride.trim();
+    }
+
     const ticket = await serverDb.updateTicket(id, {
       title: body.title,
       description: body.description,
@@ -94,6 +122,8 @@ export async function PATCH(request: NextRequest) {
       status: body.status,
       tags: body.tags,
       seats: body.seats,
+      projectId: body.projectId !== undefined ? body.projectId : undefined,
+      branchOverride: body.branchOverride !== undefined ? body.branchOverride || null : undefined,
     });
 
     if (!ticket) {

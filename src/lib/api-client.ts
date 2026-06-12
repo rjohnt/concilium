@@ -57,7 +57,7 @@ export async function createTicketOnServer(
 
 export async function updateTicketOnServer(
   id: string,
-  updates: { title?: string; description?: string; dueDate?: string | null; priority?: PriorityLevel; status?: TicketStatus; tags?: Tag[]; seats?: SeatMap },
+  updates: { title?: string; description?: string; dueDate?: string | null; priority?: PriorityLevel; status?: TicketStatus; tags?: Tag[]; seats?: SeatMap; projectId?: string | null; branchOverride?: string | null },
 ): Promise<Ticket | null> {
   const data = await fetchJson<{ ticket: Ticket }>(`${API_BASE}/tickets?id=${encodeURIComponent(id)}`, {
     method: "PATCH",
