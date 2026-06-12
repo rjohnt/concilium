@@ -54,7 +54,8 @@ src/
 ├── components/       # Reusable components (30+ components)
 ├── lib/              # Business logic, types, store, personas, consensus
 │   ├── seats.ts            # Seat model: humans + AI stand-ins per persona
-│   ├── persona-prompts.ts  # Versioned persona system prompts (eval-able)
+│   ├── persona-charters.ts # Per-role mandate/lens/pushBackOn/defersTo (role distinctness)
+│   ├── persona-prompts.ts  # Composes charters into versioned system prompts (eval-able)
 │   ├── standin.ts          # AI stand-in feedback generation (server-side)
 │   ├── mediator-persona.ts # The Mediator facilitator agent (own prompt)
 │   └── build-executor/     # Pluggable build executors (report, local-claude)
@@ -86,9 +87,16 @@ scripts/evals/        # LLM prompt eval harness (npm run evals)
   store (`claimSeat`/`releaseSeat`), never by mutating the map.
 - **Feedback sources**: `FeedbackEntry.source` is `"human"` or `"ai-standin"`
   (absent = legacy human). Stand-in approvals count toward consensus.
-- **Prompts**: persona/mediator prompts live in `persona-prompts.ts` and
-  `mediator-persona.ts`. When changing them, bump `PROMPT_VERSION` and run
-  `npm run evals` (scenarios in `scripts/evals/`).
+- **Prompts**: each role's distinctness comes from its charter in
+  `persona-charters.ts` (mandate / lens / pushBackOn / **defersTo** — the last
+  keeps lanes from bleeding); `persona-prompts.ts` composes those into the
+  system prompt. When changing a charter/prompt, bump `PROMPT_VERSION` and run
+  `npm run evals`. Deterministic guardrail: `persona-charters.test.ts` asserts
+  each prompt carries its own lens vocabulary (no LLM/key needed).
+- **Evals**: strategy in `EVALS.md` (read before changing scenarios, judges, or
+  thresholds). Results dual-write to local JSONL and the Supabase
+  `eval_results` table; the `/evals` page is the performance-over-time
+  dashboard and `eval-report.ts` holds its (unit-tested) aggregation.
 - **Build executors**: select via `CONCILIUM_BUILD_EXECUTOR` (`report` default,
   `local-claude` for sandboxed Claude Code builds). New executors implement
   `BuildExecutor` in `src/lib/build-executor/`.
