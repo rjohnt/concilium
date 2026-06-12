@@ -1,10 +1,18 @@
 /**
  * Local Claude Code executor — the first real build path.
  *
- * Pipeline: generate the consensus spec (report executor), then drive a local
- * `claude` CLI headlessly inside a sandboxed workspace directory to implement
- * it. The workspace is its own git repo, so the diff and changed-file list
- * become reviewable artifacts on the build report.
+ * Pipeline: generate the consensus spec (report executor), then drive a
+ * `claude` CLI headlessly inside a sandbox workspace to implement it. All
+ * workspace/git/process work goes through a SandboxProvider (local host or
+ * docker — selected by the owning project's sandbox_provider setting, then
+ * CONCILIUM_SANDBOX_PROVIDER, default local), so this executor never touches
+ * child_process directly.
+ *
+ * The build target (repoUrl + branch) comes from resolveBuildTarget: the
+ * ticket's branch_override, else the project default, else 'main'; repoUrl is
+ * null for standalone tickets, which keeps the original empty-workspace
+ * behavior. When a repoUrl is configured the work branch is pushed to origin
+ * after the run.
  *
  * Gated by env:
  *   CONCILIUM_BUILD_EXECUTOR=local-claude   — selects this executor
@@ -12,58 +20,17 @@
  *                                             (default: data/builds)
  *
  * Requires the Claude Code CLI (`claude`) on PATH with valid credentials.
- * This is deliberately the simplest possible sandbox; a Daytona/remote
- * executor can replace it behind the same interface.
  */
 
-import { execFile } from "child_process";
-import { promisify } from "util";
-import fs from "fs";
-import path from "path";
-import { BuildArtifact } from "../types";
+import { BuildArtifact, Project } from "../types";
 import { BuildContext, BuildExecution, BuildExecutor } from "./types";
 import { reportExecutor } from "./report-executor";
-
-const execFileAsync = promisify(execFile);
+import { getSandboxProvider, makeArtifact } from "../sandbox";
+import { resolveBuildTargetWithProject } from "../build-target";
+import { getProject } from "../server-db";
 
 const CLAUDE_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
-const ARTIFACT_CHAR_LIMIT = 20_000;
-
-function getWorkspaceRoot(): string {
-  return process.env.CONCILIUM_BUILD_WORKSPACE
-    ? path.resolve(process.env.CONCILIUM_BUILD_WORKSPACE)
-    : path.resolve(process.cwd(), "data", "builds");
-}
-
-async function ensureWorkspace(ticketId: string): Promise<string> {
-  const workspace = path.join(getWorkspaceRoot(), ticketId);
-  fs.mkdirSync(workspace, { recursive: true });
-  if (!fs.existsSync(path.join(workspace, ".git"))) {
-    await execFileAsync("git", ["init", "-q"], { cwd: workspace });
-  }
-  return workspace;
-}
-
-function truncate(text: string): string {
-  return text.length > ARTIFACT_CHAR_LIMIT
-    ? text.slice(0, ARTIFACT_CHAR_LIMIT) + "\n… [truncated]"
-    : text;
-}
-
-function artifact(
-  buildId: string,
-  type: BuildArtifact["type"],
-  label: string,
-  content: string
-): BuildArtifact {
-  return {
-    id: `${buildId}-${type}-${Math.random().toString(36).slice(2, 8)}`,
-    type,
-    label,
-    content: truncate(content),
-    createdAt: new Date().toISOString(),
-  };
-}
+const CLAUDE_MAX_BUFFER = 32 * 1024 * 1024;
 
 function buildClaudePrompt(ctx: BuildContext, implementationPlan: string): string {
   return [
@@ -103,57 +70,73 @@ export const localClaudeExecutor: BuildExecutor = {
     const specExecution = await reportExecutor.execute(ctx);
     const report = specExecution.report;
     report.executor = "local-claude";
-    const artifacts: BuildArtifact[] = [];
+    let artifacts: BuildArtifact[] = [];
 
-    // 2) Drive Claude Code headlessly in the sandboxed workspace
     try {
-      const workspace = await ensureWorkspace(ctx.ticket.id);
-      const prompt = buildClaudePrompt(ctx, report.implementationPlan);
+      // 2) Resolve where this build runs and lands
+      const project: Project | undefined = ctx.ticket.projectId
+        ? await getProject(ctx.ticket.projectId)
+        : undefined;
+      const target = resolveBuildTargetWithProject(ctx.ticket, project);
+      const provider = getSandboxProvider(project?.sandboxProvider);
 
-      const { stdout } = await execFileAsync(
-        "claude",
-        ["-p", prompt, "--output-format", "json", "--permission-mode", "acceptEdits"],
-        {
-          cwd: workspace,
-          timeout: CLAUDE_TIMEOUT_MS,
-          maxBuffer: 32 * 1024 * 1024,
-          env: { ...process.env },
-        }
-      );
+      const handle = await provider.createWorkspace({
+        ticketId: ctx.ticket.id,
+        repoUrl: target.repoUrl,
+        branch: target.branch,
+      });
 
-      // The CLI returns a JSON envelope; surface its result text as the log
-      let resultText = stdout;
       try {
-        const envelope = JSON.parse(stdout);
-        resultText = String(envelope.result ?? stdout);
-      } catch {
-        // non-JSON output — keep raw stdout
-      }
-      artifacts.push(artifact(ctx.buildId, "log", "Claude Code build log", resultText));
+        // 3) Drive Claude Code headlessly inside the sandbox
+        const prompt = buildClaudePrompt(ctx, report.implementationPlan);
+        const result = await provider.exec(
+          handle,
+          ["claude", "-p", prompt, "--output-format", "json", "--permission-mode", "acceptEdits"],
+          { timeoutMs: CLAUDE_TIMEOUT_MS, maxBuffer: CLAUDE_MAX_BUFFER }
+        );
+        if (result.exitCode !== 0) {
+          throw new Error(
+            result.stderr.trim() || `claude exited with code ${result.exitCode}`
+          );
+        }
 
-      // 3) Collect evidence: changed files + diff from the workspace repo
-      const { stdout: fileList } = await execFileAsync(
-        "git",
-        ["log", "--stat", "-1"],
-        { cwd: workspace, maxBuffer: 8 * 1024 * 1024 }
-      ).catch(() => ({ stdout: "" }));
-      if (fileList.trim()) {
-        artifacts.push(artifact(ctx.buildId, "file-list", "Changed files (last commit)", fileList));
-      }
+        // The CLI returns a JSON envelope; surface its result text as the log
+        let resultText = result.stdout;
+        try {
+          const envelope = JSON.parse(result.stdout);
+          resultText = String(envelope.result ?? result.stdout);
+        } catch {
+          // non-JSON output — keep raw stdout
+        }
 
-      const { stdout: diff } = await execFileAsync(
-        "git",
-        ["show", "--format=", "HEAD"],
-        { cwd: workspace, maxBuffer: 32 * 1024 * 1024 }
-      ).catch(() => ({ stdout: "" }));
-      if (diff.trim()) {
-        artifacts.push(artifact(ctx.buildId, "diff", "Implementation diff", diff));
+        // 4) Collect evidence: build log + changed files + diff
+        artifacts = await provider.collectArtifacts(handle, {
+          buildId: ctx.buildId,
+          log: resultText,
+        });
+
+        // 5) Push the work branch when the project has a configured repo
+        if (target.repoUrl) {
+          const push = await provider.pushBranch(handle, handle.branch);
+          artifacts.push(
+            makeArtifact(
+              ctx.buildId,
+              "log",
+              "Branch push",
+              push.pushed
+                ? `Pushed ${handle.branch} to origin.`
+                : `Push skipped: ${push.reason ?? "unknown reason"}`
+            )
+          );
+        }
+      } finally {
+        await provider.destroy(handle);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       report.status = "failed";
       report.errorMessage = `Local Claude Code execution failed: ${message}`;
-      artifacts.push(artifact(ctx.buildId, "log", "Execution error", message));
+      artifacts.push(makeArtifact(ctx.buildId, "log", "Execution error", message));
     }
 
     report.artifacts = artifacts;
