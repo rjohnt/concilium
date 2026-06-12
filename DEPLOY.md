@@ -43,7 +43,10 @@ build/run is driven by `railway.json`:
 | `DAYTONA_API_KEY` | server-only | Required for the `daytona` sandbox provider — builds fail with a config error without it |
 | `DAYTONA_API_URL` | optional | Daytona API endpoint (defaults to Daytona's hosted API) |
 | `DAYTONA_GIT_PAT` | optional | Personal access token for cloning/pushing private repos from Daytona sandboxes |
-| `GITHUB_TOKEN` | server-only | GitHub token (classic PAT with `repo`, or fine-grained with Pull requests: read/write) used to open PRs after a build pushes its branch — only needed when a project enables **Open PRs**. Without it the branch still pushes; the build records a "Pull request skipped" note instead of failing |
+| `GITHUB_APP_ID` | server-only | GitHub App id (the ConciliumAI app). With the private key below, builds mint short-lived installation tokens scoped to the project's repo — the customer-repeatable way to open PRs. Customers install the app on their repos; PRs are authored by the app's bot |
+| `GITHUB_APP_PRIVATE_KEY` | server-only | The app's private key PEM content (`\n`-escaped newlines allowed) — use this on hosts where a file path isn't practical |
+| `GITHUB_APP_PRIVATE_KEY_PATH` | server-only | Alternative to the above: path to the downloaded `.pem` file |
+| `GITHUB_TOKEN` | server-only | Fallback when the app isn't configured/installed: a PAT (classic `repo`, or fine-grained with Contents + Pull requests: read/write) used to open PRs. Without any credential the branch still pushes; the build records a "Pull request skipped" note instead of failing |
 
 > The Postgres data layer (and therefore `SUPABASE_SERVICE_ROLE_KEY`) requires
 > the Supabase-migration change to be on `main`. Until then the app runs on

@@ -32,7 +32,19 @@ describe("envGitHubTokenProvider", () => {
 });
 
 describe("getGitHubTokenProvider", () => {
-  it("selects the env provider in v1", () => {
-    expect(getGitHubTokenProvider()).toBe(envGitHubTokenProvider);
+  it("selects the app→env chain provider", () => {
+    expect(getGitHubTokenProvider().name).toBe("github-app+env");
+  });
+
+  it("falls back to GITHUB_TOKEN when the app is not configured", async () => {
+    vi.stubEnv("GITHUB_APP_ID", "");
+    vi.stubEnv("GITHUB_TOKEN", "ghp_fallback");
+    expect(await getGitHubTokenProvider().getToken(project)).toBe("ghp_fallback");
+  });
+
+  it("returns null when neither app nor token is configured", async () => {
+    vi.stubEnv("GITHUB_APP_ID", "");
+    vi.stubEnv("GITHUB_TOKEN", "");
+    expect(await getGitHubTokenProvider().getToken(project)).toBeNull();
   });
 });
