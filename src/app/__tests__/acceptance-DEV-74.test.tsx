@@ -161,7 +161,7 @@ describe("DEV-74: Clear all filters button (acceptance)", () => {
 
     // Set multiple filters first
     // 1. Status
-    fireEvent.click(screen.getByRole("button", { name: /Draft/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /Draft/i }));
     // 2. Search
     const searchInput = screen.getByRole("textbox", { name: "Search tickets" });
     fireEvent.change(searchInput, { target: { value: "something" } });
@@ -187,8 +187,8 @@ describe("DEV-74: Clear all filters button (acceptance)", () => {
 
     // Status should be back to "All" — the redesigned tabs signal the active
     // tab with the coral background (no aria-current / "(N tickets)" naming)
-    const allTab = screen.getAllByRole("button", { name: /^All\b/ })[0];
-    expect(allTab.style.background).toContain("coral");
+    const allTab = screen.getAllByRole("tab", { name: /^All\b/ })[0];
+    expect(allTab.className).toContain("cc-tab--active");
 
     // Priority should be back to default — the "All" priority button should be active
     // (We can verify an All button is still in the document as a sanity check)
@@ -208,7 +208,7 @@ describe("DEV-74: Clear all filters button (acceptance)", () => {
     renderDashboard();
 
     // Activate a filter so button appears
-    fireEvent.click(screen.getByRole("button", { name: /In review/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /In review/i }));
 
     // The redesign replaced .btn-ghost with inline-styled text buttons —
     // assert the durable contract: an icon plus the label.

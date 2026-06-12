@@ -347,13 +347,12 @@ describe("Sidebar", () => {
 
   // --- Design token test ---
 
-  it("renders the Concilium brand mark, wordmark, and tagline", () => {
+  it("renders the Concilium brand mark and wordmark", () => {
     render(<Sidebar />);
-    // Coral rebrand: an SVG logo image plus the wordmark and tagline
+    // DS rebrand: SVG mark + Bricolage wordmark (tagline removed)
     const logo = document.querySelector('img[src="/brand/logo-mark.svg"]');
     expect(logo).toBeInTheDocument();
     expect(screen.getByText("Concilium")).toBeInTheDocument();
-    expect(screen.getByText("give every project a council")).toBeInTheDocument();
   });
 
   // --- Renders nav items ---

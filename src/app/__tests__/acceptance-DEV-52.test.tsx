@@ -308,7 +308,7 @@ describe("DEV-52: Persona reviewed-by filter (acceptance)", () => {
       renderDashboard();
 
       // Filter to draft only (T3, T4 have no feedback at all)
-      fireEvent.click(screen.getByRole("button", { name: /Draft/ }));
+      fireEvent.click(screen.getByRole("tab", { name: /Draft/ }));
 
       // Now click Engineer persona — no draft tickets have engineer feedback
       clickPersona("Engineer");
@@ -429,7 +429,7 @@ describe("DEV-52: Persona reviewed-by filter (acceptance)", () => {
       expect(engineerBtnAll.textContent).toMatch(/2/);
 
       // Filter to draft only: only T3, T4 — no engineer feedback
-      fireEvent.click(screen.getByRole("button", { name: /Draft/ }));
+      fireEvent.click(screen.getByRole("tab", { name: /Draft/ }));
 
       // After filtering to draft, engineer count is 0, badge hidden
       const engineerBtnDraft = getPersonaButton("Engineer");
@@ -445,7 +445,7 @@ describe("DEV-52: Persona reviewed-by filter (acceptance)", () => {
       renderDashboard();
 
       // Filter to "In Review" status
-      fireEvent.click(screen.getByRole("button", { name: /In review/i }));
+      fireEvent.click(screen.getByRole("tab", { name: /In review/i }));
 
       // Should show T1, T2, T5 (all in-review)
       expectTicketVisible("Dark mode toggle");
@@ -549,7 +549,7 @@ describe("DEV-52: Persona reviewed-by filter (acceptance)", () => {
       setupTicketsWithFeedback();
       renderDashboard();
 
-      fireEvent.click(screen.getByRole("button", { name: /Draft/ }));
+      fireEvent.click(screen.getByRole("tab", { name: /Draft/ }));
       clickPersona("Engineer");
 
       expect(
@@ -580,7 +580,7 @@ describe("DEV-52: Persona reviewed-by filter (acceptance)", () => {
       setupTicketsWithFeedback();
       renderDashboard();
 
-      fireEvent.click(screen.getByRole("button", { name: /Draft/ }));
+      fireEvent.click(screen.getByRole("tab", { name: /Draft/ }));
       clickPersona("Engineer");
 
       expect(
