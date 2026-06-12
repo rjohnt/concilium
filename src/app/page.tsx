@@ -123,8 +123,8 @@ export default function DashboardPage() {
           <h2 className="text-xl font-bold tracking-tight" style={{ color: "var(--ink-900)", fontFamily: "var(--font-display)" }}>Tickets</h2>
           <p className="text-xs mt-0.5" style={{ color: "var(--ink-500)" }}>Multiplayer stakeholder collaboration</p>
         </div>
-        <Link href="/new" className="btn-primary text-xs">
-          <PlusCircle size={16} /> New Ticket
+        <Link href="/new" className="btn-primary btn-sm">
+          <PlusCircle size={15} /> New ticket
         </Link>
       </div>
 
@@ -183,10 +183,10 @@ export default function DashboardPage() {
           <input ref={searchInputRef} type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
             placeholder="Search tickets by title or description..."
             aria-label="Search tickets"
-            className="w-full pl-10 pr-10 py-2.5 rounded-lg text-sm outline-none transition-all duration-150"
-            style={{ background: MP.searchBg, border: `1px solid ${MP.searchBorder}`, color: "var(--ink-900)" }}
-            onFocus={e => e.currentTarget.style.borderColor = "var(--coral-500)"}
-            onBlur={e => e.currentTarget.style.borderColor = MP.searchBorder}
+            className="w-full pl-10 pr-10 py-2.5 rounded-md text-sm outline-none transition-all duration-150"
+            style={{ background: MP.searchBg, border: "1px solid var(--border-strong)", color: "var(--ink-900)" }}
+            onFocus={e => { e.currentTarget.style.borderColor = "var(--coral-500)"; e.currentTarget.style.boxShadow = "var(--shadow-focus)"; }}
+            onBlur={e => { e.currentTarget.style.borderColor = "var(--border-strong)"; e.currentTarget.style.boxShadow = "none"; }}
           />
           {searchQuery && (
             <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded transition-colors" style={{ color: MP.tabInactive.text }}>
@@ -196,36 +196,23 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Filter bar (status tabs) ─────────────────────────── */}
-      <div className="flex items-center gap-1 mb-6 overflow-x-auto scrollbar-none -mx-1 px-1">
-        {(["all", "draft", "in-review", "consensus", "building", "done"] as const).map(tab => {
-          const label = tab === "all" ? "All" : tab.charAt(0).toUpperCase() + tab.slice(1).replace("-", " ");
-          const active = activeFilter === tab;
-          return (
-            <button key={tab} onClick={() => setActiveFilter(tab)}
-              className="px-3 py-1.5 text-xs font-medium cursor-pointer transition-all duration-100 whitespace-nowrap shrink-0"
-              style={{
-                background: active ? MP.tabActive.bg : "transparent",
-                color: active ? MP.tabActive.text : MP.tabInactive.text,
-                border: active ? "none" : "1px solid transparent",
-                borderRadius: 999,
-                fontFamily: "var(--font-sans)",
-              }}
-              onMouseOver={e => { if (!active) e.currentTarget.style.color = MP.tabInactive.hoverText; }}
-              onMouseOut={e => { if (!active) e.currentTarget.style.color = MP.tabInactive.text; }}
-            >
-              {label}
-              <span className="ml-1.5 px-1 py-0.5 rounded-full text-[10px] font-bold"
-                style={{
-                  background: active ? "rgba(255,255,255,0.18)" : MP.tabInactive.countBg,
-                  color: active ? "#ffffff" : MP.tabInactive.countText,
-                }}
+      {/* ── Filter bar — DS segmented tabs (cc-tabs) ─────────── */}
+      <div className="mb-6 overflow-x-auto scrollbar-none -mx-1 px-1">
+        <div className="cc-tabs">
+          {(["all", "draft", "in-review", "consensus", "building", "done"] as const).map(tab => {
+            const label = tab === "all" ? "All" : tab.charAt(0).toUpperCase() + tab.slice(1).replace("-", " ");
+            const active = activeFilter === tab;
+            return (
+              <button key={tab} onClick={() => setActiveFilter(tab)}
+                role="tab" aria-selected={active}
+                className={`cc-tab${active ? " cc-tab--active" : ""}`}
               >
-                {statusCounts[tab] || 0}
-              </span>
-            </button>
-          );
-        })}
+                {label}
+                <span className="cc-tab__count">{tab === "all" ? tickets.length : statusCounts[tab] || 0}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* ── Filters toggle (progressive disclosure) ──────────── */}

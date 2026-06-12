@@ -101,21 +101,21 @@ export function BuildReportInline({ ticket, onBuildUpdated, onRetry }: BuildRepo
   const sections: SectionConfig[] = [
     {
       key: "requirements",
-      icon: <ListChecks size={14} className="text-blue-400" />,
+      icon: <ListChecks size={14} className="text-[#185FA5]" />,
       label: "Requirements",
       items: report.requirements,
       emptyText: "No requirements extracted.",
     },
     {
       key: "designDecisions",
-      icon: <Palette size={14} className="text-purple-400" />,
+      icon: <Palette size={14} className="text-[var(--persona-des-500)]" />,
       label: "Design Decisions",
       items: report.designDecisions,
       emptyText: "No design decisions documented.",
     },
     {
       key: "qaCriteria",
-      icon: <FlaskConical size={14} className="text-amber-400" />,
+      icon: <FlaskConical size={14} className="text-[var(--persona-res-500)]" />,
       label: "QA Criteria",
       items: report.qaCriteria,
       emptyText: "No QA criteria specified.",
@@ -199,7 +199,7 @@ export function BuildReportInline({ ticket, onBuildUpdated, onRetry }: BuildRepo
       {report.implementationPlan && (
         <div className="border-t border-border-subtle pt-4">
           <div className="flex items-center gap-2 mb-2">
-            <FileCode2 size={14} className="text-emerald-400" />
+            <FileCode2 size={14} className="text-[var(--success-500)]" />
             <span className="text-xs font-medium text-ink-secondary">Implementation Plan</span>
           </div>
           <div
@@ -220,7 +220,7 @@ function getStatusBadge(status: string) {
     case "building":
       return {
         icon: <Loader2 size={12} className="animate-spin" />,
-        color: "bg-yellow-900/40 text-yellow-400 border-yellow-700/50",
+        color: "bg-[var(--warning-100)] text-[color-mix(in_oklab,var(--warning-500)_72%,black)] border-[color-mix(in_oklab,var(--warning-500)_28%,transparent)]",
         label: "Building",
       };
     case "completed":
@@ -238,7 +238,7 @@ function getStatusBadge(status: string) {
     default:
       return {
         icon: <Loader2 size={12} className="animate-spin" />,
-        color: "bg-yellow-900/40 text-yellow-400",
+        color: "bg-[var(--warning-100)] text-[color-mix(in_oklab,var(--warning-500)_72%,black)]",
         label: "Building",
       };
   }

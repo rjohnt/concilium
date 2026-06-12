@@ -57,7 +57,7 @@ export function CopyButton({ text, label, className = "", icon = "copy" }: CopyB
   if (copied) {
     return (
       <button
-        className={`btn-ghost p-1.5 rounded-lg text-emerald-400 cursor-default ${className}`}
+        className={`btn-ghost p-1.5 rounded-lg text-[var(--success-500)] cursor-default ${className}`}
         aria-label="Copied!"
         disabled
       >

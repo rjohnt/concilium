@@ -39,7 +39,7 @@ export function BuildCompleteCelebration({
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="relative overflow-hidden rounded-2xl border border-olive/30 bg-gradient-to-br from-olive/5 via-raised to-emerald-900/10"
+          className="relative overflow-hidden rounded-2xl border border-olive/30 bg-gradient-to-br from-olive/5 via-raised to-[var(--success-100)]"
         >
           {/* Confetti particles */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
