@@ -105,6 +105,46 @@ describe("BuildReport", () => {
     });
   });
 
+  describe("pull request link", () => {
+    const prArtifact = {
+      id: "BLD-001-report-pr",
+      type: "report" as const,
+      label: "Pull request",
+      content: "https://github.com/acme/app/pull/42",
+      createdAt: "2026-05-27T10:05:00Z",
+    };
+
+    it("renders the PR artifact as a clickable link", () => {
+      render(
+        <BuildReport
+          report={createBuildReport({ artifacts: [prArtifact] })}
+        />
+      );
+      const link = screen.getByRole("link", { name: /pull request/i });
+      expect(link).toHaveAttribute("href", "https://github.com/acme/app/pull/42");
+      expect(link).toHaveAttribute("target", "_blank");
+    });
+
+    it("shows no PR link when the report has no pull-request artifact", () => {
+      render(
+        <BuildReport
+          report={createBuildReport({
+            artifacts: [
+              {
+                id: "BLD-001-log-a",
+                type: "log",
+                label: "Build log",
+                content: "did stuff",
+                createdAt: "2026-05-27T10:05:00Z",
+              },
+            ],
+          })}
+        />
+      );
+      expect(screen.queryByRole("link", { name: /pull request/i })).not.toBeInTheDocument();
+    });
+  });
+
   describe("retry UI", () => {
     it("shows attempt count when buildRetryCount is set and failed", () => {
       render(

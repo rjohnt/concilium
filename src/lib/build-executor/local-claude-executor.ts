@@ -12,7 +12,9 @@
  * ticket's branch_override, else the project default, else 'main'; repoUrl is
  * null for standalone tickets, which keeps the original empty-workspace
  * behavior. When a repoUrl is configured the work branch is pushed to origin
- * after the run.
+ * after the run; when the project also has create_pr enabled and the push
+ * succeeded, a GitHub PR is opened (see @/lib/github) — PR failures degrade
+ * to a log artifact and never fail the build.
  *
  * Gated by env:
  *   CONCILIUM_BUILD_EXECUTOR=local-claude   — selects this executor
@@ -28,6 +30,7 @@ import { reportExecutor } from "./report-executor";
 import { getSandboxProvider, makeArtifact } from "../sandbox";
 import { resolveBuildTargetWithProject } from "../build-target";
 import { getProject } from "../server-db";
+import { maybeCreateBuildPullRequest } from "../github";
 
 const CLAUDE_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
 const CLAUDE_MAX_BUFFER = 32 * 1024 * 1024;
@@ -128,6 +131,19 @@ export const localClaudeExecutor: BuildExecutor = {
                 : `Push skipped: ${push.reason ?? "unknown reason"}`
             )
           );
+
+          // 6) Open a PR when the project asks for one and the push landed.
+          //    Never fails the build — errors degrade to a log artifact.
+          const prArtifact = await maybeCreateBuildPullRequest({
+            project,
+            pushed: push.pushed,
+            headBranch: handle.branch,
+            baseBranch: target.branch,
+            ticket: ctx.ticket,
+            report,
+            buildId: ctx.buildId,
+          });
+          if (prArtifact) artifacts.push(prArtifact);
         }
       } finally {
         await provider.destroy(handle);

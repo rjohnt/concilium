@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   reportExecute: vi.fn(),
   getProject: vi.fn(),
   getSandboxProvider: vi.fn(),
+  maybeCreateBuildPullRequest: vi.fn(),
   provider: {
     name: "mock",
     createWorkspace: vi.fn(),
@@ -30,6 +31,10 @@ vi.mock("../report-executor", () => ({
 
 vi.mock("../../server-db", () => ({
   getProject: mocks.getProject,
+}));
+
+vi.mock("../../github", () => ({
+  maybeCreateBuildPullRequest: mocks.maybeCreateBuildPullRequest,
 }));
 
 vi.mock("../../sandbox", () => ({
@@ -127,6 +132,7 @@ beforeEach(() => {
   ]);
   mocks.provider.pushBranch.mockResolvedValue({ pushed: true });
   mocks.provider.destroy.mockResolvedValue(undefined);
+  mocks.maybeCreateBuildPullRequest.mockResolvedValue(null);
 });
 
 describe("localClaudeExecutor — standalone tickets (no project, regression path)", () => {
@@ -238,6 +244,81 @@ describe("localClaudeExecutor — project-backed tickets", () => {
     const pushNote = execution.report.artifacts?.find((a) => a.label === "Branch push");
     expect(pushNote?.content).toContain("Push skipped: no 'origin' remote");
     expect(execution.report.status).toBe("completed");
+  });
+});
+
+describe("localClaudeExecutor — pull-request wiring", () => {
+  it("asks the PR gate to run after a successful push, with the resolved branches", async () => {
+    const project = makeProject({ createPr: true });
+    mocks.getProject.mockResolvedValue(project);
+
+    await localClaudeExecutor.execute(makeContext(makeTicket({ projectId: "PRJ-001" })));
+
+    expect(mocks.maybeCreateBuildPullRequest).toHaveBeenCalledWith({
+      project,
+      pushed: true,
+      headBranch: "concilium/tix-001",
+      baseBranch: "develop",
+      ticket: expect.objectContaining({ id: "TIX-001", title: "Test feature" }),
+      report: expect.objectContaining({ implementationPlan: "the plan" }),
+      buildId: "BLD-007",
+    });
+  });
+
+  it("reports pushed: false to the gate when the push was skipped (no PR happens)", async () => {
+    mocks.getProject.mockResolvedValue(makeProject({ createPr: true }));
+    mocks.provider.pushBranch.mockResolvedValue({ pushed: false, reason: "no remote" });
+
+    await localClaudeExecutor.execute(makeContext(makeTicket({ projectId: "PRJ-001" })));
+
+    expect(mocks.maybeCreateBuildPullRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ pushed: false })
+    );
+  });
+
+  it("never consults the PR gate for standalone tickets (no repoUrl, nothing pushed)", async () => {
+    await localClaudeExecutor.execute(makeContext());
+    expect(mocks.maybeCreateBuildPullRequest).not.toHaveBeenCalled();
+  });
+
+  it("attaches the PR artifact to the report when one is returned", async () => {
+    mocks.getProject.mockResolvedValue(makeProject({ createPr: true }));
+    mocks.maybeCreateBuildPullRequest.mockResolvedValue({
+      id: "BLD-007-report-pr",
+      type: "report",
+      label: "Pull request",
+      content: "https://github.com/acme/app/pull/42",
+      createdAt: "2026-01-01T00:00:00.000Z",
+    });
+
+    const execution = await localClaudeExecutor.execute(
+      makeContext(makeTicket({ projectId: "PRJ-001" }))
+    );
+
+    const pr = execution.report.artifacts?.find((a) => a.label === "Pull request");
+    expect(pr?.content).toBe("https://github.com/acme/app/pull/42");
+    expect(execution.report.status).toBe("completed");
+  });
+
+  it("keeps the build completed when PR creation degrades to a failure artifact", async () => {
+    mocks.getProject.mockResolvedValue(makeProject({ createPr: true }));
+    mocks.maybeCreateBuildPullRequest.mockResolvedValue({
+      id: "BLD-007-log-prfail",
+      type: "log",
+      label: "Pull request failed",
+      content: "Could not open a pull request: 403",
+      createdAt: "2026-01-01T00:00:00.000Z",
+    });
+
+    const execution = await localClaudeExecutor.execute(
+      makeContext(makeTicket({ projectId: "PRJ-001" }))
+    );
+
+    expect(execution.report.status).toBe("completed");
+    expect(execution.report.errorMessage).toBeUndefined();
+    expect(
+      execution.report.artifacts?.some((a) => a.label === "Pull request failed")
+    ).toBe(true);
   });
 });
 
