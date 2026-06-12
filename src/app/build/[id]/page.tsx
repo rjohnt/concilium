@@ -119,10 +119,10 @@ export default function BuildPage() {
               <span
                 className={`badge ${
                   ticket.status === "building"
-                    ? "bg-blue-900/50 text-blue-400"
+                    ? "bg-[var(--info-100)] text-[#185FA5]"
                     : ticket.status === "done"
                       ? "bg-olive/20 text-olive"
-                      : "bg-yellow-900/50 text-yellow-400"
+                      : "bg-[var(--warning-100)] text-[color-mix(in_oklab,var(--warning-500)_72%,black)]"
                 }`}
               >
                 {ticket.status === "building" ? (

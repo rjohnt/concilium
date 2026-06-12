@@ -76,7 +76,7 @@ export default function LoginPage() {
           <button
             onClick={handleGoogleLogin}
             disabled={googleLoading}
-            className="w-full flex items-center justify-center gap-3 px-4 py-2.5 bg-white hover:bg-gray-100 text-gray-900 rounded-lg font-medium text-sm transition-colors disabled:opacity-60"
+            className="w-full flex items-center justify-center gap-3 px-4 py-2.5 bg-white hover:bg-[var(--warm-100)] text-[var(--text-body)] rounded-lg font-medium text-sm transition-colors disabled:opacity-60"
           >
             {googleLoading ? (
               <Loader2 size={18} className="animate-spin" />
@@ -118,7 +118,14 @@ export default function LoginPage() {
           {/* Email/Password Form */}
           <form onSubmit={handleEmailLogin} className="space-y-4">
             {error && (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-2.5 text-sm text-red-400">
+              <div
+                className="border rounded-lg px-4 py-2.5 text-sm"
+                style={{
+                  background: "var(--danger-100)",
+                  borderColor: "color-mix(in oklab, var(--danger-500) 24%, transparent)",
+                  color: "color-mix(in oklab, var(--danger-500) 82%, black)",
+                }}
+              >
                 {error}
               </div>
             )}

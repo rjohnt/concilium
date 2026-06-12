@@ -170,7 +170,7 @@ export function EditableField({
           </button>
         </div>
         {error && (
-          <p className="mt-1.5 text-xs text-red-400" role="alert">
+          <p className="mt-1.5 text-xs" style={{ color: "var(--danger-500)" }} role="alert">
             {error}
           </p>
         )}

@@ -649,7 +649,7 @@ describe("consensus calculation", () => {
     renderSessionPrompt(ticket, "engineer");
 
     expect(
-      screen.queryByText("Consensus reached!")
+      screen.queryByText("Consensus reached —")
     ).not.toBeInTheDocument();
   });
 
@@ -665,13 +665,13 @@ describe("consensus calculation", () => {
 
     renderSessionPrompt(ticket, "engineer");
 
-    // The full text is "Consensus reached! All required personas have approved."
+    // The full text is "Consensus reached — all required personas have approved."
     // inside a single <p> element, so use a regex for partial match
-    const banner = await screen.findByText(/Consensus reached!/, {}, { timeout: 3000 });
+    const banner = await screen.findByText(/Consensus reached —/, {}, { timeout: 3000 });
     expect(banner).toBeInTheDocument();
 
     expect(
-      screen.getByText(/All required personas have approved/)
+      screen.getByText(/all required personas have approved/)
     ).toBeInTheDocument();
   });
 

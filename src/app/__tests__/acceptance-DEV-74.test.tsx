@@ -103,8 +103,9 @@ describe("DEV-74: Clear all filters button (acceptance)", () => {
   it("AC2: button appears when a status filter is active (activeFilter !== 'all')", () => {
     renderDashboard();
 
-    // Click the "In Review" filter tab (aria-label = "In Review (N tickets)")
-    const inReviewTab = screen.getByRole("button", { name: /In Review/i });
+    // Click the "In review" segmented-control tab (role="tab"; accessible
+    // name includes the count chip, so match on the label substring)
+    const inReviewTab = screen.getByRole("tab", { name: /In Review/i });
     fireEvent.click(inReviewTab);
 
     expect(

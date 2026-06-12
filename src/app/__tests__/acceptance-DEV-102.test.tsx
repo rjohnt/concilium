@@ -228,7 +228,7 @@ describe("AC 2: Valid forward transitions", () => {
       // The trigger button text reflects current status
       const statusLabel =
         from === "draft" ? "Draft" :
-        from === "in-review" ? "In Review" :
+        from === "in-review" ? "In review" :
         from === "consensus" ? "Consensus" :
         from === "building" ? "Building" : "Done";
 
@@ -239,7 +239,7 @@ describe("AC 2: Valid forward transitions", () => {
 
       const targetLabel =
         to === "draft" ? "Draft" :
-        to === "in-review" ? "In Review" :
+        to === "in-review" ? "In review" :
         to === "consensus" ? "Consensus" :
         to === "building" ? "Building" : "Done";
 
@@ -280,7 +280,7 @@ describe("AC 3: Valid backward transitions (one step only)", () => {
 
       const statusLabel =
         from === "draft" ? "Draft" :
-        from === "in-review" ? "In Review" :
+        from === "in-review" ? "In review" :
         from === "consensus" ? "Consensus" :
         from === "building" ? "Building" : "Done";
 
@@ -291,7 +291,7 @@ describe("AC 3: Valid backward transitions (one step only)", () => {
 
       const targetLabel =
         to === "draft" ? "Draft" :
-        to === "in-review" ? "In Review" :
+        to === "in-review" ? "In review" :
         to === "consensus" ? "Consensus" :
         to === "building" ? "Building" : "Done";
 
@@ -314,7 +314,7 @@ describe("AC 3: Valid backward transitions (one step only)", () => {
     const dropdown = trigger.parentElement?.querySelector(".absolute.top-full") as HTMLElement;
     if (!dropdown) throw new Error("Dropdown not found");
 
-    const inReviewBtn = within(dropdown).getByText("In Review").closest("button")!;
+    const inReviewBtn = within(dropdown).getByText("In review").closest("button")!;
     expect(inReviewBtn).toBeDisabled();
   });
 });
@@ -346,7 +346,7 @@ describe("AC 4: Single source of truth (VALID_TRANSITIONS + validateTransition)"
 
     // Only "Consensus" should be enabled (besides current "Draft")
     const draftBtn = within(dropdown).getByText("Draft").closest("button")!;
-    const inReviewBtn = within(dropdown).getByText("In Review").closest("button")!;
+    const inReviewBtn = within(dropdown).getByText("In review").closest("button")!;
     const consensusBtn = within(dropdown).getByText("Consensus").closest("button")!;
     const buildingBtn = within(dropdown).getByText("Building").closest("button")!;
     const doneBtn = within(dropdown).getByText("Done").closest("button")!;
@@ -438,7 +438,7 @@ describe("AC 6: Status editor dropdown with disabled invalid options", () => {
     const dropdown = await openDropdown();
 
     expect(within(dropdown).getByText("Draft")).toBeInTheDocument();
-    expect(within(dropdown).getByText("In Review")).toBeInTheDocument();
+    expect(within(dropdown).getByText("In review")).toBeInTheDocument();
     expect(within(dropdown).getByText("Consensus")).toBeInTheDocument();
     expect(within(dropdown).getByText("Building")).toBeInTheDocument();
     expect(within(dropdown).getByText("Done")).toBeInTheDocument();
@@ -448,7 +448,7 @@ describe("AC 6: Status editor dropdown with disabled invalid options", () => {
     await renderPage();
     const dropdown = await openDropdown();
 
-    const inReviewBtn = within(dropdown).getByText("In Review").closest("button")!;
+    const inReviewBtn = within(dropdown).getByText("In review").closest("button")!;
     const consensusBtn = within(dropdown).getByText("Consensus").closest("button")!;
     const buildingBtn = within(dropdown).getByText("Building").closest("button")!;
     const doneBtn = within(dropdown).getByText("Done").closest("button")!;
@@ -459,12 +459,12 @@ describe("AC 6: Status editor dropdown with disabled invalid options", () => {
     expect(doneBtn).toBeDisabled();
   });
 
-  it("current status shows a Check icon and gold styling", async () => {
+  it("current status shows a Check icon and accent styling", async () => {
     await renderPage();
     const dropdown = await openDropdown();
 
     const draftRow = within(dropdown).getByText("Draft").closest("button")!;
-    expect(draftRow.className).toContain("gold");
+    expect(draftRow.className).toContain("coral");
     const checkSvg = draftRow.querySelector("svg");
     expect(checkSvg).toBeInTheDocument();
   });
@@ -489,7 +489,7 @@ describe("AC 7: Selecting a valid option triggers the transition", () => {
     await renderPage();
     const dropdown = await openDropdown();
 
-    const inReviewBtn = within(dropdown).getByText("In Review").closest("button")!;
+    const inReviewBtn = within(dropdown).getByText("In review").closest("button")!;
     expect(inReviewBtn).not.toBeDisabled();
     fireEvent.click(inReviewBtn);
 
@@ -502,7 +502,7 @@ describe("AC 7: Selecting a valid option triggers the transition", () => {
     const dropdown = await openDropdown();
     expect(dropdown).toBeInTheDocument();
 
-    const inReviewBtn = within(dropdown).getByText("In Review").closest("button")!;
+    const inReviewBtn = within(dropdown).getByText("In review").closest("button")!;
     fireEvent.click(inReviewBtn);
 
     await waitFor(() => {
@@ -559,7 +559,7 @@ describe("AC 8: Toast error for blocked transitions", () => {
     await renderPage();
     const dropdown = await openDropdown();
 
-    const inReviewBtn = within(dropdown).getByText("In Review").closest("button")!;
+    const inReviewBtn = within(dropdown).getByText("In review").closest("button")!;
     fireEvent.click(inReviewBtn);
 
     // No error toast

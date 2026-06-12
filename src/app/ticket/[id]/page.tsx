@@ -264,20 +264,22 @@ export default function TicketDetailPage() {
                 {ticket.id}
               </span>
               <CopyButton text={ticket.id} label={ticket.id} />
-              {/* Status dropdown */}
+              {/* Status dropdown — DS cc-badge tones */}
               <div className="relative" ref={statusDropdownRef}>
                 <button
                   onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-                  className={`badge inline-flex items-center gap-1.5 cursor-pointer ${
-                    ticket.status === "draft" ? "bg-cardinal/20 text-cardinal" :
-                    ticket.status === "in-review" ? "bg-blue-steel/20 text-blue-steel" :
-                    ticket.status === "consensus" ? "bg-gold/20 text-gold-light" :
-                    ticket.status === "building" ? "bg-olive/20 text-olive" :
-                    "bg-raised text-ink-primary"
-                  }`}
+                  className="cc-badge cursor-pointer"
+                  style={
+                    ticket.status === "draft" ? { background: "var(--warm-150)", color: "var(--ink-700)" } :
+                    ticket.status === "in-review" ? { background: "var(--warning-100)", color: "#8A5A12" } :
+                    ticket.status === "consensus" ? { background: "var(--success-100)", color: "#1B6B4A" } :
+                    ticket.status === "building" ? { background: "var(--info-100)", color: "#185FA5" } :
+                    { background: "var(--success-100)", color: "#1B6B4A" }
+                  }
                 >
+                  <span className="cc-badge__dot" />
                   {ticket.status === "draft" ? "Draft" :
-                   ticket.status === "in-review" ? "In Review" :
+                   ticket.status === "in-review" ? "In review" :
                    ticket.status === "consensus" ? "Consensus" :
                    ticket.status === "building" ? "Building" :
                    "Done"}
@@ -285,7 +287,9 @@ export default function TicketDetailPage() {
                 </button>
 
                 {showStatusDropdown && (
-                  <div className="absolute top-full mt-1 left-0 z-50 bg-elevated border border-border-visible rounded-lg shadow-lg py-1 min-w-[160px]">
+                  <div className="absolute top-full mt-1 left-0 z-50 py-1 min-w-[160px]"
+                    style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-lg)" }}
+                  >
                     {(["draft", "in-review", "consensus", "building", "done"] as TicketStatus[]).map((s) => {
                       const isValid = validateTransition(ticket.status, s);
                       const isCurrent = ticket.status === s;
@@ -295,14 +299,14 @@ export default function TicketDetailPage() {
                           disabled={!isValid && !isCurrent}
                           onClick={() => isValid && handleStatusChange(s)}
                           className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between ${
-                            isCurrent ? "bg-gold/10 text-gold-light" :
-                            isValid ? "text-ink-primary hover:bg-raised cursor-pointer" :
-                            "text-ink-muted opacity-40 cursor-not-allowed"
+                            isCurrent ? "bg-[var(--coral-50)] text-[var(--coral-700)] font-semibold" :
+                            isValid ? "text-[var(--ink-900)] hover:bg-[var(--bg-hover)] cursor-pointer" :
+                            "text-[var(--text-faint)] opacity-50 cursor-not-allowed"
                           }`}
                         >
                           <span>
                             {s === "draft" ? "Draft" :
-                             s === "in-review" ? "In Review" :
+                             s === "in-review" ? "In review" :
                              s === "consensus" ? "Consensus" :
                              s === "building" ? "Building" :
                              "Done"}
@@ -332,7 +336,7 @@ export default function TicketDetailPage() {
               type="input"
               placeholder="Enter ticket title"
               className="mb-3"
-              displayClassName="text-2xl font-bold text-ink-primary"
+              displayClassName="text-2xl font-bold text-ink-primary font-display tracking-[-0.02em]"
             />
             <EditableField
               value={ticket.description}
@@ -458,7 +462,8 @@ export default function TicketDetailPage() {
               {showActionsMenu && (
                 <div
                   role="menu"
-                  className="absolute right-0 mt-1 w-60 bg-raised border border-border-visible rounded-lg shadow-xl py-1 z-30"
+                  className="absolute right-0 mt-1 w-60 py-1 z-30"
+                  style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-lg)" }}
                 >
                   <button
                     role="menuitem"
@@ -505,7 +510,7 @@ export default function TicketDetailPage() {
                       setShowActionsMenu(false);
                       setShowDeleteDialog(true);
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left text-cardinal hover:bg-cardinal/10 transition-colors"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left text-[var(--danger-500)] hover:bg-[var(--danger-100)] transition-colors"
                   >
                     <Trash2 size={15} />
                     Delete ticket
