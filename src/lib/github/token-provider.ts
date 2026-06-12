@@ -30,10 +30,21 @@ export const envGitHubTokenProvider: GitHubTokenProvider = {
 };
 
 /**
- * Select the active token provider. Future: return a GitHub App
- * installation provider when app credentials are configured, keyed by the
- * project's repo owner.
+ * App installation tokens first (the customer-repeatable path), falling back
+ * to a plain GITHUB_TOKEN for single-user / local setups. Both misses → null,
+ * which callers already degrade on.
  */
+export const chainGitHubTokenProvider: GitHubTokenProvider = {
+  name: "github-app+env",
+  async getToken(project: Project): Promise<string | null> {
+    const { appGitHubTokenProvider } = await import("./app-token-provider");
+    const appToken = await appGitHubTokenProvider.getToken(project);
+    if (appToken) return appToken;
+    return envGitHubTokenProvider.getToken(project);
+  },
+};
+
+/** Select the active token provider. */
 export function getGitHubTokenProvider(): GitHubTokenProvider {
-  return envGitHubTokenProvider;
+  return chainGitHubTokenProvider;
 }

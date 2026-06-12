@@ -64,7 +64,7 @@ export async function maybeCreateBuildPullRequest(
         buildId,
         "log",
         "Pull request skipped",
-        "No GitHub token configured (set GITHUB_TOKEN) — branch was pushed but no PR was opened."
+        "No GitHub credential available — install the Concilium GitHub App on this repository (or set GITHUB_TOKEN). The branch was pushed but no PR was opened."
       );
     }
 
