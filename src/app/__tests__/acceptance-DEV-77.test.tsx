@@ -87,6 +87,9 @@ vi.mock("@/lib/store", () => ({
   triggerBuild: mockTriggerBuild,
   retryBuild: mockRetryBuild,
   updateTicketStatus: vi.fn(),
+  getSeats: vi.fn(() => ({})),
+  claimSeat: vi.fn(),
+  releaseSeat: vi.fn(),
 }));
 
 // --- Personas ---

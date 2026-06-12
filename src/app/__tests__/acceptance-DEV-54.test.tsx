@@ -15,6 +15,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { ToastProvider } from "@/components/Toast";
 import type { ReactNode } from "react";
+import type { PersonaId } from "@/lib/types";
 
 // ===========================================================================
 // Mocks shared across all test suites
@@ -1489,7 +1490,6 @@ describe("AC 7b: BuildTrigger component integration", () => {
     }));
 
     vi.doMock("@/lib/consensus-threshold", () => ({
-      getBuildReadiness: vi.fn(() => ({ ready: true, score: 100, consensusMet: true, feedbackCount: 4, missingPersonas: [], nextSteps: [] })),
       getBuildReadiness: mockGetBuildReadiness,
       generateBuildSummary: vi.fn(() => "# Summary"),
       DEFAULT_THRESHOLD: 0.75,
@@ -1537,7 +1537,6 @@ describe("AC 7b: BuildTrigger component integration", () => {
 
   it("BuildTrigger component shows 'Build In Progress' when status is building", async () => {
     vi.doMock("@/lib/consensus-threshold", () => ({
-      getBuildReadiness: vi.fn(() => ({ ready: true, score: 100, consensusMet: true, feedbackCount: 4, missingPersonas: [], nextSteps: [] })),
       getBuildReadiness: vi.fn(() => ({
         ready: false, score: 100, blockers: [], nextSteps: [],
       })),
@@ -1591,7 +1590,6 @@ describe("AC 7b: BuildTrigger component integration", () => {
 
   it("BuildTrigger component shows 'Build Complete' when status is done", async () => {
     vi.doMock("@/lib/consensus-threshold", () => ({
-      getBuildReadiness: vi.fn(() => ({ ready: true, score: 100, consensusMet: true, feedbackCount: 4, missingPersonas: [], nextSteps: [] })),
       getBuildReadiness: vi.fn(() => ({
         ready: false, score: 100, blockers: [], nextSteps: [],
       })),
@@ -1988,7 +1986,6 @@ describe("Full pipeline integration: from feedback to build display", () => {
     }));
 
     vi.doMock("@/lib/consensus-threshold", () => ({
-      getBuildReadiness: vi.fn(() => ({ ready: true, score: 100, consensusMet: true, feedbackCount: 4, missingPersonas: [], nextSteps: [] })),
       checkConsensusThreshold: vi.fn(() => ({
         reached: true, progress: 1.0, threshold: 0.75,
       })),
@@ -2064,7 +2061,6 @@ describe("Full pipeline integration: from feedback to build display", () => {
     }));
 
     vi.doMock("@/lib/consensus-threshold", () => ({
-      getBuildReadiness: vi.fn(() => ({ ready: true, score: 100, consensusMet: true, feedbackCount: 4, missingPersonas: [], nextSteps: [] })),
       checkConsensusThreshold: vi.fn(() => ({
         reached: false, progress: 0, threshold: 0.75,
       })),

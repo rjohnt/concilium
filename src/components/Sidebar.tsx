@@ -15,11 +15,13 @@ import {
   ChevronRight,
   Search,
   FlaskConical,
+  FolderGit2,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/lib/auth-context";
 import { getTickets } from "@/lib/store";
 import { TemplateEditor } from "./TemplateEditor";
+import { ProjectSettingsPanel } from "./ProjectSettingsPanel";
 import { ThemeToggle } from "./ThemeToggle";
 
 // ── Concilium Design System palette ─────────────────────────────
@@ -43,6 +45,7 @@ export function Sidebar() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isTemplateEditorOpen, setIsTemplateEditorOpen] = useState(false);
+  const [isProjectSettingsOpen, setIsProjectSettingsOpen] = useState(false);
   const hamburgerRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [ticketCounts, setTicketCounts] = useState({ total: 0, active: 0 });
@@ -92,6 +95,7 @@ export function Sidebar() {
     { href: "/new", label: "New Ticket", icon: PlusCircle },
     { href: "/evals", label: "Agent Evals", icon: FlaskConical },
     { label: "Templates", icon: Settings, onClick: () => setIsTemplateEditorOpen(true) },
+    { label: "Project", icon: FolderGit2, onClick: () => setIsProjectSettingsOpen(true) },
   ];
 
   const teamItems = [
@@ -310,6 +314,7 @@ export function Sidebar() {
       </aside>
 
       <TemplateEditor isOpen={isTemplateEditorOpen} onClose={() => setIsTemplateEditorOpen(false)} />
+      <ProjectSettingsPanel isOpen={isProjectSettingsOpen} onClose={() => setIsProjectSettingsOpen(false)} />
     </>
   );
 }

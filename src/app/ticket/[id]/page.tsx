@@ -22,6 +22,7 @@ import { DetailSkeleton } from "@/components/Skeleton";
 import { DeleteTicketDialog } from "@/components/DeleteTicketDialog";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { EditableField } from "@/components/EditableField";
+import { TicketProjectSelect } from "@/components/TicketProjectSelect";
 import { TagChip } from "@/components/TagChip";
 import { EmptyState } from "@/components/EmptyState";
 import { Clock, GitBranch, RefreshCw, Sparkles, Trash2, FileQuestion, Calendar, Users, ChevronDown, Check, Share2, MoreHorizontal, Link2 } from "lucide-react";
@@ -230,6 +231,21 @@ export default function TicketDetailPage() {
   const handleUpdateDueDate = (newDueDate: string | null) => {
     if (!ticket) return;
     const updated = updateTicket(ticket.id, { dueDate: newDueDate });
+    if (updated) setTicket({ ...updated });
+  };
+
+  const handleUpdateBranchOverride = (newBranch: string | null) => {
+    if (!ticket) return;
+    const trimmed = newBranch?.trim() || null;
+    if ((ticket.branchOverride ?? null) === trimmed) return;
+    const updated = updateTicket(ticket.id, { branchOverride: trimmed });
+    if (updated) setTicket({ ...updated });
+  };
+
+  const handleUpdateProject = (newProjectId: string | null) => {
+    if (!ticket) return;
+    if ((ticket.projectId ?? null) === newProjectId) return;
+    const updated = updateTicket(ticket.id, { projectId: newProjectId });
     if (updated) setTicket({ ...updated });
   };
 
@@ -463,6 +479,50 @@ export default function TicketDetailPage() {
                   </span>
                 );
               })()}
+            </div>
+
+            {/* Project assignment — links this ticket's builds to a repo */}
+            <div className="mt-4 pt-4 border-t border-border-subtle">
+              <TicketProjectSelect
+                value={ticket.projectId ?? null}
+                onChange={handleUpdateProject}
+              />
+            </div>
+
+            {/* Build branch override */}
+            <div className="mt-4 pt-4 border-t border-border-subtle">
+              <p className="text-xs font-medium text-ink-muted mb-2">Build Branch</p>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  key={ticket.branchOverride ?? ""}
+                  defaultValue={ticket.branchOverride ?? ""}
+                  placeholder="Project default"
+                  aria-label="Build branch override"
+                  onBlur={(e) => handleUpdateBranchOverride(e.target.value || null)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      (e.target as HTMLInputElement).blur();
+                    }
+                  }}
+                  className="bg-elevated border border-border-visible rounded-lg px-3 py-2 text-sm text-ink-primary placeholder:text-ink-muted/50 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent font-mono"
+                />
+                {ticket.branchOverride && (
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateBranchOverride(null)}
+                    className="px-3 py-2 text-sm text-ink-muted hover:text-ink-primary transition-colors"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              <p className="mt-1.5 text-xs text-ink-muted">
+                {ticket.branchOverride
+                  ? "Builds for this ticket target this branch."
+                  : "Leave empty to build on the project's default branch."}
+              </p>
             </div>
           </div>
 

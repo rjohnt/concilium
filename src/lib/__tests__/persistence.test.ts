@@ -35,6 +35,7 @@ function makeTicket(overrides: Partial<Ticket> = {}): Ticket {
     title: "Test ticket",
     description: "A test",
     status: "draft",
+    priority: 2,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     feedback: [],

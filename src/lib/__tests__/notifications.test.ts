@@ -125,8 +125,17 @@ function createMockNotification(
 
 // ── Test suite ─────────────────────────────────────────────────────────────
 
+/**
+ * addNotification / notify* return `AppNotification | null` (null when muted
+ * by preferences). These tests never mute, so bind them with the null
+ * stripped from the return type to keep assertions clean.
+ */
+type NonNullReturn<F extends (...args: never[]) => unknown> = (
+  ...args: Parameters<F>
+) => NonNullable<ReturnType<F>>;
+
 describe("notifications", () => {
-  let addNotification: typeof import("../notifications").addNotification;
+  let addNotification: NonNullReturn<typeof import("../notifications").addNotification>;
   let getNotifications: typeof import("../notifications").getNotifications;
   let getUnreadCount: typeof import("../notifications").getUnreadCount;
   let markRead: typeof import("../notifications").markRead;
@@ -134,9 +143,13 @@ describe("notifications", () => {
   let onNotificationsChange: typeof import("../notifications").onNotificationsChange;
   let requestNotificationPermission: typeof import("../notifications").requestNotificationPermission;
   let requestBrowserNotification: typeof import("../notifications").requestBrowserNotification;
-  let notifyFeedbackSubmitted: typeof import("../notifications").notifyFeedbackSubmitted;
-  let notifyConsensusReached: typeof import("../notifications").notifyConsensusReached;
-  let notifyBuildCompleted: typeof import("../notifications").notifyBuildCompleted;
+  let notifyFeedbackSubmitted: NonNullReturn<
+    typeof import("../notifications").notifyFeedbackSubmitted
+  >;
+  let notifyConsensusReached: NonNullReturn<
+    typeof import("../notifications").notifyConsensusReached
+  >;
+  let notifyBuildCompleted: NonNullReturn<typeof import("../notifications").notifyBuildCompleted>;
 
   /**
    * Helper: re-import the notifications module fresh (each test).
@@ -154,7 +167,7 @@ describe("notifications", () => {
     resetMockNotifications();
 
     const mod = await import("../notifications");
-    addNotification = mod.addNotification;
+    addNotification = mod.addNotification as typeof addNotification;
     getNotifications = mod.getNotifications;
     getUnreadCount = mod.getUnreadCount;
     markRead = mod.markRead;
@@ -162,9 +175,9 @@ describe("notifications", () => {
     onNotificationsChange = mod.onNotificationsChange;
     requestNotificationPermission = mod.requestNotificationPermission;
     requestBrowserNotification = mod.requestBrowserNotification;
-    notifyFeedbackSubmitted = mod.notifyFeedbackSubmitted;
-    notifyConsensusReached = mod.notifyConsensusReached;
-    notifyBuildCompleted = mod.notifyBuildCompleted;
+    notifyFeedbackSubmitted = mod.notifyFeedbackSubmitted as typeof notifyFeedbackSubmitted;
+    notifyConsensusReached = mod.notifyConsensusReached as typeof notifyConsensusReached;
+    notifyBuildCompleted = mod.notifyBuildCompleted as typeof notifyBuildCompleted;
   }
 
   beforeEach(async () => {

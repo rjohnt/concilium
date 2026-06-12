@@ -98,6 +98,23 @@ export function BuildIterationPanel({
           <p className="text-xs font-semibold text-ink-muted">Artifacts</p>
           {artifacts.map((art) => {
             const Icon = ARTIFACT_ICONS[art.type] ?? FileCode2;
+            // Bare-URL artifacts (e.g. the pull-request link) open directly.
+            const isLink = /^https?:\/\/\S+$/.test(art.content.trim());
+            if (isLink) {
+              return (
+                <a
+                  key={art.id}
+                  href={art.content.trim()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-deep border border-border-subtle text-xs text-gold hover:border-gold/40 transition-colors"
+                >
+                  <Icon size={13} className="text-blue-steel" />
+                  {art.label}
+                  <span className="ml-auto text-ink-ghost">{formatRelativeTime(art.createdAt)}</span>
+                </a>
+              );
+            }
             return (
               <details key={art.id} className="rounded-lg bg-deep border border-border-subtle">
                 <summary className="flex items-center gap-2 px-3 py-2 text-xs text-ink-secondary cursor-pointer select-none">

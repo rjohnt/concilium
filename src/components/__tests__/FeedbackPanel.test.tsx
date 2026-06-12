@@ -28,6 +28,8 @@ const mockTicket: Ticket = {
   title: 'Test Ticket',
   description: 'A test ticket for feedback panel',
   status: 'in-review',
+  priority: 2,
+  tags: [],
   createdAt: '2025-01-01T00:00:00.000Z',
   updatedAt: '2025-01-02T00:00:00.000Z',
   feedback: mockFeedback,

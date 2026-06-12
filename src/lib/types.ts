@@ -44,6 +44,26 @@ export const TAG_COLORS: Record<string, string> = Object.fromEntries(
   PREDEFINED_TAGS.map((t) => [t.id, t.color])
 );
 
+// === Projects: build settings that tickets hang off ===
+
+export type SandboxProvider = "local" | "docker" | "daytona";
+
+export const SANDBOX_PROVIDERS: SandboxProvider[] = ["local", "docker", "daytona"];
+
+export interface Project {
+  id: string;
+  name: string;
+  /** Git remote the build executor clones/pushes. Null for local-only projects. */
+  repoUrl: string | null;
+  /** Branch builds target unless a ticket overrides it. */
+  defaultBranch: string;
+  /** Where ticket builds run: 'local' | 'docker' | 'daytona'. */
+  sandboxProvider: SandboxProvider;
+  /** Open a PR after a successful build instead of committing to the branch. */
+  createPr: boolean;
+  createdAt: string; // ISO string
+}
+
 export interface Persona {
   id: PersonaId;
   label: string;
@@ -160,6 +180,10 @@ export interface Ticket {
    * normalizeSeats() from @/lib/seats, which defaults every seat to an AI stand-in.
    */
   seats?: SeatMap;
+  /** Owning project. Null/absent for standalone tickets (back-compat). */
+  projectId?: string | null;
+  /** When set, builds target this branch instead of the project's default. */
+  branchOverride?: string | null;
   buildReport?: BuildReport;
   /** Timestamp of the last build retry attempt (ISO string). Enforces 5s cooldown. */
   lastAttemptedAt?: string;

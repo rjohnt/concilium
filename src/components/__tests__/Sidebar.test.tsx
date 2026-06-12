@@ -52,9 +52,11 @@ vi.mock("@/lib/auth-context", () => ({
 }));
 
 // Mock store — getTickets returns empty by default
-const mockGetTickets = vi.fn(() => []);
+const mockGetTickets = vi.fn(
+  (): Array<{ id: string; status: string; updatedAt: string }> => []
+);
 vi.mock("@/lib/store", () => ({
-  getTickets: (...args: unknown[]) => mockGetTickets(...args),
+  getTickets: () => mockGetTickets(),
 }));
 
 // Helper to create a mock matchMedia
