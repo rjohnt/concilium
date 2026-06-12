@@ -1,7 +1,14 @@
-# Green-suite gate — the enforcement half of the definition-of-done rule in
-# AGENTS.md §Testing. Every PR and every push to main must pass the full unit
-# suite. (LLM evals are NOT run here — they need DEEPSEEK_API_KEY and cost
-# money; they skip automatically without the key.)
+# Green-suite gate + deploy-on-green.
+#
+# test: every PR and push to main must pass the full unit suite and build
+#       (the enforcement half of the definition-of-done rule in AGENTS.md).
+#       LLM evals are NOT run here — they need DEEPSEEK_API_KEY and cost
+#       money; they skip automatically without the key.
+#
+# deploy: pushes to main that pass `test` are deployed to Railway, pinned to
+#       the exact commit SHA. This replaces Railway's native git integration
+#       (its GitHub App isn't installed on this repo) and is deliberately
+#       gated on the suite: a red main cannot ship.
 name: test
 
 on:
@@ -21,3 +28,56 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+
+  deploy:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: railway-production
+      cancel-in-progress: false
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      # Railway project "concilium" (not secrets — resource ids)
+      ENV_ID: 6f838e13-2ee2-4f6f-9c1b-0e85722baee2
+      SERVICE_ID: 261a888c-6544-4a4c-9e30-ae176b58d907
+      PROJECT_ID: 210bf2ca-cb73-4b85-b33c-42b991b2c37d
+    steps:
+      - name: Trigger Railway deploy (pinned to this commit)
+        run: |
+          PAYLOAD=$(jq -n \
+            --arg e "$ENV_ID" --arg s "$SERVICE_ID" --arg c "$GITHUB_SHA" \
+            '{query: "mutation($e:String!,$s:String!,$c:String){serviceInstanceDeployV2(environmentId:$e,serviceId:$s,commitSha:$c)}", variables: {e:$e, s:$s, c:$c}}')
+          RESPONSE=$(curl -sf -X POST https://backboard.railway.app/graphql/v2 \
+            -H "Authorization: Bearer $RAILWAY_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data "$PAYLOAD")
+          echo "$RESPONSE"
+          echo "$RESPONSE" | jq -e '.data.serviceInstanceDeployV2' > /dev/null
+
+      - name: Wait for deployment to succeed
+        run: |
+          PAYLOAD=$(jq -n --arg p "$PROJECT_ID" \
+            '{query: "query($p:String!){deployments(first:5,input:{projectId:$p}){edges{node{status meta}}}}", variables: {p:$p}}')
+          for i in $(seq 1 40); do
+            STATUS=$(curl -sf -X POST https://backboard.railway.app/graphql/v2 \
+              -H "Authorization: Bearer $RAILWAY_TOKEN" \
+              -H "Content-Type: application/json" \
+              --data "$PAYLOAD" \
+              | jq -r --arg sha "$GITHUB_SHA" \
+                '.data.deployments.edges[].node | select(.meta.commitHash == $sha) | .status' \
+              | head -1)
+            echo "[$((i*15))s] deployment status: ${STATUS:-pending}"
+            case "$STATUS" in
+              SUCCESS) exit 0 ;;
+              FAILED|CRASHED|REMOVED) echo "Deployment failed ($STATUS)"; exit 1 ;;
+            esac
+            sleep 15
+          done
+          echo "Timed out waiting for deployment"; exit 1
+
+      - name: Smoke check
+        run: |
+          BODY=$(curl -sf -m 20 https://concilium-web-production.up.railway.app/api/health)
+          echo "$BODY"
+          echo "$BODY" | jq -e '.status == "ok"' > /dev/null
