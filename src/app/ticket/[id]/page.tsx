@@ -2,8 +2,10 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Ticket, PersonaId, PRIORITY_LABELS, PRIORITY_COLORS, PriorityLevel, PREDEFINED_TAGS, TicketStatus } from "@/lib/types";
-import { seedData, getTicket, deleteTicket, updateTicket, updateTicketPriority, updateTicketTags, updateTicketStatus, retryBuild, createTicket } from "@/lib/store";
+import { Ticket, PersonaId, Seat, PRIORITY_LABELS, PRIORITY_COLORS, PriorityLevel, PREDEFINED_TAGS, TicketStatus } from "@/lib/types";
+import { seedData, getTicket, deleteTicket, updateTicket, updateTicketPriority, updateTicketTags, updateTicketStatus, retryBuild, createTicket, getSeats, claimSeat, releaseSeat } from "@/lib/store";
+import { useAuth } from "@/lib/auth-context";
+import { getClientId } from "@/lib/session-presence";
 import { validateTransition } from "@/lib/status-machine";
 import { formatDueDate } from "@/lib/date-utils";
 import { getPersona } from "@/lib/personas";
@@ -31,12 +33,19 @@ export default function TicketDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { addToast } = useToast();
+  const { user, loading: authLoading, displayName, preferredRole, saveRole } = useAuth();
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Session state
   const [sessionPersona, setSessionPersona] = useState<PersonaId | null>(null);
   const [showJoinModal, setShowJoinModal] = useState(false);
+  const [seats, setSeats] = useState<Record<PersonaId, Seat> | undefined>(undefined);
+
+  // Seats are claimed under the account id when signed in, falling back to
+  // the anonymous per-browser id.
+  const seatId = user?.id ?? getClientId();
+  const humanLabel = displayName ?? "Human";
 
   // Delete dialog state
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -105,6 +114,7 @@ export default function TicketDetailPage() {
     seedData();
     const t = getTicket(params.id as string);
     setTicket(t || null);
+    setSeats(getSeats(params.id as string));
     setLoading(false);
   }, [params.id]);
 
@@ -118,6 +128,7 @@ export default function TicketDetailPage() {
       const t = getTicket(params.id as string);
       if (t) {
         setTicket(t);
+        setSeats(getSeats(params.id as string));
       } else {
         // Ticket was deleted — redirect to dashboard
         router.push("/");
@@ -127,16 +138,37 @@ export default function TicketDetailPage() {
     return () => window.removeEventListener("tickets-changed", handler);
   }, [params.id, router]);
 
+  // Resume a seat you already hold on this ticket — your role follows you in
+  // without re-picking. Waits for auth so account-claimed seats are recognized.
+  useEffect(() => {
+    if (loading || authLoading || sessionPersona || !ticket || !seats) return;
+    const mine = Object.values(seats).find(
+      (s) => s.occupant === "human" && s.claimedBy === seatId
+    );
+    if (mine) {
+      setSessionPersona(mine.personaId);
+      setShowJoinModal(false);
+    }
+  }, [loading, authLoading, sessionPersona, ticket, seats, seatId]);
+
   // After ticket loads, show the join modal if no session is active
   useEffect(() => {
-    if (!loading && ticket && !sessionPersona && !showJoinModal) {
+    if (!loading && !authLoading && ticket && !sessionPersona && !showJoinModal) {
       // Small delay for cinematic entrance after page load
       const timer = setTimeout(() => setShowJoinModal(true), 400);
       return () => clearTimeout(timer);
     }
-  }, [loading, ticket, sessionPersona, showJoinModal]);
+  }, [loading, authLoading, ticket, sessionPersona, showJoinModal]);
 
   const handleJoinSession = (personaId: PersonaId) => {
+    const ticketId = params.id as string;
+    // Hand any previously held seat back to its AI stand-in, then claim the new one
+    if (sessionPersona && sessionPersona !== personaId) {
+      releaseSeat(ticketId, sessionPersona, seatId);
+    }
+    claimSeat(ticketId, personaId, seatId, humanLabel);
+    saveRole(personaId);
+    setSeats(getSeats(ticketId));
     setSessionPersona(personaId);
     setShowJoinModal(false);
   };
@@ -222,16 +254,14 @@ export default function TicketDetailPage() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* Join Session Modal */}
+      {/* Join Session Modal — single instance with mode prop */}
       <JoinSessionModal
-        isOpen={showJoinModal && !sessionPersona}
+        isOpen={showJoinModal}
         onJoin={handleJoinSession}
-      />
-
-      {/* Switch Persona Modal (re-join) */}
-      <JoinSessionModal
-        isOpen={showJoinModal && !!sessionPersona}
-        onJoin={handleJoinSession}
+        mode={sessionPersona ? "switch" : "initial"}
+        seats={seats}
+        clientId={seatId}
+        preferredRole={preferredRole}
       />
 
       {/* Active persona indicator */}

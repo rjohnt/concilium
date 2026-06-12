@@ -38,7 +38,7 @@ const C = {
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, signOut } = useAuth();
+  const { user, signOut, displayName } = useAuth();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isTemplateEditorOpen, setIsTemplateEditorOpen] = useState(false);
@@ -280,11 +280,11 @@ export function Sidebar() {
                   <img src={user.user_metadata.avatar_url} alt="Avatar" className="w-7 h-7 rounded-full shrink-0" style={{ border: `1.5px solid ${C.accentBorder}` }} />
                 ) : (
                   <div style={{ width: 28, height: 28, borderRadius: "50%", background: C.accentLight, border: `1.5px solid ${C.accentBorder}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: C.accent, flexShrink: 0 }}>
-                    {getInitials(user.user_metadata?.full_name || user.user_metadata?.name || user.email)}
+                    {getInitials(displayName || user.email)}
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold truncate" style={{ color: C.textPrimary }}>{user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0]}</p>
+                  <p className="text-xs font-semibold truncate" style={{ color: C.textPrimary }}>{displayName || user.email?.split("@")[0]}</p>
                   <p className="text-[10px]" style={{ color: C.textMuted }}>Free plan</p>
                 </div>
               </div>

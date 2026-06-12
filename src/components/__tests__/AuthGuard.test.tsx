@@ -300,14 +300,14 @@ describe("AC5 — Unauthenticated access to public paths", () => {
     expect(mockReplace).not.toHaveBeenCalled();
   });
 
-  it("allows access to / (root, exact match)", () => {
+  it("redirects / to /welcome when signed out (root is protected)", () => {
     setPathname("/");
     setupAuthState(null, false);
 
-    renderAuthGuard();
+    const { container } = renderAuthGuard();
 
-    expect(screen.getByTestId("child")).toBeInTheDocument();
-    expect(mockReplace).not.toHaveBeenCalled();
+    expect(mockReplace).toHaveBeenCalledWith("/welcome");
+    expect(container.firstChild).toBeNull();
   });
 
   it("protects /dashboard (no startsWith or exact match for public)", () => {

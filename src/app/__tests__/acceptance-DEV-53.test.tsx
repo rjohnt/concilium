@@ -61,13 +61,20 @@ vi.mock("@/lib/store", () => ({
   addFeedback: (...args: any[]) => mockStore.addFeedback(...args),
   getFeedbackHistory: (...args: any[]) => (mockStore.getFeedbackHistory as any)(...args),
   getConsensusProgress: (...args: any[]) => (mockStore.getConsensusProgress as any)(...args),
+  getSeats: () => ({}),
+  claimSeat: vi.fn(),
+  releaseSeat: vi.fn(),
 }));
 
 // Mock auth-context
 vi.mock("@/lib/auth-context", () => ({
   useAuth: vi.fn(() => ({
     user: null,
+    loading: false,
     signOut: vi.fn(),
+    displayName: null,
+    preferredRole: null,
+    saveRole: vi.fn(),
   })),
 }));
 
