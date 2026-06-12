@@ -71,14 +71,18 @@ describe("PageTransition", () => {
     expect(mockUsePathname).toHaveBeenCalled();
   });
 
-  it("AnimatePresence mode is 'wait'", () => {
+  it("does NOT wrap in AnimatePresence (SSR-duplication guard)", () => {
+    // AnimatePresence + streaming SSR duplicated the page: the server copy
+    // was orphaned while mode="wait" held the client copy at `initial`
+    // (opacity 0) waiting on a phantom exit. The component must render the
+    // motion.div directly.
     render(
       <PageTransition>
         <span>Content</span>
       </PageTransition>
     );
-    const ap = screen.getByTestId("animate-presence");
-    expect(ap.getAttribute("data-mode")).toBe("wait");
+    expect(screen.queryByTestId("animate-presence")).toBeNull();
+    expect(screen.getByTestId("motion-div")).toBeInTheDocument();
   });
 
   it("reacts to pathname changes (key-driven re-render)", () => {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isLLMConfigured, AI_NOT_CONFIGURED_MESSAGE } from "@/lib/llm";
 import { mediate, continueMediation } from "@/lib/mediator";
 import { PersonaId } from "@/lib/types";
 import { checkRateLimit, extractIp, applyRateLimitHeaders } from "@/lib/rateLimit";
@@ -42,6 +43,15 @@ export async function POST(request: NextRequest) {
     const response = NextResponse.json(
       { error: "Too many requests", retryAfter: Math.max(0, retryAfter) },
       { status: 429 }
+    );
+    return applyRateLimitHeaders(response, rateLimitResult);
+  }
+
+  // Friendly degrade when no LLM key is configured (the session UI renders `error`).
+  if (!isLLMConfigured()) {
+    const response = NextResponse.json(
+      { error: AI_NOT_CONFIGURED_MESSAGE, code: "ai_not_configured" },
+      { status: 503 }
     );
     return applyRateLimitHeaders(response, rateLimitResult);
   }

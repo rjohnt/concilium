@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="assets/vendor/gsap.min.js"></script>
+    <script src="assets/vendor/three.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "Bricolage Grotesque";
+        font-style: normal;
+        font-weight: 100 900;
+        font-display: block;
+        src: url("assets/fonts/Bricolage-normal.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Hanken Grotesk";
+        font-style: normal;
+        font-weight: 100 900;
+        font-display: block;
+        src: url("assets/fonts/Hanken-normal.woff2") format("woff2");
+      }
+      :root {
+        --coral: #e85d34;
+        --coral-light: #f07e5c;
+        --cream: #fcfaf6;
+        --ink: #2b221c;
+        --eng: #1e9c86;
+        --des: #7a57d1;
+        --prod: #d9962a;
+        --qa: #2f82c7;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #120c08; }
+      body { font-family: "Hanken Grotesk", sans-serif; }
+      .display { font-family: "Bricolage Grotesque", sans-serif; }
+      .mono { font-family: "JetBrains Mono", monospace; }
+
+      #stage { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+      #chamber-bg {
+        position: absolute; inset: 0; z-index: 0;
+        background: radial-gradient(120% 90% at 50% 38%, #3a2e25 0%, #271d16 42%, #160f0a 100%);
+      }
+      #three-layer { position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: 1; }
+      #vignette {
+        position: absolute; inset: 0; z-index: 2; pointer-events: none;
+        background: radial-gradient(115% 85% at 50% 42%, transparent 56%, rgba(8, 5, 3, 0.5) 100%);
+      }
+      #grain {
+        position: absolute; inset: 0; z-index: 3; pointer-events: none; opacity: 0.05;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+      }
+      #warmwash {
+        position: absolute; inset: 0; z-index: 4; opacity: 0; pointer-events: none;
+        background: radial-gradient(120% 100% at 50% 45%, #fffaf3 0%, #fdf3ea 45%, #f7e7d8 100%);
+      }
+
+      .scene {
+        position: absolute; inset: 0; z-index: 6;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        text-align: center; padding: 120px 200px;
+        opacity: 0; visibility: hidden;
+      }
+      .headline {
+        font-family: "Bricolage Grotesque", sans-serif;
+        font-weight: 700; color: var(--cream);
+        line-height: 1.04; letter-spacing: -0.025em;
+        text-shadow: 0 4px 34px rgba(8, 5, 3, 0.55);
+      }
+      .accent { color: var(--coral-light); }
+      .eyebrow {
+        font-size: 21px; letter-spacing: 0.4em; text-transform: uppercase;
+        font-weight: 600; color: var(--coral-light);
+        text-shadow: 0 2px 18px rgba(8, 5, 3, 0.6);
+      }
+
+      /* Scene 1 — cold open */
+      #s1 .line-1 { font-size: 76px; color: #d6c9b8; font-weight: 600; }
+      #s1 .line-2 { font-size: 116px; margin-top: 16px; }
+
+      /* Scene 2 — the council convenes; cards sit low so the 3D breathes */
+      #s2 { justify-content: flex-start; padding-top: 130px; }
+      #s2 .headline { font-size: 96px; margin-top: 20px; }
+      .persona-strip {
+        position: absolute; bottom: 84px; left: 0; right: 0;
+        display: flex; justify-content: center; gap: 18px;
+      }
+      .pcard {
+        display: flex; align-items: center; gap: 13px;
+        padding: 16px 26px 16px 18px; border-radius: 999px;
+        background: rgba(24, 17, 12, 0.62);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(8px);
+        box-shadow: 0 18px 44px rgba(0, 0, 0, 0.4);
+      }
+      .pcard .av {
+        width: 52px; height: 52px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 21px; color: #fff;
+      }
+      .pcard .pname {
+        font-family: "Bricolage Grotesque", sans-serif;
+        font-size: 25px; font-weight: 600; color: var(--cream); line-height: 1.1;
+        text-align: left;
+      }
+      .pcard .prole {
+        font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase;
+        font-weight: 700; text-align: left;
+      }
+
+      /* Scene 3 — deliberation */
+      #s3 .headline { font-size: 56px; margin-bottom: 38px; }
+      .ticket {
+        width: 1060px;
+        background: rgba(22, 16, 12, 0.74);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 24px; padding: 26px 34px;
+        box-shadow: 0 40px 90px rgba(0, 0, 0, 0.55);
+        backdrop-filter: blur(8px);
+      }
+      .ticket-bar {
+        display: flex; align-items: center; gap: 11px;
+        padding-bottom: 18px; margin-bottom: 6px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .dot { width: 11px; height: 11px; border-radius: 50%; }
+      .ticket-id { margin-left: 8px; font-size: 17px; letter-spacing: 0.08em; color: #b7a896; }
+      .msg { display: flex; align-items: flex-start; gap: 16px; padding: 14px 4px; text-align: left; }
+      .msg .av {
+        flex: 0 0 auto; width: 48px; height: 48px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 19px; color: #fff;
+      }
+      .msg .who { display: flex; align-items: center; gap: 11px; margin-bottom: 4px; }
+      .msg .who b {
+        font-family: "Bricolage Grotesque", sans-serif;
+        font-size: 22px; color: var(--cream); font-weight: 600;
+      }
+      .msg .tag {
+        font-size: 12.5px; letter-spacing: 0.07em; text-transform: uppercase;
+        font-weight: 700; padding: 3px 10px; border-radius: 999px;
+      }
+      .msg .tx { font-size: 23px; line-height: 1.42; color: #ddd2c4; }
+
+      /* Scene 4 — your seat */
+      #s4 .headline { font-size: 96px; max-width: 1460px; }
+      #s4 .sub {
+        margin-top: 28px; font-size: 32px; font-weight: 600;
+        letter-spacing: 0.02em; color: #e8ddcc;
+        text-shadow: 0 3px 22px rgba(8, 5, 3, 0.7);
+      }
+
+      /* Scene 5 — consensus */
+      #s5 .stamp {
+        width: 230px; height: 230px; border-radius: 50%;
+        border: 6px solid var(--coral);
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+        color: var(--coral); margin-bottom: 44px;
+        box-shadow: 0 0 0 14px rgba(232, 93, 52, 0.12), 0 30px 70px rgba(232, 93, 52, 0.22);
+        background: rgba(255, 250, 243, 0.6);
+      }
+      #s5 .seal-word {
+        font-family: "Bricolage Grotesque", sans-serif;
+        font-weight: 700; font-size: 32px; letter-spacing: 0.05em; text-transform: uppercase;
+      }
+      #s5 .seal-sub { font-size: 14px; letter-spacing: 0.32em; text-transform: uppercase; opacity: 0.8; }
+      #s5 .headline { font-size: 76px; color: var(--ink); text-shadow: none; }
+      #s5 .headline .accent { color: var(--coral); }
+
+      /* Scene 6 — lockup: converging pebbles + wordmark */
+      #s6 .lockrow { display: flex; align-items: center; gap: 30px; }
+      #s6 .mark { position: relative; width: 116px; height: 116px; }
+      #s6 .mark i { position: absolute; border-radius: 50%; display: block; }
+      #s6 .peb-coral { width: 44px; height: 44px; background: #e85d34; left: 36px; top: 13px; }
+      #s6 .peb-iris  { width: 44px; height: 44px; background: #7a57d1; left: 16px; top: 48px; }
+      #s6 .peb-teal  { width: 44px; height: 44px; background: #1e9c86; left: 56px; top: 48px; }
+      #s6 .peb-dot   { width: 22px; height: 22px; background: #2b221c; left: 47px; top: 49px; }
+      #s6 .brand {
+        font-family: "Bricolage Grotesque", sans-serif;
+        font-weight: 700; font-size: 104px; color: var(--ink); letter-spacing: -0.03em;
+      }
+      #s6 .tagline {
+        margin-top: 22px; font-weight: 500; font-size: 40px;
+        letter-spacing: -0.01em; color: var(--coral);
+      }
+      #s6 .cta {
+        margin-top: 48px; display: inline-flex; align-items: center; gap: 14px;
+        background: var(--coral); color: #fff;
+        font-weight: 600; font-size: 27px; padding: 19px 38px; border-radius: 999px;
+        box-shadow: 0 18px 44px rgba(232, 93, 52, 0.34);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="31" data-width="1920" data-height="1080">
+      <audio id="bed" class="clip" src="assets/music.m4a" data-start="0" data-duration="31" data-track-index="9" data-volume="0.85"></audio>
+      <div id="stage">
+        <div id="chamber-bg" data-layout-ignore></div>
+        <canvas id="three-layer" width="1920" height="1080" data-layout-ignore></canvas>
+        <div id="vignette" data-layout-ignore></div>
+        <div id="grain" data-layout-ignore></div>
+        <div id="warmwash" data-layout-ignore></div>
+
+        <!-- 1 · cold open -->
+        <div id="s1" class="scene">
+          <div class="headline line-1 display">AI can write the code.</div>
+          <div class="headline line-2 display">Who decides <span class="accent">what to build?</span></div>
+        </div>
+
+        <!-- 2 · the council convenes -->
+        <div id="s2" class="scene">
+          <div class="eyebrow">The council convenes</div>
+          <div class="headline display">Every seat is filled.</div>
+          <div class="persona-strip">
+            <div class="pcard pc">
+              <span class="av" style="background: var(--eng)">A</span>
+              <span><span class="pname">Ada</span><br /><span class="prole" style="color: var(--eng)">Engineer</span></span>
+            </div>
+            <div class="pcard pc">
+              <span class="av" style="background: var(--des)">I</span>
+              <span><span class="pname">Iris</span><br /><span class="prole" style="color: var(--des)">Designer</span></span>
+            </div>
+            <div class="pcard pc">
+              <span class="av" style="background: var(--prod)">P</span>
+              <span><span class="pname">Pam</span><br /><span class="prole" style="color: var(--prod)">Product Owner</span></span>
+            </div>
+            <div class="pcard pc">
+              <span class="av" style="background: var(--qa)">R</span>
+              <span><span class="pname">Ray</span><br /><span class="prole" style="color: var(--qa)">QA</span></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3 · deliberation -->
+        <div id="s3" class="scene">
+          <div class="headline display">They weigh in. <span class="accent">You steer.</span></div>
+          <div class="ticket">
+            <div class="ticket-bar">
+              <span class="dot" style="background: var(--prod)"></span>
+              <span class="dot" style="background: var(--qa)"></span>
+              <span class="dot" style="background: var(--des)"></span>
+              <span class="dot" style="background: var(--eng)"></span>
+              <span class="ticket-id mono">TKT-128 · living ticket</span>
+            </div>
+            <div class="msg m">
+              <div class="av" style="background: var(--prod)">P</div>
+              <div>
+                <div class="who"><b>Pam</b><span class="tag" style="color: var(--prod); background: rgba(217,150,42,0.16)">Product Owner</span></div>
+                <div class="tx">Goal: ship the share page — buyers see status without signing in.</div>
+              </div>
+            </div>
+            <div class="msg m">
+              <div class="av" style="background: var(--qa)">R</div>
+              <div>
+                <div class="who"><b>Ray</b><span class="tag" style="color: var(--qa); background: rgba(47,130,199,0.16)">QA</span></div>
+                <div class="tx">An expired link should explain itself, not 404.</div>
+              </div>
+            </div>
+            <div class="msg m">
+              <div class="av" style="background: var(--des)">I</div>
+              <div>
+                <div class="who"><b>Iris</b><span class="tag" style="color: var(--des); background: rgba(122,87,209,0.16)">Designer</span></div>
+                <div class="tx">Designing an empty state that keeps the page warm.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 · your seat -->
+        <div id="s4" class="scene">
+          <div class="headline display">AI holds the seat <span class="accent">until you take it.</span></div>
+          <div class="sub">Claim a seat. Steer the room. Ship with provenance.</div>
+        </div>
+
+        <!-- 5 · consensus -->
+        <div id="s5" class="scene">
+          <div class="stamp" id="seal">
+            <div class="seal-word">Consensus</div>
+            <div class="seal-sub">Verdict reached</div>
+          </div>
+          <div class="headline display">Consensus reached. <span class="accent">The build begins.</span></div>
+        </div>
+
+        <!-- 6 · lockup -->
+        <div id="s6" class="scene">
+          <div class="lockrow">
+            <div class="mark">
+              <i class="peb-coral"></i>
+              <i class="peb-iris"></i>
+              <i class="peb-teal"></i>
+              <i class="peb-dot"></i>
+            </div>
+            <div class="brand display">Concilium</div>
+          </div>
+          <div class="tagline">Software by consensus.</div>
+          <div class="cta">Convene your council <span>→</span></div>
+        </div>
+      </div>
+    </div>
+
+    <script type="application/json" id="council-config">
+      {
+        "palette": "dark",
+        "duration": 31,
+        "beats": {
+          "reveal": [0, 4.5],
+          "seats": { "start": 4.7, "stagger": 0.85 },
+          "focus": [15.3, 20.6],
+          "consensus": [20.5, 24.0],
+          "beam": [21.0, 24.5],
+          "fadeOut": [24.8, 26.4]
+        },
+        "camera": {
+          "orbitSpeed": 0.09, "orbitOffset": -0.65,
+          "rFrom": 9.2, "rTo": 7.6, "hFrom": 5.5, "hTo": 3.4,
+          "push": 1.4, "pushDrop": 0.5, "lookY": 0.1
+        },
+        "motes": true,
+        "beam": true
+      }
+    </script>
+    <script src="assets/vendor/council-scene.js"></script>
+
+    <script>
+      (function () {
+        window.__timelines = window.__timelines || {};
+        const tl = gsap.timeline({ paused: true });
+        const E = "power3.out";
+
+        function scene(sel, start, end, inDur, outDur) {
+          tl.fromTo(sel, { autoAlpha: 0 }, { autoAlpha: 1, duration: inDur, ease: "power2.out" }, start);
+          tl.to(sel, { autoAlpha: 0, duration: outDur, ease: "power2.in" }, end - outDur);
+        }
+
+        /* 1 · cold open (0–4.6) — blur-in reveal */
+        scene("#s1", 0.2, 4.6, 0.7, 0.6);
+        tl.fromTo("#s1 .line-1",
+          { y: 46, opacity: 0, filter: "blur(14px)" },
+          { y: 0, opacity: 1, filter: "blur(0px)", duration: 1.0, ease: E }, 0.45);
+        tl.fromTo("#s1 .line-2",
+          { y: 56, opacity: 0, filter: "blur(14px)" },
+          { y: 0, opacity: 1, filter: "blur(0px)", duration: 1.05, ease: E }, 1.45);
+
+        /* 2 · council convenes (4.6–9.4) */
+        scene("#s2", 4.6, 9.4, 0.6, 0.6);
+        tl.from("#s2 .eyebrow", { y: 20, opacity: 0, duration: 0.55, ease: E }, 4.75);
+        tl.from("#s2 .headline", { y: 32, opacity: 0, duration: 0.7, ease: E }, 4.95);
+        tl.from("#s2 .pc", { y: 44, opacity: 0, scale: 0.92, duration: 0.55, stagger: 0.85, ease: "back.out(1.7)" }, 5.0);
+
+        /* 3 · deliberation (9.4–15.3) */
+        scene("#s3", 9.4, 15.3, 0.6, 0.6);
+        tl.from("#s3 .headline", { y: 28, opacity: 0, duration: 0.6, ease: E }, 9.6);
+        tl.from("#s3 .ticket", { y: 46, opacity: 0, duration: 0.7, ease: E }, 9.9);
+        tl.from("#s3 .m", { x: -36, opacity: 0, duration: 0.55, stagger: 1.05, ease: E }, 10.5);
+
+        /* 4 · your seat (15.3–20.5) */
+        scene("#s4", 15.3, 20.5, 0.7, 0.6);
+        tl.from("#s4 .headline", { y: 38, opacity: 0, duration: 0.9, ease: E }, 15.6);
+        tl.from("#s4 .sub", { y: 24, opacity: 0, duration: 0.7, ease: E }, 16.3);
+
+        /* warm bloom under the consensus beat */
+        tl.fromTo("#warmwash", { autoAlpha: 0 }, { autoAlpha: 0.96, duration: 2.0, ease: "power2.inOut" }, 21.0);
+
+        /* 5 · consensus (20.6–25.4) */
+        scene("#s5", 20.6, 25.4, 0.7, 0.6);
+        tl.from("#s5 .stamp", { scale: 0.4, opacity: 0, rotate: -18, duration: 0.7, ease: "back.out(1.8)" }, 21.4);
+        tl.to("#s5 #seal", { scale: 1.06, duration: 0.18, yoyo: true, repeat: 1, ease: "power2.inOut" }, 22.1);
+        tl.from("#s5 .headline", { y: 32, opacity: 0, duration: 0.7, ease: E }, 22.0);
+
+        /* 6 · lockup (25.5–31) — pebbles converge into the mark */
+        tl.fromTo("#s6", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.7, ease: "power2.out" }, 25.5); // lockup holds to the end
+        tl.from("#s6 .peb-coral", { x: -120, y: -90, opacity: 0, duration: 0.75, ease: "back.out(1.4)" }, 25.7);
+        tl.from("#s6 .peb-iris",  { x: -140, y: 90, opacity: 0, duration: 0.75, ease: "back.out(1.4)" }, 25.8);
+        tl.from("#s6 .peb-teal",  { x: 60, y: 140, opacity: 0, duration: 0.75, ease: "back.out(1.4)" }, 25.9);
+        tl.from("#s6 .peb-dot",   { scale: 0, opacity: 0, duration: 0.45, ease: "back.out(2.2)" }, 26.55);
+        tl.from("#s6 .brand", { x: -26, opacity: 0, duration: 0.7, ease: E }, 26.35);
+        tl.from("#s6 .tagline", { y: 22, opacity: 0, duration: 0.65, ease: E }, 26.8);
+        tl.from("#s6 .cta", { y: 22, opacity: 0, scale: 0.93, duration: 0.6, ease: "back.out(1.6)" }, 27.3);
+        tl.to("#s6 .cta", { scale: 1.035, duration: 0.55, yoyo: true, repeat: 2, ease: "power1.inOut" }, 28.4);
+
+        /* anchor: pad the timeline to the composition end so seeks past the
+           last tween never reset to initial state (blank final frames) */
+        tl.set("#root", { autoAlpha: 1 }, 30.98);
+
+        window.__timelines["main"] = tl;
+      })();
+    </script>
+  </body>
+</html>

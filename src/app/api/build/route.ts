@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTicket, getFeedbackHistory, setBuildReport } from "@/lib/server-db";
+import { isLLMConfigured, AI_NOT_CONFIGURED_MESSAGE } from "@/lib/llm";
 import { getBuildExecutor } from "@/lib/build-executor";
 import { checkRateLimit, extractIp, applyRateLimitHeaders } from "@/lib/rateLimit";
 import type { RateLimitConfig } from "@/lib/types";
@@ -39,6 +40,15 @@ export async function POST(request: NextRequest) {
     const response = NextResponse.json(
       { error: "Too many requests", retryAfter: Math.max(0, retryAfter) },
       { status: 429 }
+    );
+    return applyRateLimitHeaders(response, rateLimitResult);
+  }
+
+  // Friendly degrade when no LLM key is configured (BuildTrigger surfaces `error`).
+  if (!isLLMConfigured()) {
+    const response = NextResponse.json(
+      { error: AI_NOT_CONFIGURED_MESSAGE, code: "ai_not_configured" },
+      { status: 503 }
     );
     return applyRateLimitHeaders(response, rateLimitResult);
   }
