@@ -95,8 +95,7 @@ describe("useKeyboardShortcut", () => {
   });
 
   it("runs callback with the event", () => {
-    let capturedEvent: KeyboardEvent | undefined;
-    const fn = vi.fn((_e: KeyboardEvent) => {});
+    const fn = vi.fn();
 
     renderHook(() => {
       useKeyboardShortcut("k", () => {
