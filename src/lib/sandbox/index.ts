@@ -2,13 +2,14 @@
  * Sandbox provider registry.
  *
  * Selection order: the owning project's sandbox_provider setting, then the
- * CONCILIUM_SANDBOX_PROVIDER env var, then "local". Unknown names (including
- * not-yet-implemented ones like "daytona") warn and fall back to local.
+ * CONCILIUM_SANDBOX_PROVIDER env var, then "local". Unknown names warn and
+ * fall back to local.
  */
 
 import { SandboxProvider } from "./types";
 import { localSandboxProvider } from "./local-provider";
 import { dockerSandboxProvider } from "./docker-provider";
+import { daytonaSandboxProvider } from "./daytona-provider";
 
 export type {
   CollectArtifactsOptions,
@@ -23,10 +24,12 @@ export { workBranchName } from "./types";
 export { makeArtifact } from "./git-workspace";
 export { localSandboxProvider } from "./local-provider";
 export { dockerSandboxProvider, DOCKER_UNAVAILABLE_MESSAGE } from "./docker-provider";
+export { daytonaSandboxProvider, DAYTONA_NOT_CONFIGURED_MESSAGE } from "./daytona-provider";
 
 const providers: Record<string, SandboxProvider> = {
   local: localSandboxProvider,
   docker: dockerSandboxProvider,
+  daytona: daytonaSandboxProvider,
 };
 
 export function getSandboxProvider(projectSetting?: string | null): SandboxProvider {

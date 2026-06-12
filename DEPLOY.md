@@ -39,6 +39,10 @@ build/run is driven by `railway.json`:
 | `DEEPSEEK_API_KEY` | server-only | Mediator, AI stand-ins, build specs |
 | `CONCILIUM_BUILD_EXECUTOR` | optional | `report` (default) or `local-claude` |
 | `CONCILIUM_BUILD_WORKSPACE` | optional | Sandbox dir for `local-claude` builds |
+| `CONCILIUM_SANDBOX_PROVIDER` | optional | Default sandbox provider: `local` (default), `docker`, or `daytona` (projects can override) |
+| `DAYTONA_API_KEY` | server-only | Required for the `daytona` sandbox provider — builds fail with a config error without it |
+| `DAYTONA_API_URL` | optional | Daytona API endpoint (defaults to Daytona's hosted API) |
+| `DAYTONA_GIT_PAT` | optional | Personal access token for cloning/pushing private repos from Daytona sandboxes |
 
 > The Postgres data layer (and therefore `SUPABASE_SERVICE_ROLE_KEY`) requires
 > the Supabase-migration change to be on `main`. Until then the app runs on

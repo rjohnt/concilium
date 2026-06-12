@@ -16,10 +16,11 @@
 import { BuildArtifact } from "../types";
 
 export interface WorkspaceHandle {
-  /** Name of the provider that created this workspace ("local", "docker"). */
+  /** Name of the provider that created this workspace ("local", "docker", "daytona"). */
   provider: string;
   ticketId: string;
-  /** Absolute host path of the workspace directory. */
+  /** Absolute workspace directory path — on the host for local/docker, inside
+   *  the remote sandbox for daytona. */
   path: string;
   /** Branch the build's work happens on: concilium/<ticketId> (lowercased). */
   branch: string;
@@ -27,6 +28,8 @@ export interface WorkspaceHandle {
   repoUrl: string | null;
   /** Container image used for exec (docker provider only). */
   image?: string;
+  /** Remote sandbox id (daytona provider only). */
+  sandboxId?: string;
 }
 
 export interface CreateWorkspaceOptions {

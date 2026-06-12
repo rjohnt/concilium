@@ -4,7 +4,12 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { getSandboxProvider, localSandboxProvider, dockerSandboxProvider } from "../index";
+import {
+  getSandboxProvider,
+  localSandboxProvider,
+  dockerSandboxProvider,
+  daytonaSandboxProvider,
+} from "../index";
 
 beforeEach(() => {
   delete process.env.CONCILIUM_SANDBOX_PROVIDER;
@@ -24,6 +29,7 @@ describe("getSandboxProvider", () => {
 
   it("selects by project setting", () => {
     expect(getSandboxProvider("docker")).toBe(dockerSandboxProvider);
+    expect(getSandboxProvider("daytona")).toBe(daytonaSandboxProvider);
     expect(getSandboxProvider("local")).toBe(localSandboxProvider);
   });
 
@@ -39,7 +45,7 @@ describe("getSandboxProvider", () => {
 
   it("warns and falls back to local for unknown provider names", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    expect(getSandboxProvider("daytona")).toBe(localSandboxProvider);
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('"daytona"'));
+    expect(getSandboxProvider("fly")).toBe(localSandboxProvider);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('"fly"'));
   });
 });
