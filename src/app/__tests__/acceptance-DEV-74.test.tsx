@@ -66,7 +66,10 @@ import DashboardPage from "../page";
 // ── Helpers ────────────────────────────────────────────────────────────
 
 function renderDashboard() {
-  return render(<DashboardPage />);
+  // Advanced filters live behind the Filters disclosure since the redesign
+  const result = render(<DashboardPage />);
+  fireEvent.click(screen.getByRole("button", { name: /^filters/i }));
+  return result;
 }
 
 // ── Tests ──────────────────────────────────────────────────────────────
@@ -181,11 +184,10 @@ describe("DEV-74: Clear all filters button (acceptance)", () => {
     // Search input should be empty
     expect(searchInput).toHaveValue("");
 
-    // Status should be back to "All"
-    expect(screen.getByRole("button", { name: /^All \(/ })).toHaveAttribute(
-      "aria-current",
-      "page",
-    );
+    // Status should be back to "All" — the redesigned tabs signal the active
+    // tab with the coral background (no aria-current / "(N tickets)" naming)
+    const allTab = screen.getAllByRole("button", { name: /^All\b/ })[0];
+    expect(allTab.style.background).toContain("coral");
 
     // Priority should be back to default — the "All" priority button should be active
     // (We can verify an All button is still in the document as a sanity check)
@@ -200,16 +202,18 @@ describe("DEV-74: Clear all filters button (acceptance)", () => {
 
   // ── AC7: Button has correct styling classes ──────────────────────────
 
-  it("AC7: button has btn-ghost class and X icon from lucide-react", () => {
+  it("AC7: button renders with an icon and the expected label", () => {
     createTicket("Test", "Desc");
     renderDashboard();
 
     // Activate a filter so button appears
-    fireEvent.click(screen.getByRole("button", { name: /In Review/i }));
+    fireEvent.click(screen.getByRole("button", { name: /In review/i }));
 
+    // The redesign replaced .btn-ghost with inline-styled text buttons —
+    // assert the durable contract: an icon plus the label.
     const clearBtn = screen.getByRole("button", { name: "Clear all filters" });
-    expect(clearBtn.className).toContain("btn-ghost");
     expect(clearBtn.className).toContain("inline-flex");
+    expect(clearBtn.querySelector("svg")).not.toBeNull();
     expect(clearBtn.textContent).toContain("Clear all filters");
   });
 });

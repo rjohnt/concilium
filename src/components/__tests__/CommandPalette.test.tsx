@@ -1,11 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { CommandPalette } from "../CommandPalette";
+import { ToastProvider } from "@/components/Toast";
 
 // ── Mocks ────────────────────────────────────────────────────────────────
 const mockPush = vi.fn();
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush }),
+  usePathname: () => "/",
 }));
 
 // Helper: fire a global keydown event on the window
@@ -35,13 +37,13 @@ beforeEach(() => {
 describe("CommandPalette", () => {
   // ── Visibility ──────────────────────────────────────────────────────
   it("renders nothing by default (isOpen=false initially)", () => {
-    render(<CommandPalette />);
+    render(<ToastProvider><CommandPalette /></ToastProvider>);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   // ── Open ────────────────────────────────────────────────────────────
   it("opens on Meta+K", () => {
-    render(<CommandPalette />);
+    render(<ToastProvider><CommandPalette /></ToastProvider>);
 
     act(() => {
       fireKeyDown("k", { metaKey: true, ctrlKey: false });
@@ -51,7 +53,7 @@ describe("CommandPalette", () => {
   });
 
   it("opens on Ctrl+K", () => {
-    render(<CommandPalette />);
+    render(<ToastProvider><CommandPalette /></ToastProvider>);
 
     act(() => {
       fireKeyDown("k", { metaKey: false, ctrlKey: true });
@@ -62,7 +64,7 @@ describe("CommandPalette", () => {
 
   // ── Close ───────────────────────────────────────────────────────────
   it("closes on Escape", () => {
-    render(<CommandPalette />);
+    render(<ToastProvider><CommandPalette /></ToastProvider>);
     openPalette();
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
@@ -75,7 +77,7 @@ describe("CommandPalette", () => {
   });
 
   it("closes on backdrop click", () => {
-    render(<CommandPalette />);
+    render(<ToastProvider><CommandPalette /></ToastProvider>);
     openPalette();
 
     // The backdrop is the outermost div with the click handler
@@ -91,7 +93,7 @@ describe("CommandPalette", () => {
 
   // ── ARIA ────────────────────────────────────────────────────────────
   it("has correct ARIA attributes", () => {
-    render(<CommandPalette />);
+    render(<ToastProvider><CommandPalette /></ToastProvider>);
     openPalette();
 
     const dialog = screen.getByRole("dialog");
@@ -100,16 +102,16 @@ describe("CommandPalette", () => {
   });
 
   it("input has aria-activedescendant pointing to selected command", () => {
-    render(<CommandPalette />);
+    render(<ToastProvider><CommandPalette /></ToastProvider>);
     openPalette();
 
-    const input = screen.getByPlaceholderText("Type a command...");
+    const input = screen.getByPlaceholderText("Search tickets or run a command…");
     // First command should be selected by default
     expect(input).toHaveAttribute("aria-activedescendant", "command-0");
   });
 
   it("command items have role='option' and aria-selected", () => {
-    render(<CommandPalette />);
+    render(<ToastProvider><CommandPalette /></ToastProvider>);
     openPalette();
 
     const options = screen.getAllByRole("option");
@@ -122,7 +124,7 @@ describe("CommandPalette", () => {
 
   // ── Keyboard navigation ─────────────────────────────────────────────
   it("navigates with ArrowDown", () => {
-    render(<CommandPalette />);
+    render(<ToastProvider><CommandPalette /></ToastProvider>);
     openPalette();
 
     act(() => {
@@ -135,7 +137,7 @@ describe("CommandPalette", () => {
   });
 
   it("navigates with ArrowUp", () => {
-    render(<CommandPalette />);
+    render(<ToastProvider><CommandPalette /></ToastProvider>);
     openPalette();
 
     // ArrowDown then ArrowUp should go back to first
@@ -147,7 +149,7 @@ describe("CommandPalette", () => {
   });
 
   it("wraps around at boundaries (ArrowDown past last → first)", () => {
-    render(<CommandPalette />);
+    render(<ToastProvider><CommandPalette /></ToastProvider>);
     openPalette();
 
     const options = screen.getAllByRole("option");
@@ -163,7 +165,7 @@ describe("CommandPalette", () => {
   });
 
   it("wraps around at boundaries (ArrowUp past first → last)", () => {
-    render(<CommandPalette />);
+    render(<ToastProvider><CommandPalette /></ToastProvider>);
     openPalette();
 
     const options = screen.getAllByRole("option");
@@ -176,7 +178,7 @@ describe("CommandPalette", () => {
   });
 
   it("Enter navigates to selected command", () => {
-    render(<CommandPalette />);
+    render(<ToastProvider><CommandPalette /></ToastProvider>);
     openPalette();
 
     act(() => {
@@ -190,10 +192,10 @@ describe("CommandPalette", () => {
 
   // ── Focus trap ──────────────────────────────────────────────────────
   it("Tab from input moves focus to first command", () => {
-    render(<CommandPalette />);
+    render(<ToastProvider><CommandPalette /></ToastProvider>);
     openPalette();
 
-    const input = screen.getByPlaceholderText("Type a command...");
+    const input = screen.getByPlaceholderText("Search tickets or run a command…");
 
     act(() => {
       input.focus();
@@ -208,10 +210,10 @@ describe("CommandPalette", () => {
   });
 
   it("Shift+Tab wraps from input to last command", () => {
-    render(<CommandPalette />);
+    render(<ToastProvider><CommandPalette /></ToastProvider>);
     openPalette();
 
-    const input = screen.getByPlaceholderText("Type a command...");
+    const input = screen.getByPlaceholderText("Search tickets or run a command…");
 
     act(() => {
       input.focus();
@@ -227,7 +229,7 @@ describe("CommandPalette", () => {
   });
 
   it("Tab from last command wraps back to input", () => {
-    render(<CommandPalette />);
+    render(<ToastProvider><CommandPalette /></ToastProvider>);
     openPalette();
 
     const commands = screen.getAllByRole("option");
@@ -246,10 +248,10 @@ describe("CommandPalette", () => {
 
   // ── Search filtering ────────────────────────────────────────────────
   it("search filtering works (case-insensitive)", async () => {
-    render(<CommandPalette />);
+    render(<ToastProvider><CommandPalette /></ToastProvider>);
     openPalette();
 
-    const input = screen.getByPlaceholderText("Type a command...");
+    const input = screen.getByPlaceholderText("Search tickets or run a command…");
 
     await act(async () => {
       fireEvent.change(input, { target: { value: "new" } });
@@ -261,22 +263,22 @@ describe("CommandPalette", () => {
   });
 
   it("shows empty state for no match", async () => {
-    render(<CommandPalette />);
+    render(<ToastProvider><CommandPalette /></ToastProvider>);
     openPalette();
 
-    const input = screen.getByPlaceholderText("Type a command...");
+    const input = screen.getByPlaceholderText("Search tickets or run a command…");
 
     await act(async () => {
       fireEvent.change(input, { target: { value: "zzz_nonexistent" } });
     });
 
-    expect(screen.getByText("No commands found")).toBeInTheDocument();
+    expect(screen.getByText(/No tickets or commands match/)).toBeInTheDocument();
     expect(screen.queryByRole("option")).not.toBeInTheDocument();
   });
 
   // ── Command hints ───────────────────────────────────────────────────
   it("shows kbd hints for commands", () => {
-    render(<CommandPalette />);
+    render(<ToastProvider><CommandPalette /></ToastProvider>);
     openPalette();
 
     // Each command has a shortcut displayed as a <kbd> element
@@ -289,7 +291,7 @@ describe("CommandPalette", () => {
 
   // ── Click navigation ────────────────────────────────────────────────
   it("click on a command navigates", () => {
-    render(<CommandPalette />);
+    render(<ToastProvider><CommandPalette /></ToastProvider>);
     openPalette();
 
     const newTicketButton = screen.getByText("New Ticket");
@@ -304,10 +306,10 @@ describe("CommandPalette", () => {
 
   // ── Reset on open ──────────────────────────────────────────────────
   it("resets query and selection when reopened", async () => {
-    render(<CommandPalette />);
+    render(<ToastProvider><CommandPalette /></ToastProvider>);
     openPalette();
 
-    const input = screen.getByPlaceholderText("Type a command...");
+    const input = screen.getByPlaceholderText("Search tickets or run a command…");
 
     // Type something and navigate
     await act(async () => {
@@ -321,7 +323,7 @@ describe("CommandPalette", () => {
     // Reopen
     openPalette();
 
-    const newInput = screen.getByPlaceholderText("Type a command...");
+    const newInput = screen.getByPlaceholderText("Search tickets or run a command…");
     expect(newInput).toHaveValue("");
     expect(screen.getAllByRole("option")[0]).toHaveAttribute("aria-selected", "true");
   });
