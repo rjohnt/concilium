@@ -479,7 +479,7 @@ describe("DEV-77: Toast notification system (acceptance)", () => {
     });
 
     // Find and click the trash/delete button
-    const deleteBtn = screen.getByTitle("Delete ticket");
+    const deleteBtn = (() => { fireEvent.click(screen.getByTitle("More actions")); return screen.getByRole("menuitem", { name: /Delete ticket/i }); })();
     fireEvent.click(deleteBtn);
 
     // Delete dialog should appear
@@ -510,7 +510,7 @@ describe("DEV-77: Toast notification system (acceptance)", () => {
     });
 
     // Delete the ticket
-    fireEvent.click(screen.getByTitle("Delete ticket"));
+    fireEvent.click((() => { fireEvent.click(screen.getByTitle("More actions")); return screen.getByRole("menuitem", { name: /Delete ticket/i }); })());
     await waitFor(() => {
       expect(screen.getByText("Delete Ticket")).toBeInTheDocument();
     });

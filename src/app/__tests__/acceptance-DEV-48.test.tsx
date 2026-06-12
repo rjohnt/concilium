@@ -244,13 +244,14 @@ describe("DEV-48: Inline ticket title editing (acceptance)", () => {
 
   // ── AC6: Input inherits display title typography ─────────────────────
 
-  it("AC6: input has font-bold and text-ink-primary typography classes", () => {
+  it("AC6: input keeps title-weight typography (redesigned tokens)", () => {
     renderDashboardWithTicket();
 
     enterEditMode("Original Title");
 
+    // The redesign uses font-semibold for the inline title input
     const input = getEditInput();
-    expect(input.className).toContain("font-bold");
+    expect(input.className).toContain("font-semibold");
     expect(input.className).toContain("text-ink-primary");
   });
 
