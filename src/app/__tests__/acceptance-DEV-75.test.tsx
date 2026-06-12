@@ -49,7 +49,9 @@ describe("AC2 — /api/build rate limit (5 req/min)", () => {
     vi.doMock("@/lib/llm", () => ({
       callDeepSeek: vi.fn(),
       DEEPSEEK_PRO_MODEL: "deepseek-v4-pro",
-    }));
+      isLLMConfigured: () => true,
+      AI_NOT_CONFIGURED_MESSAGE: "AI not configured",
+      }));
 
     vi.doMock("@/lib/store", () => {
       const mockTickets: Map<string, Record<string, unknown>> = new Map();
@@ -87,6 +89,7 @@ describe("AC2 — /api/build rate limit (5 req/min)", () => {
     }));
 
     vi.doMock("@/lib/consensus-threshold", () => ({
+      getBuildReadiness: vi.fn(() => ({ ready: true, score: 100, consensusMet: true, feedbackCount: 4, missingPersonas: [], nextSteps: [] })),
       checkConsensusThreshold: vi.fn(() => ({ reached: true, progress: 0.75, threshold: 0.75 })),
       generateBuildSummary: vi.fn(() => "# Build Summary\n\nTest summary."),
     }));
@@ -254,6 +257,7 @@ describe("AC4 — GET /api/prompt is not rate-limited", () => {
     }));
 
     vi.doMock("@/lib/consensus-threshold", () => ({
+      getBuildReadiness: vi.fn(() => ({ ready: true, score: 100, consensusMet: true, feedbackCount: 4, missingPersonas: [], nextSteps: [] })),
       checkConsensusThreshold: vi.fn(() => ({ reached: false, progress: 0.25, threshold: 0.75 })),
     }));
 
@@ -508,7 +512,9 @@ describe("AC7 — Rate-limit check is synchronous, enforced before body parsing"
     vi.doMock("@/lib/llm", () => ({
       callDeepSeek: vi.fn(),
       DEEPSEEK_PRO_MODEL: "deepseek-v4-pro",
-    }));
+      isLLMConfigured: () => true,
+      AI_NOT_CONFIGURED_MESSAGE: "AI not configured",
+      }));
 
     vi.doMock("@/lib/store", () => {
       const mockTicket = {
@@ -540,6 +546,7 @@ describe("AC7 — Rate-limit check is synchronous, enforced before body parsing"
     }));
 
     vi.doMock("@/lib/consensus-threshold", () => ({
+      getBuildReadiness: vi.fn(() => ({ ready: true, score: 100, consensusMet: true, feedbackCount: 4, missingPersonas: [], nextSteps: [] })),
       checkConsensusThreshold: vi.fn(() => ({ reached: true, progress: 0.75, threshold: 0.75 })),
       generateBuildSummary: vi.fn(() => "# Build Summary"),
     }));
