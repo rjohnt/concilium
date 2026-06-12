@@ -63,9 +63,22 @@ function makeHandle(overrides: Partial<WorkspaceHandle> = {}): WorkspaceHandle {
   };
 }
 
+// Credential vars the provider forwards into containers — snapshot/clear so
+// the host machine's real ANTHROPIC_*/CLAUDE_* env never leaks into argv
+// assertions, and restore afterwards.
+const FORWARDED_ENV_PATTERN = /^(ANTHROPIC_|CLAUDE_)/;
+let savedForwardedEnv: Record<string, string> = {};
+
 beforeEach(() => {
   vi.clearAllMocks();
   process.env.CONCILIUM_BUILD_WORKSPACE = ROOT;
+  savedForwardedEnv = {};
+  for (const [key, value] of Object.entries(process.env)) {
+    if (value !== undefined && FORWARDED_ENV_PATTERN.test(key)) {
+      savedForwardedEnv[key] = value;
+      delete process.env[key];
+    }
+  }
   mocks.existsSync.mockReturnValue(false);
   mocks.execFileMock.mockResolvedValue({ stdout: "", stderr: "" });
 });
@@ -74,6 +87,8 @@ afterEach(() => {
   delete process.env.CONCILIUM_BUILD_WORKSPACE;
   delete process.env.CONCILIUM_SANDBOX_MEMORY;
   delete process.env.CONCILIUM_SANDBOX_CPUS;
+  delete process.env.ANTHROPIC_API_KEY;
+  Object.assign(process.env, savedForwardedEnv);
 });
 
 describe("dockerSandboxProvider.createWorkspace", () => {
@@ -113,7 +128,7 @@ describe("dockerSandboxProvider.createWorkspace", () => {
     expect(mocks.execFileMock).toHaveBeenCalledWith("docker", ["info"], expect.anything());
     expect(mocks.execFileMock).toHaveBeenCalledWith(
       "git",
-      ["clone", "--branch", "main", "https://github.com/acme/app.git", "."],
+      ["clone", "--branch", "main", "--", "https://github.com/acme/app.git", "."],
       expect.objectContaining({ cwd: WS })
     );
     expect(handle.provider).toBe("docker");
@@ -188,6 +203,42 @@ describe("dockerSandboxProvider.exec", () => {
     expect((args as string[]).indexOf("pytest")).toBeGreaterThan(
       (args as string[]).indexOf("python:3.12-bookworm")
     );
+  });
+
+  it("forwards host agent credentials (ANTHROPIC_*/CLAUDE_*) into the container", async () => {
+    process.env.ANTHROPIC_API_KEY = "sk-ant-test-123";
+
+    await dockerSandboxProvider.exec(makeHandle(), ["claude", "-p", "build it"]);
+
+    const [, args] = mocks.execFileMock.mock.calls[0];
+    expect(args).toEqual(
+      expect.arrayContaining(["-e", "ANTHROPIC_API_KEY=sk-ant-test-123"])
+    );
+    // forwarded credentials come before the image, like other -e flags
+    expect((args as string[]).indexOf("-e")).toBeLessThan(
+      (args as string[]).indexOf(DEFAULT_DOCKER_IMAGE)
+    );
+  });
+
+  it("lets explicit exec env override forwarded host credentials", async () => {
+    process.env.ANTHROPIC_API_KEY = "host-key";
+
+    await dockerSandboxProvider.exec(makeHandle(), ["claude", "-p", "x"], {
+      env: { ANTHROPIC_API_KEY: "explicit-key" },
+    });
+
+    const [, args] = mocks.execFileMock.mock.calls[0];
+    expect(args).toEqual(expect.arrayContaining(["-e", "ANTHROPIC_API_KEY=explicit-key"]));
+    expect(args).not.toEqual(expect.arrayContaining(["ANTHROPIC_API_KEY=host-key"]));
+  });
+
+  it("does not forward unrelated host env vars into the container", async () => {
+    await dockerSandboxProvider.exec(makeHandle(), ["true"]);
+
+    const [, args] = mocks.execFileMock.mock.calls[0];
+    const envFlags = (args as string[]).filter((_, i, all) => all[i - 1] === "-e");
+    expect(envFlags.some((v) => v.startsWith("PATH="))).toBe(false);
+    expect(envFlags.some((v) => v.startsWith("HOME="))).toBe(false);
   });
 
   it("honors CONCILIUM_SANDBOX_MEMORY / CONCILIUM_SANDBOX_CPUS overrides", async () => {

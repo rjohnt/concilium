@@ -34,7 +34,12 @@ import {
   WorkspaceHandle,
   workBranchName,
 } from "./types";
-import { makeArtifact } from "./git-workspace";
+import {
+  COMMIT_AUTHOR,
+  COMMIT_EMAIL,
+  collectArtifactsViaExec,
+} from "./git-workspace";
+import { assertSafeRepoUrl } from "../git-url";
 
 export const DAYTONA_NOT_CONFIGURED_MESSAGE =
   "Daytona is not configured: set the DAYTONA_API_KEY environment variable " +
@@ -43,9 +48,6 @@ export const DAYTONA_NOT_CONFIGURED_MESSAGE =
 
 /** Username sent alongside a PAT for HTTPS git auth (GitHub convention). */
 const GIT_PAT_USERNAME = "git";
-
-const COMMIT_AUTHOR = "Concilium Build";
-const COMMIT_EMAIL = "builds@concilium.local";
 
 /** Live sandboxes keyed by sandbox id — a handle is just data, so the
  *  provider keeps the client/sandbox pair here between calls. */
@@ -132,6 +134,9 @@ export const daytonaSandboxProvider: SandboxProvider = {
       const branch = workBranchName(opts.ticketId);
 
       if (repoUrl) {
+        // Same guard as the host providers: never clone option-looking,
+        // ext::/file://-style, or otherwise unsafe remote URLs.
+        assertSafeRepoUrl(repoUrl);
         const pat = getGitPat();
         await sandbox.git.clone(
           repoUrl,
@@ -174,27 +179,8 @@ export const daytonaSandboxProvider: SandboxProvider = {
   },
 
   async collectArtifacts(handle, opts: CollectArtifactsOptions): Promise<BuildArtifact[]> {
-    const artifacts: BuildArtifact[] = [];
-
-    if (opts.log !== undefined) {
-      artifacts.push(makeArtifact(opts.buildId, "log", "Claude Code build log", opts.log));
-    }
-
-    const failed: ExecResult = { stdout: "", stderr: "", exitCode: 1 };
-
-    const fileList = await this.exec(handle, ["git", "log", "--stat", "-1"]).catch(() => failed);
-    if (fileList.exitCode === 0 && fileList.stdout.trim()) {
-      artifacts.push(
-        makeArtifact(opts.buildId, "file-list", "Changed files (last commit)", fileList.stdout)
-      );
-    }
-
-    const diff = await this.exec(handle, ["git", "show", "--format=", "HEAD"]).catch(() => failed);
-    if (diff.exitCode === 0 && diff.stdout.trim()) {
-      artifacts.push(makeArtifact(opts.buildId, "diff", "Implementation diff", diff.stdout));
-    }
-
-    return artifacts;
+    // Shared artifact pipeline, executed through the remote sandbox.
+    return collectArtifactsViaExec((command) => this.exec(handle, command), opts);
   },
 
   async pushBranch(handle, branchName): Promise<PushResult> {

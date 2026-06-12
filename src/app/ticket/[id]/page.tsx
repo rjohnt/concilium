@@ -22,6 +22,7 @@ import { DetailSkeleton } from "@/components/Skeleton";
 import { DeleteTicketDialog } from "@/components/DeleteTicketDialog";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { EditableField } from "@/components/EditableField";
+import { TicketProjectSelect } from "@/components/TicketProjectSelect";
 import { TagChip } from "@/components/TagChip";
 import { EmptyState } from "@/components/EmptyState";
 import { Clock, GitBranch, RefreshCw, Sparkles, Trash2, FileQuestion, Calendar, Users, ChevronDown, Check, Share2, MoreHorizontal, Link2 } from "lucide-react";
@@ -238,6 +239,13 @@ export default function TicketDetailPage() {
     const trimmed = newBranch?.trim() || null;
     if ((ticket.branchOverride ?? null) === trimmed) return;
     const updated = updateTicket(ticket.id, { branchOverride: trimmed });
+    if (updated) setTicket({ ...updated });
+  };
+
+  const handleUpdateProject = (newProjectId: string | null) => {
+    if (!ticket) return;
+    if ((ticket.projectId ?? null) === newProjectId) return;
+    const updated = updateTicket(ticket.id, { projectId: newProjectId });
     if (updated) setTicket({ ...updated });
   };
 
@@ -471,6 +479,14 @@ export default function TicketDetailPage() {
                   </span>
                 );
               })()}
+            </div>
+
+            {/* Project assignment — links this ticket's builds to a repo */}
+            <div className="mt-4 pt-4 border-t border-border-subtle">
+              <TicketProjectSelect
+                value={ticket.projectId ?? null}
+                onChange={handleUpdateProject}
+              />
             </div>
 
             {/* Build branch override */}

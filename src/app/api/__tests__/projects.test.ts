@@ -151,6 +151,31 @@ describe("/api/projects", () => {
     expect(response.status).toBe(400);
   });
 
+  it.each([
+    ["ext:: remote helper", 'ext::sh -c "touch /tmp/pwn"'],
+    ["option-looking value", "--upload-pack=touch /tmp/pwn"],
+    ["file:// URL", "file:///etc/passwd"],
+    ["plain http URL", "http://169.254.169.254/latest/meta-data"],
+    ["non-URL junk", "not a git url"],
+  ])("POST returns 400 for unsafe repoUrl (%s)", async (_label, repoUrl) => {
+    const response = await POST(createPostRequest({ name: "X", repoUrl }));
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.error).toContain("repoUrl");
+    expect(serverDb.createProject).not.toHaveBeenCalled();
+  });
+
+  it("POST accepts ssh:// and scp-style git remotes", async () => {
+    const ssh = await POST(
+      createPostRequest({ name: "A", repoUrl: "ssh://git@github.com/acme/app.git" })
+    );
+    expect(ssh.status).toBe(201);
+    const scp = await POST(
+      createPostRequest({ name: "B", repoUrl: "git@github.com:acme/app.git" })
+    );
+    expect(scp.status).toBe(201);
+  });
+
   // --- PATCH ---
 
   it("PATCH updates settings on an existing project", async () => {
@@ -186,6 +211,15 @@ describe("/api/projects", () => {
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.project.repoUrl).toBeNull();
+  });
+
+  it("PATCH returns 400 for an unsafe repoUrl", async () => {
+    await POST(createPostRequest({ name: "Concilium" }));
+    const [id] = Array.from(mockProjects.keys());
+
+    const response = await PATCH(createPatchRequest(id, { repoUrl: "ext::sh -c id" }));
+    expect(response.status).toBe(400);
+    expect(serverDb.updateProject).not.toHaveBeenCalled();
   });
 
   it("PATCH returns 400 without an id", async () => {

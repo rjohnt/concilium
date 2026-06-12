@@ -11,6 +11,12 @@
  *
  * Git operations (clone, branch, artifact harvesting, push) happen on the
  * host against the bind-mounted workspace, exactly like the local provider.
+ *
+ * Environment: containers do not inherit the host environment, so exec
+ * forwards an allow-list of credential variables (ANTHROPIC_* / CLAUDE_*)
+ * into the container — without these, `claude` would run unauthenticated in
+ * docker while succeeding on the local provider. Explicit opts.env wins over
+ * forwarded host values.
  */
 
 import fs from "fs";
@@ -57,6 +63,19 @@ function detectDevcontainerImage(workspacePath: string): string {
   return DEFAULT_DOCKER_IMAGE;
 }
 
+/** Host env vars forwarded into the container (agent credentials/config). */
+const FORWARDED_HOST_ENV_PATTERN = /^(ANTHROPIC_|CLAUDE_)/;
+
+function forwardedHostEnv(): Record<string, string> {
+  const env: Record<string, string> = {};
+  for (const [key, value] of Object.entries(process.env)) {
+    if (value !== undefined && FORWARDED_HOST_ENV_PATTERN.test(key)) {
+      env[key] = value;
+    }
+  }
+  return env;
+}
+
 async function assertDockerAvailable(): Promise<void> {
   try {
     const info = await runHostCommand(["docker", "info"]);
@@ -77,10 +96,9 @@ export const dockerSandboxProvider: SandboxProvider = {
   },
 
   async exec(handle, command, opts = {}) {
-    const envFlags = Object.entries(opts.env ?? {}).flatMap(([key, value]) => [
-      "-e",
-      `${key}=${value}`,
-    ]);
+    const envFlags = Object.entries({ ...forwardedHostEnv(), ...opts.env }).flatMap(
+      ([key, value]) => ["-e", `${key}=${value}`]
+    );
     const dockerArgv = [
       "docker",
       "run",

@@ -15,6 +15,7 @@ import { SANDBOX_PROVIDERS, SandboxProvider } from "@/lib/types";
 import type { RateLimitConfig } from "@/lib/types";
 import { checkRateLimit, extractIp, applyRateLimitHeaders } from "@/lib/rateLimit";
 import { sanitize } from "@/lib/sanitize";
+import { isAllowedRepoUrl, REPO_URL_REQUIREMENTS } from "@/lib/git-url";
 
 const PROJECT_RATE_LIMIT: RateLimitConfig = {
   windowMs: 60_000, // 1 minute
@@ -44,7 +45,14 @@ function parseSettings(body: Record<string, unknown>): ParsedSettings {
     if (body.repoUrl === null || body.repoUrl === "") {
       updates.repoUrl = null;
     } else if (typeof body.repoUrl === "string") {
-      updates.repoUrl = sanitize(body.repoUrl.trim());
+      // repoUrl flows into `git clone` in the sandbox layer — reject anything
+      // that is not a plain https/ssh/scp-style git remote (no ext::, no
+      // file://, no option-looking values). See @/lib/git-url.
+      const repoUrl = sanitize(body.repoUrl.trim());
+      if (!isAllowedRepoUrl(repoUrl)) {
+        return { ok: false, error: `Invalid field: ${REPO_URL_REQUIREMENTS}` };
+      }
+      updates.repoUrl = repoUrl;
     } else {
       return { ok: false, error: "Invalid field: repoUrl must be a string or null" };
     }

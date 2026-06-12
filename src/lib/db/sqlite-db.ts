@@ -704,6 +704,12 @@ export function seedFromClientData(clientData: {
       d.prepare("UPDATE tickets SET status = ?, created_at = ?, updated_at = ?, seats_json = ? WHERE id = ?")
         .run(ticket.status, ticket.createdAt, ticket.updatedAt, JSON.stringify(ticket.seats ?? {}), ticket.id);
 
+      // Restore build settings. The project link is restored only when that
+      // project row exists (subquery yields NULL otherwise), satisfying the FK.
+      d.prepare(
+        "UPDATE tickets SET project_id = (SELECT id FROM projects WHERE id = ?), branch_override = ? WHERE id = ?"
+      ).run(ticket.projectId ?? null, ticket.branchOverride ?? null, ticket.id);
+
       // Restore feedback
       for (const fb of ticket.feedback) {
         d.prepare(`

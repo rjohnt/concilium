@@ -571,6 +571,17 @@ export async function seedFromClientData(clientData: {
     ) as { id: string }[];
     if (existing.length > 0) continue;
 
+    // Restore the project link only when that project row exists — the
+    // tickets.project_id FK would reject a dangling reference otherwise.
+    let projectId: string | null = null;
+    if (ticket.projectId) {
+      const projectRows = throwOnError(
+        await db.from("projects").select("id").eq("id", ticket.projectId).limit(1),
+        "projects select"
+      ) as { id: string }[];
+      if (projectRows.length > 0) projectId = ticket.projectId;
+    }
+
     throwOnError(
       await db.from("tickets").insert({
         id: ticket.id,
@@ -583,6 +594,8 @@ export async function seedFromClientData(clientData: {
         due_date: ticket.dueDate || null,
         tags: ticket.tags ?? [],
         seats: ticket.seats ?? {},
+        project_id: projectId,
+        branch_override: ticket.branchOverride ?? null,
       }),
       "tickets insert"
     );

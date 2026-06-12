@@ -12,6 +12,7 @@ import { promisify } from "util";
 import fs from "fs";
 import path from "path";
 import { BuildArtifact } from "../types";
+import { assertSafeRepoUrl } from "../git-url";
 import {
   CollectArtifactsOptions,
   CreateWorkspaceOptions,
@@ -26,6 +27,11 @@ const execFileAsync = promisify(execFile);
 
 const ARTIFACT_CHAR_LIMIT = 20_000;
 const DEFAULT_MAX_BUFFER = 32 * 1024 * 1024;
+
+/** Git identity used for the defensive pre-push commit (kept in sync with the
+ *  Daytona provider, which commits through the SDK with the same identity). */
+export const COMMIT_AUTHOR = "Concilium Build";
+export const COMMIT_EMAIL = "builds@concilium.local";
 
 export function getWorkspaceRoot(): string {
   return process.env.CONCILIUM_BUILD_WORKSPACE
@@ -90,10 +96,16 @@ export async function prepareGitWorkspace(
 
   if (!fs.existsSync(path.join(workspace, ".git"))) {
     if (repoUrl) {
+      // Defense in depth: the API boundary validates repoUrl, but never hand
+      // git anything that could select a remote helper (ext::), read local
+      // files (file://), or be parsed as an option (leading dash). The `--`
+      // separator ends option parsing before the URL.
+      assertSafeRepoUrl(repoUrl);
       const cloneBranch = opts.branch?.trim();
       await gitOrThrow(workspace, [
         "clone",
         ...(cloneBranch ? ["--branch", cloneBranch] : []),
+        "--",
         repoUrl,
         ".",
       ]);
@@ -129,9 +141,13 @@ export function makeArtifact(
   };
 }
 
-/** Harvest build evidence: optional log, changed-file list, and diff. */
-export async function collectGitArtifacts(
-  handle: WorkspaceHandle,
+/**
+ * Harvest build evidence — optional log, changed-file list, and diff — via an
+ * arbitrary exec function, so every provider (host git for local/docker,
+ * remote exec for Daytona) shares one artifact pipeline.
+ */
+export async function collectArtifactsViaExec(
+  run: (command: string[]) => Promise<ExecResult>,
   opts: CollectArtifactsOptions
 ): Promise<BuildArtifact[]> {
   const artifacts: BuildArtifact[] = [];
@@ -140,18 +156,16 @@ export async function collectGitArtifacts(
     artifacts.push(makeArtifact(opts.buildId, "log", "Claude Code build log", opts.log));
   }
 
-  const fileList = await git(handle.path, ["log", "--stat", "-1"]).catch(
-    (): ExecResult => ({ stdout: "", stderr: "", exitCode: 1 })
-  );
+  const failed: ExecResult = { stdout: "", stderr: "", exitCode: 1 };
+
+  const fileList = await run(["git", "log", "--stat", "-1"]).catch(() => failed);
   if (fileList.exitCode === 0 && fileList.stdout.trim()) {
     artifacts.push(
       makeArtifact(opts.buildId, "file-list", "Changed files (last commit)", fileList.stdout)
     );
   }
 
-  const diff = await git(handle.path, ["show", "--format=", "HEAD"]).catch(
-    (): ExecResult => ({ stdout: "", stderr: "", exitCode: 1 })
-  );
+  const diff = await run(["git", "show", "--format=", "HEAD"]).catch(() => failed);
   if (diff.exitCode === 0 && diff.stdout.trim()) {
     artifacts.push(makeArtifact(opts.buildId, "diff", "Implementation diff", diff.stdout));
   }
@@ -159,7 +173,25 @@ export async function collectGitArtifacts(
   return artifacts;
 }
 
-/** Push the work branch to origin; no-op result when no remote exists. */
+/** Harvest build evidence from a host-filesystem workspace. */
+export async function collectGitArtifacts(
+  handle: WorkspaceHandle,
+  opts: CollectArtifactsOptions
+): Promise<BuildArtifact[]> {
+  return collectArtifactsViaExec(
+    (command) => runHostCommand(command, { cwd: handle.path }),
+    opts
+  );
+}
+
+/**
+ * Push the work branch to origin; no-op result when no remote exists.
+ *
+ * Before pushing, defensively sweep up anything the build agent left
+ * uncommitted — with an explicit git identity, since a fresh clone (clean
+ * sandbox/CI) has none configured. Mirrors the Daytona provider's
+ * add/commit/push sequence so all providers push equivalent branches.
+ */
 export async function pushBranchToOrigin(
   handle: WorkspaceHandle,
   branchName: string
@@ -173,6 +205,27 @@ export async function pushBranchToOrigin(
     if (remotes.exitCode !== 0 || !names.includes("origin")) {
       return { pushed: false, reason: "no 'origin' remote configured for this workspace" };
     }
+
+    await git(handle.path, ["add", "-A"]);
+    const staged = await git(handle.path, ["diff", "--cached", "--quiet"]);
+    if (staged.exitCode !== 0) {
+      const commit = await git(handle.path, [
+        "-c",
+        `user.name=${COMMIT_AUTHOR}`,
+        "-c",
+        `user.email=${COMMIT_EMAIL}`,
+        "commit",
+        "-m",
+        `concilium: build output for ${branchName}`,
+      ]);
+      if (commit.exitCode !== 0) {
+        return {
+          pushed: false,
+          reason: `git commit failed (exit ${commit.exitCode}): ${commit.stderr.trim() || commit.stdout.trim()}`,
+        };
+      }
+    }
+
     const push = await git(handle.path, ["push", "-u", "origin", branchName]);
     if (push.exitCode !== 0) {
       return {
