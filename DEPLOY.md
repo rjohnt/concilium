@@ -3,20 +3,31 @@
 **Hosting model:** the Next.js app runs on **Railway**; **Supabase** provides the
 database, auth, and realtime. Supabase does *not* host the app itself.
 
-## Railway — auto-deploy on merge to main
+## Deploy-on-green — merge to main → tests → Railway
 
-Concilium uses Railway's **native GitHub integration** — no CI workflow needed.
+Deploys are driven by **GitHub Actions** (`.github/workflows/test.yml`), not
+Railway's native git integration (its GitHub App isn't installed on this
+repo). The flow, on every push to `main`:
 
-1. In the Railway project → service → **Settings → Source**, connect the
-   GitHub repo and set the **production branch to `main`**.
-2. Every merge to `main` then auto-builds (Nixpacks, Node 22) and deploys.
-3. Build/run is driven by `railway.json`:
-   - build: Nixpacks → `npm run build`
-   - start: `npm run start` (`next start`)
-   - healthcheck: `GET /api/health` (returns `{ status: "ok", dataBackend }`)
-   - restart on failure, up to 5 retries
+1. **`test` job** — full unit suite (`npm test`) + production build. A red
+   suite blocks the deploy entirely (see AGENTS.md: green suite is the
+   definition of done).
+2. **`deploy` job** — calls Railway's GraphQL API
+   (`serviceInstanceDeployV2`) **pinned to the exact merge commit SHA**,
+   polls the deployment until `SUCCESS`, then smoke-checks
+   `GET /api/health`. Requires the `RAILWAY_TOKEN` repo secret (a Railway
+   team token).
 
-PRs build but do not deploy; only `main` deploys.
+PRs run the `test` job only; nothing deploys from a PR. On Railway's side,
+build/run is driven by `railway.json`:
+- build: Nixpacks → `npm run build`
+- start: `npm run start` (`next start`)
+- healthcheck: `GET /api/health` (returns `{ status: "ok", dataBackend }`)
+- restart on failure, up to 5 retries
+
+> Manual deploy (e.g. rollback to a known-good SHA): run the same
+> `serviceInstanceDeployV2` mutation with `commitSha` set — without it,
+> Railway redeploys the previously cached commit, not latest main.
 
 ## Required environment variables (Railway → service → Variables)
 
