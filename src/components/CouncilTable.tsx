@@ -16,6 +16,7 @@ import {
   AlertTriangle,
   Clock,
   Hammer,
+  Crown,
 } from "lucide-react";
 
 const GLYPH: Record<PersonaId, React.ComponentType<{ size?: number }>> = {
@@ -132,7 +133,17 @@ function Seat({ seat, area }: { seat: SeatStatus; area: string }) {
         </span>
         <span style={{ minWidth: 0 }}>
           <span className="ctbl-nm">{seat.label}</span>
-          <span className="ctbl-who">{seat.occupantLabel}</span>
+          <span className="ctbl-who">
+            {seat.occupantLabel}
+            {seat.occupant === "human" && (
+              <span
+                className="ctbl-primary"
+                title={`Primary ${seat.label} — this person's call settles ${seat.label} disputes on this ticket`}
+              >
+                <Crown size={9} /> primary
+              </span>
+            )}
+          </span>
         </span>
       </div>
       {seat.note && <p className="ctbl-note">{seat.note}</p>}
@@ -173,7 +184,8 @@ export function CouncilTable({ ticket }: { ticket: Ticket }) {
         .ctbl-row{display:flex;align-items:center;gap:9px}
         .ctbl-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;flex:0 0 auto}
         .ctbl-nm{display:block;font-weight:600;font-size:14px;color:var(--ink-900);line-height:1.15}
-        .ctbl-who{display:block;font-family:var(--font-mono);font-size:11px;color:var(--text-faint)}
+        .ctbl-who{display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:11px;color:var(--text-faint)}
+        .ctbl-primary{display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:var(--radius-pill);background:var(--coral-100);color:var(--coral-700);font-family:var(--font-sans);font-size:10px;font-weight:600;letter-spacing:.02em}
         .ctbl-note{font-size:12.5px;line-height:1.4;color:var(--text-muted);margin:9px 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
         .ctbl-chip{display:inline-flex;align-items:center;gap:5px;margin-top:9px;font-size:11.5px;font-weight:500;padding:3px 9px;border-radius:var(--radius-pill);background:var(--surface-card)}
         .ctbl-dot{width:7px;height:7px;border-radius:50%;flex:0 0 auto}

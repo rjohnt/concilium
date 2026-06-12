@@ -39,7 +39,7 @@ const C = {
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, signOut } = useAuth();
+  const { user, signOut, displayName } = useAuth();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isTemplateEditorOpen, setIsTemplateEditorOpen] = useState(false);
@@ -283,11 +283,11 @@ export function Sidebar() {
                   <img src={user.user_metadata.avatar_url} alt="Avatar" className="w-[30px] h-[30px] rounded-full shrink-0" />
                 ) : (
                   <div style={{ width: 30, height: 30, borderRadius: "50%", background: C.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#fff", flexShrink: 0, fontFamily: "var(--font-sans)" }}>
-                    {getInitials(user.user_metadata?.full_name || user.user_metadata?.name || user.email)}
+                    {getInitials(displayName || user.email)}
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="truncate" style={{ fontSize: 13.5, fontWeight: 600, color: C.textPrimary, lineHeight: 1.2, margin: 0 }}>{user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0]}</p>
+                  <p className="truncate" style={{ fontSize: 13.5, fontWeight: 600, color: C.textPrimary, lineHeight: 1.2, margin: 0 }}>{displayName || user.email?.split("@")[0]}</p>
                   <p className="truncate" style={{ fontSize: 11.5, color: "var(--text-muted)", margin: 0 }}>{user.email}</p>
                 </div>
               </div>

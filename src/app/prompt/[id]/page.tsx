@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Ticket, PersonaId, Seat } from "@/lib/types";
 import { seedData, getTicket, getConsensusProgress, getSeats, claimSeat, releaseSeat } from "@/lib/store";
-import { setPreferredRole } from "@/lib/seats";
 import { useAuth } from "@/lib/auth-context";
 import { getAllPersonas, getPersona } from "@/lib/personas";
 import { formatRelativeTime, formatAbsoluteDate } from "@/lib/timeAgo";
@@ -49,7 +48,7 @@ import Link from "next/link";
 export default function PromptSessionPage() {
   const params = useParams();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading, displayName, preferredRole, saveRole } = useAuth();
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState(true);
   const [sessionPersona, setSessionPersona] = useState<PersonaId | null>(null);
@@ -59,8 +58,10 @@ export default function PromptSessionPage() {
   const [showNotificationPrefs, setShowNotificationPrefs] = useState(false);
   const [seats, setSeats] = useState<Record<PersonaId, Seat> | undefined>(undefined);
 
-  // Display name for seat claims: email local-part when signed in
-  const humanLabel = user?.email ? user.email.split("@")[0] : "Human";
+  // Seats are claimed under the account id when signed in (so they follow the
+  // user across devices), falling back to the anonymous per-browser id.
+  const seatId = user?.id ?? getClientId();
+  const humanLabel = displayName ?? "Human";
 
   const loadTicket = useCallback(() => {
     seedData();
@@ -74,12 +75,27 @@ export default function PromptSessionPage() {
     loadTicket();
   }, [loadTicket]);
 
+  // Resume a seat you already hold on this ticket — your role follows you in
+  // without re-picking. Waits for auth so account-claimed seats are recognized.
+  useEffect(() => {
+    if (loading || authLoading || sessionPersona || !ticket || !seats) return;
+    const mine = Object.values(seats).find(
+      (s) => s.occupant === "human" && s.claimedBy === seatId
+    );
+    if (mine) {
+      setSessionPersona(mine.personaId);
+      setShowJoinModal(false);
+      const persona = getAllPersonas().find((p) => p.id === mine.personaId);
+      joinSession(ticket.id, mine.personaId, persona?.label);
+    }
+  }, [loading, authLoading, sessionPersona, ticket, seats, seatId]);
+
   // Auto-show join modal if no persona selected
   useEffect(() => {
-    if (!loading && ticket && !sessionPersona) {
+    if (!loading && !authLoading && ticket && !sessionPersona) {
       setShowJoinModal(true);
     }
-  }, [loading, ticket, sessionPersona]);
+  }, [loading, authLoading, ticket, sessionPersona]);
 
   // Listen for notification count changes
   useEffect(() => {
@@ -102,10 +118,10 @@ export default function PromptSessionPage() {
 
     // Hand any previously held seat back to its AI stand-in, then claim the new one
     if (sessionPersona && sessionPersona !== personaId) {
-      releaseSeat(ticketId, sessionPersona, getClientId());
+      releaseSeat(ticketId, sessionPersona, seatId);
     }
-    claimSeat(ticketId, personaId, getClientId(), humanLabel);
-    setPreferredRole(personaId);
+    claimSeat(ticketId, personaId, seatId, humanLabel);
+    saveRole(personaId);
     setSeats(getSeats(ticketId));
 
     setSessionPersona(personaId);
@@ -125,10 +141,10 @@ export default function PromptSessionPage() {
     const ticketId = params.id as string;
 
     if (sessionPersona && sessionPersona !== personaId) {
-      releaseSeat(ticketId, sessionPersona, getClientId());
+      releaseSeat(ticketId, sessionPersona, seatId);
     }
-    claimSeat(ticketId, personaId, getClientId(), humanLabel);
-    setPreferredRole(personaId);
+    claimSeat(ticketId, personaId, seatId, humanLabel);
+    saveRole(personaId);
     setSeats(getSeats(ticketId));
 
     setSessionPersona(personaId);
@@ -144,7 +160,7 @@ export default function PromptSessionPage() {
 
   const handleReleaseSeat = () => {
     if (!sessionPersona) return;
-    releaseSeat(params.id as string, sessionPersona, getClientId());
+    releaseSeat(params.id as string, sessionPersona, seatId);
     setSeats(getSeats(params.id as string));
     setSessionPersona(null);
     setShowJoinModal(true);
@@ -181,7 +197,8 @@ export default function PromptSessionPage() {
         onJoin={handleJoinSession}
         mode={sessionPersona ? "switch" : "initial"}
         seats={seats}
-        clientId={getClientId()}
+        clientId={seatId}
+        preferredRole={preferredRole}
       />
 
       {/* Top bar */}

@@ -6,7 +6,6 @@ import { useAuth } from "@/lib/auth-context";
 import { Loader2 } from "lucide-react";
 
 const PUBLIC_PATHS = ["/login", "/signup", "/auth/callback", "/welcome", "/share", "/compare", "/evals"];
-const PUBLIC_EXACT_PATHS = ["/"];
 
 // In development without Supabase credentials, bypass auth entirely.
 // NEXT_PUBLIC_* is inlined on both server and client, so this resolves to
@@ -28,9 +27,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   }
 
   // Allow public paths without auth
-  const isPublic =
-    PUBLIC_PATHS.some((p) => pathname.startsWith(p)) ||
-    PUBLIC_EXACT_PATHS.includes(pathname);
+  const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
 
   if (isPublic) {
     // If already logged in and on auth page, redirect to home
@@ -53,9 +50,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Redirect to login if not authenticated
+  // Redirect to login if not authenticated. Visitors landing on the root go
+  // to the marketing page instead of a bare login wall.
   if (!user) {
-    router.replace("/login");
+    router.replace(pathname === "/" ? "/welcome" : "/login");
     return null;
   }
 

@@ -73,6 +73,7 @@ export function JoinSessionModal({
   mode = "initial",
   seats,
   clientId,
+  preferredRole,
 }: {
   isOpen: boolean;
   onJoin: (personaId: PersonaId) => void;
@@ -81,6 +82,8 @@ export function JoinSessionModal({
   seats?: Record<PersonaId, Seat>;
   /** Stable id of this client, used to recognize seats you already hold. */
   clientId?: string;
+  /** Account-level remembered role; overrides the localStorage preference. */
+  preferredRole?: PersonaId | null;
 }) {
   const [selectedId, setSelectedId] = useState<PersonaId | null>(null);
   const [joining, setJoining] = useState(false);
@@ -94,12 +97,12 @@ export function JoinSessionModal({
   // Preselect the user's remembered role when the modal opens fresh
   useEffect(() => {
     if (!isOpen || mode !== "initial") return;
-    const preferred = getPreferredRole();
+    const preferred = preferredRole ?? getPreferredRole();
     if (preferred && !isLockedSeat(preferred)) {
       setSelectedId(preferred);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, mode]);
+  }, [isOpen, mode, preferredRole]);
 
   if (!isOpen) return null;
 

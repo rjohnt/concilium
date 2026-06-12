@@ -62,7 +62,11 @@ vi.mock("next/link", () => ({
 vi.mock("@/lib/auth-context", () => ({
   useAuth: vi.fn(() => ({
     user: null,
+    loading: false,
     signOut: vi.fn(),
+    displayName: null,
+    preferredRole: null,
+    saveRole: vi.fn(),
   })),
 }));
 
@@ -82,6 +86,9 @@ vi.mock("@/lib/store", () => ({
   updateTicketStatus: mockUpdateTicketStatus,
   retryBuild: vi.fn(),
   createTicket: vi.fn(),
+  getSeats: vi.fn(() => ({})),
+  claimSeat: vi.fn(),
+  releaseSeat: vi.fn(),
 }));
 
 // Mock status-machine with hoisted mutable reference
