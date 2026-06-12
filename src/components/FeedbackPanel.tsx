@@ -13,6 +13,13 @@ import { MessageSquare, CheckCircle, ThumbsUp, RefreshCw, GitBranch } from "luci
 import { VersionHistory } from "./VersionHistory";
 import { useToast } from "./Toast";
 
+const personaColorMap: Record<PersonaId, string> = {
+  engineer: "var(--persona-eng-500)",
+  designer: "var(--persona-des-500)",
+  "product-owner": "var(--persona-prod-500)",
+  qa: "var(--persona-res-500)",
+};
+
 function useModKey(): string {
   const [modKey, setModKey] = useState("Ctrl");
   useEffect(() => {
@@ -125,15 +132,23 @@ export function FeedbackPanel({
           const hasFeedback = ticket.feedback.some(
             (f) => f.personaId === pid
           );
+          const personaColor = personaColorMap[pid];
           return (
             <button
               key={pid}
               onClick={() => setActivePersona(pid)}
-              className={`transition-all ${
+              className={`relative rounded-full transition-all ${
                 activePersona === pid
-                  ? "ring-2 ring-[var(--coral-400)] rounded-full scale-105"
+                  ? "scale-105"
                   : "opacity-70 hover:opacity-100"
               }`}
+              style={
+                activePersona === pid
+                  ? {
+                      boxShadow: `0 0 0 2px var(--surface-card), 0 0 0 4px color-mix(in oklab, ${personaColor} 45%, transparent)`,
+                    }
+                  : undefined
+              }
             >
               <PersonaBadge
                 personaId={pid}
@@ -141,7 +156,13 @@ export function FeedbackPanel({
                 size="lg"
               />
               {hasFeedback && (
-                <span className="inline-block ml-0.5 w-1.5 h-1.5 rounded-full bg-coral-500" />
+                <span
+                  className="absolute -top-0.5 -right-0.5 w-[6px] h-[6px] rounded-full"
+                  style={{
+                    backgroundColor: personaColor,
+                    boxShadow: "0 0 0 2px var(--surface-card)",
+                  }}
+                />
               )}
             </button>
           );
@@ -256,7 +277,8 @@ export function FeedbackPanel({
           {historyFilter !== "all" && !showVersionHistory && (
             <button
               onClick={() => setShowVersionHistory(true)}
-              className="flex items-center gap-1.5 text-xs text-gold hover:text-gold-light transition-colors"
+              className="flex items-center gap-1.5 text-xs transition-colors hover:opacity-80"
+              style={{ color: "var(--coral-700)" }}
             >
               <GitBranch size={12} />
               Version History
@@ -283,29 +305,28 @@ export function FeedbackPanel({
                 const entryPersona = getPersona(entry.personaId);
                 const personaLabel = entryPersona?.label ?? entry.personaId;
                 return (
-                  <div
-                    key={entry.id}
-                    className="bg-[var(--bg-subtle)] rounded-lg p-3 border border-[var(--border-subtle)]"
-                  >
+                  <div key={entry.id}>
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
                         <PersonaIcon personaId={entry.personaId} size={14} />
-                        <span className="text-xs font-medium text-ink-700">
+                        <span className="text-sm font-bold" style={{ color: "var(--ink-900)" }}>
                           {personaLabel}
                         </span>
-                        <span className="text-xs text-ink-500" title={formatAbsoluteDate(entry.createdAt)}>
+                        <span className="text-[11.5px]" style={{ color: "var(--text-faint)", fontFamily: "var(--font-mono)" }} title={formatAbsoluteDate(entry.createdAt)}>
                           {formatRelativeTime(entry.createdAt)}
                         </span>
                       </div>
                       {entry.approved && (
-                        <span className="badge bg-[rgba(46,158,107,0.14)] text-[var(--success-600,var(--success-500))]">
+                        <span className="cc-badge cc-badge--success">
                           <CheckCircle size={10} /> Approved
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-ink-700 whitespace-pre-wrap mt-1">
-                      {entry.content}
-                    </p>
+                    <div className="cc-bubble">
+                      <p className="whitespace-pre-wrap" style={{ margin: 0 }}>
+                        {entry.content}
+                      </p>
+                    </div>
                   </div>
                 );
               })}

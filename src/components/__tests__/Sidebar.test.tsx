@@ -347,16 +347,12 @@ describe("Sidebar", () => {
 
   // --- Design token test ---
 
-  it("renders the Concilium logo GitBranch icon inside a gold background", () => {
+  it("renders the Concilium brand mark and wordmark", () => {
     render(<Sidebar />);
-    const aside = document.getElementById("sidebar-navigation");
-    // The GitBranch SVG is inside a gold background div with text-white for contrast
-    const svgIcon = aside!.querySelector("svg.text-white");
-    expect(svgIcon).toBeInTheDocument();
-    // Also verify it's inside a bg-gold container
-    const goldContainer = aside!.querySelector(".bg-gold");
-    expect(goldContainer).toBeInTheDocument();
-    expect(goldContainer!.querySelector("svg")).toBe(svgIcon);
+    // DS rebrand: SVG mark + Bricolage wordmark (tagline removed)
+    const logo = document.querySelector('img[src="/brand/logo-mark.svg"]');
+    expect(logo).toBeInTheDocument();
+    expect(screen.getByText("Concilium")).toBeInTheDocument();
   });
 
   // --- Renders nav items ---
@@ -381,10 +377,9 @@ describe("Sidebar", () => {
   it("badge renders when tickets exist", () => {
     mockGetTickets.mockReturnValue([{ id: "1", status: "done", updatedAt: new Date().toISOString() }]);
     render(<Sidebar />);
-    // The count badge span with class containing min-w-[18px] should show "1"
-    const badge = document.querySelector("span.min-w-\\[18px\\]");
-    expect(badge).toBeInTheDocument();
-    expect(badge?.textContent?.trim()).toBe("1");
+    // The redesigned count badge lives inside the Dashboard nav link
+    const dashboardLink = screen.getByText("Dashboard").closest("a");
+    expect(dashboardLink?.textContent).toContain("1");
   });
 
   it("badge shows correct ticket count", () => {
@@ -394,9 +389,8 @@ describe("Sidebar", () => {
       { id: "3", status: "in-review", updatedAt: new Date().toISOString() },
     ]);
     render(<Sidebar />);
-    const badge = document.querySelector("span.min-w-\\[18px\\]");
-    expect(badge).toBeInTheDocument();
-    expect(badge?.textContent?.trim()).toBe("3");
+    const dashboardLink = screen.getByText("Dashboard").closest("a");
+    expect(dashboardLink?.textContent).toContain("3");
   });
 
   it("active dot renders for active tickets (draft, in-review, consensus)", () => {
@@ -405,7 +399,7 @@ describe("Sidebar", () => {
     ]);
     render(<Sidebar />);
     // The pulsing dot wrapper is a span with class "relative flex h-2.5 w-2.5"
-    const dot = document.querySelector("span.relative.flex.h-2\\.5.w-2\\.5");
+    const dot = document.querySelector("span.relative.flex.h-2.w-2");
     expect(dot).toBeInTheDocument();
   });
 
@@ -415,7 +409,7 @@ describe("Sidebar", () => {
       { id: "2", status: "done", updatedAt: new Date().toISOString() },
     ]);
     render(<Sidebar />);
-    const dot = document.querySelector("span.relative.flex.h-2\\.5.w-2\\.5");
+    const dot = document.querySelector("span.relative.flex.h-2.w-2");
     expect(dot).not.toBeInTheDocument();
   });
 });

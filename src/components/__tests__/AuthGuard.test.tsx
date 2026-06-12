@@ -96,7 +96,7 @@ describe("AC1 — Loading state", () => {
     expect(svg).toBeInTheDocument();
   });
 
-  it("has min-h-screen and gold spinner styling", () => {
+  it("has min-h-screen and coral spinner styling", () => {
     setupAuthState(null, true);
     setPathname("/dashboard");
 
@@ -106,8 +106,8 @@ describe("AC1 — Loading state", () => {
     const loadingContainer = container.querySelector(".min-h-screen");
     expect(loadingContainer).toBeInTheDocument();
 
-    // The spinner has text-gold class
-    const spinner = container.querySelector("svg.text-gold");
+    // Coral rebrand: the spinner uses text-coral-500
+    const spinner = container.querySelector("svg.text-coral-500");
     expect(spinner).toBeInTheDocument();
   });
 

@@ -30,10 +30,10 @@ export function BuildTrigger({ ticket, onBuildTriggered }: BuildTriggerProps) {
   const readiness = getBuildReadiness(ticket);
   const scoreColor =
     readiness.score >= 90
-      ? "text-emerald-400"
+      ? "text-[var(--success-500)]"
       : readiness.score >= 50
-        ? "text-yellow-400"
-        : "text-red-400";
+        ? "text-[color-mix(in_oklab,var(--warning-500)_72%,black)]"
+        : "text-[var(--danger-500)]";
 
   const handleShowSummary = () => {
     const s = generateBuildSummary(ticket);
@@ -251,12 +251,12 @@ export function BuildTrigger({ ticket, onBuildTriggered }: BuildTriggerProps) {
 
       {/* Loading banner */}
       {isBuilding && (
-        <div className="card mt-4 border border-yellow-700/50 bg-yellow-900/10">
+        <div className="card mt-4 border border-[color-mix(in_oklab,var(--warning-500)_28%,transparent)] bg-[var(--warning-100)]">
           <div className="flex items-center gap-3">
-            <Loader2 size={18} className="animate-spin text-yellow-400" />
+            <Loader2 size={18} className="animate-spin text-[color-mix(in_oklab,var(--warning-500)_78%,black)]" />
             <div>
-              <p className="text-sm font-medium text-yellow-400">Build in progress...</p>
-              <p className="text-xs text-yellow-400/70">
+              <p className="text-sm font-medium text-[color-mix(in_oklab,var(--warning-500)_72%,black)]">Build in progress...</p>
+              <p className="text-xs text-[color-mix(in_oklab,color-mix(in_oklab,var(--warning-500)_72%,black)_70%,transparent)]">
                 The build has been triggered. The report will appear shortly.
               </p>
             </div>
@@ -318,10 +318,10 @@ export function BuildTrigger({ ticket, onBuildTriggered }: BuildTriggerProps) {
                 );
                 const approved = ticket.approvals.includes(personaId);
                 const sectionIcons: Record<string, React.ReactNode> = {
-                  engineer: <Wrench size={14} className="text-blue-400" />,
-                  designer: <Palette size={14} className="text-purple-400" />,
-                  qa: <FlaskConical size={14} className="text-amber-400" />,
-                  "product-owner": <FileText size={14} className="text-emerald-400" />,
+                  engineer: <Wrench size={14} className="text-[var(--persona-eng-500)]" />,
+                  designer: <Palette size={14} className="text-[var(--persona-des-500)]" />,
+                  qa: <FlaskConical size={14} className="text-[var(--persona-res-500)]" />,
+                  "product-owner": <FileText size={14} className="text-[var(--persona-prod-500)]" />,
                 };
 
                 return (

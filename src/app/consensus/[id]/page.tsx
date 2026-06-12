@@ -223,10 +223,10 @@ export default function ConsensusRoom() {
             <span className="text-xs font-mono text-ink-muted">{ticket.id}</span>
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
               ticket.status === "draft" ? "bg-elevated text-ink-secondary" :
-              ticket.status === "consensus" ? "bg-emerald-900/50 text-emerald-400" :
-              ticket.status === "building" ? "bg-blue-900/50 text-blue-400" :
+              ticket.status === "consensus" ? "bg-[var(--success-100)] text-[color-mix(in_oklab,var(--success-500)_80%,black)]" :
+              ticket.status === "building" ? "bg-[var(--info-100)] text-[#185FA5]" :
               ticket.status === "done" ? "bg-olive/20 text-olive" :
-              "bg-yellow-900/50 text-yellow-400"
+              "bg-[var(--warning-100)] text-[color-mix(in_oklab,var(--warning-500)_72%,black)]"
             }`}>
               {ticket.status}
             </span>

@@ -13,26 +13,27 @@ import { formatRelativeTime, formatAbsoluteDate } from "@/lib/timeAgo";
 import { updateTicket } from "@/lib/store";
 import { Clock, MessageSquare, Calendar } from "lucide-react";
 
-// ── MagicPath v2 authoritative config ──────────────────────────────
+// ── Concilium DS badge tones (components/core/Badge.jsx) ───────────
 type MPStatus = "draft" | "in-review" | "consensus" | "building" | "done";
 
-const STATUS_CONFIG: Record<MPStatus, { label: string; color: string; bg: string; border: string }> = {
-  draft:       { label: "Draft",     color: "var(--ink-500)", bg: "var(--warm-150)", border: "var(--warm-300)" },
-  "in-review": { label: "Review",    color: "#D97706", bg: "#FFFBEB", border: "#FCD34D" },
-  consensus:   { label: "Consensus", color: "#059669", bg: "#ECFDF5", border: "#6EE7B7" },
-  building:    { label: "Building",  color: "#2563EB", bg: "#EFF6FF", border: "#93C5FD" },
-  done:        { label: "Done",      color: "#059669", bg: "#ECFDF5", border: "#6EE7B7" },
+const STATUS_CONFIG: Record<MPStatus, { label: string; color: string; bg: string }> = {
+  draft:       { label: "Draft",     color: "var(--ink-700)", bg: "var(--warm-150)" },
+  "in-review": { label: "Review",    color: "#8A5A12", bg: "var(--warning-100)" },
+  consensus:   { label: "Consensus", color: "#1B6B4A", bg: "var(--success-100)" },
+  building:    { label: "Building",  color: "#185FA5", bg: "var(--info-100)" },
+  done:        { label: "Done",      color: "#1B6B4A", bg: "var(--success-100)" },
 };
 
-const PRIORITY_CONFIG: Record<number, { color: string; bg: string; border: string }> = {
-  0: { color: "#DC2626", bg: "#FEF2F2", border: "#FECACA" },
-  1: { color: "#EA580C", bg: "#FFF7ED", border: "#FDBA74" },
-  2: { color: "#2563EB", bg: "#EFF6FF", border: "#93C5FD" },
-  3: { color: "var(--ink-500)", bg: "var(--warm-150)", border: "var(--warm-300)" },
-  4: { color: "var(--ink-400)", bg: "var(--warm-50)", border: "var(--warm-200)" },
+const PRIORITY_CONFIG: Record<number, { color: string; bg: string }> = {
+  0: { color: "color-mix(in oklab, var(--danger-500) 82%, black)", bg: "var(--danger-100)" },
+  1: { color: "var(--coral-700)", bg: "var(--coral-100)" },
+  2: { color: "#185FA5", bg: "var(--info-100)" },
+  3: { color: "var(--ink-700)", bg: "var(--warm-150)" },
+  4: { color: "var(--ink-400)", bg: "var(--warm-100)" },
 };
 
-const ASSIGNEE_COLORS = ["#2563EB", "#7C3AED", "#0891B2", "#059669", "#DC2626"];
+// DS Avatar hash palette (components/core/Avatar.jsx)
+const ASSIGNEE_COLORS = ["#E85D34", "#7A57D1", "#1E9C86", "#2F82C7", "#D9962A", "#C8557F"];
 
 const SHOW_CONSENSUS_DOTS: MPStatus[] = ["in-review", "consensus"];
 
@@ -82,16 +83,17 @@ export function TicketCard({
     <div className="relative" data-ticket-card>
       <Link
         href={`/ticket/${ticket.id}`}
-        className={`block rounded-xl p-5 transition-all duration-200 border group cursor-pointer ${
+        className={`block rounded-lg p-5 transition-all duration-200 border group cursor-pointer ${
           selected ? "ring-2 ring-brand-500/70 border-brand-300" : "border-border-subtle hover:border-[var(--warm-300)]"
         }`}
         style={{
-          background: isHovered && !selected ? "var(--color-elevated)" : "var(--color-raised)",
+          background: "var(--surface-card)",
           boxShadow: selected
             ? "var(--shadow-md)"
             : isHovered
-              ? "var(--shadow-md)"
-              : "var(--shadow-xs)",
+              ? "var(--shadow-lg)"
+              : "var(--shadow-sm)",
+          transform: isHovered && !selected ? "translateY(-2px)" : "none",
         }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -101,20 +103,14 @@ export function TicketCard({
           <span className="text-[11px] font-semibold tracking-[0.08em] uppercase" style={{ color: "var(--ink-400)" }}>
             {ticket.id}
           </span>
-          {/* Status badge — exact MagicPath v2 styling */}
-          <span
-            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold leading-relaxed"
-            style={{ background: sc.bg, color: sc.color, border: `1px solid ${sc.border}`, letterSpacing: "-0.01em" }}
-          >
-            <span className="w-[5px] h-[5px] rounded-full shrink-0" style={{ background: sc.color }} />
+          {/* Status badge — DS cc-badge pill */}
+          <span className="cc-badge" style={{ background: sc.bg, color: sc.color, fontSize: 11.5 }}>
+            <span className="cc-badge__dot" />
             {sc.label}
           </span>
-          {/* Priority badge — exact MagicPath v2 styling */}
+          {/* Priority badge — DS cc-badge pill */}
           {ticket.priority !== 4 && (
-            <span
-              className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold"
-              style={{ background: pc.bg, color: pc.color, border: `1px solid ${pc.border}`, letterSpacing: "-0.01em" }}
-            >
+            <span className="cc-badge" style={{ background: pc.bg, color: pc.color, fontSize: 11.5 }}>
               {PRIORITY_LABELS[ticket.priority]}
             </span>
           )}
@@ -208,7 +204,7 @@ export function TicketCard({
           const dl = formatDueDate(ticket.dueDate);
           return (
             <div className="mt-2">
-              <span className={`inline-flex items-center gap-1 text-[11px] ${dl.className} ${dl.isOverdue ? "bg-[#FEF2F2] border border-[#FECACA] rounded-md px-2 py-0.5" : ""}`}>
+              <span className={`inline-flex items-center gap-1 text-[11px] ${dl.className} ${dl.isOverdue ? "bg-[var(--danger-100)] rounded-pill px-2 py-0.5" : ""}`}>
                 <Calendar size={11} />
                 {dl.label}
               </span>

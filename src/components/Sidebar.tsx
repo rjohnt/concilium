@@ -14,6 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Search,
+  FlaskConical,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/lib/auth-context";
@@ -89,6 +90,7 @@ export function Sidebar() {
   const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/new", label: "New Ticket", icon: PlusCircle },
+    { href: "/evals", label: "Agent Evals", icon: FlaskConical },
     { label: "Templates", icon: Settings, onClick: () => setIsTemplateEditorOpen(true) },
   ];
 
@@ -106,16 +108,17 @@ export function Sidebar() {
     return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
   };
 
+  // Matches the DS app shell `.sb__item` (ui_kits/app/AppShell.jsx)
   const n = (h: boolean) => ({
     display: "flex" as const, alignItems: "center" as const, gap: 10,
-    width: "100%", padding: "8px 12px", borderRadius: 13, cursor: "pointer" as const,
-    fontSize: 13, letterSpacing: "-0.1px", fontFamily: "var(--font-sans)" as const,
+    width: "100%", padding: "8px 10px", borderRadius: "var(--radius-md)", cursor: "pointer" as const,
+    fontSize: 14.5, fontFamily: "var(--font-sans)" as const,
     background: h ? "var(--surface-card)" : "transparent",
     color: h ? C.textPrimary : C.text,
     fontWeight: h ? 600 : 500 as any,
     border: "1px solid transparent",
     boxShadow: h ? "var(--shadow-xs)" : "none",
-    transition: "all 0.12s",
+    transition: "background var(--dur-fast) var(--ease-out)",
     textDecoration: "none",
     boxSizing: "border-box" as const,
   } as React.CSSProperties);
@@ -177,22 +180,19 @@ export function Sidebar() {
       <aside id="sidebar-navigation"
         className={`fixed left-0 top-0 h-full z-50 flex flex-col overscroll-contain
           ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
-          md:translate-x-0 md:sticky md:top-0`}
-        style={{ width: 256, background: C.bg, borderRight: `1px solid ${C.border}` }}
+          md:translate-x-0 md:sticky md:top-0 md:h-screen md:self-start md:shrink-0`}
+        style={{ width: 248, background: C.bg, borderRight: `1px solid ${C.border}` }}
       >
         <button ref={closeButtonRef} onClick={closeSidebar}
           className="absolute top-4 right-4 p-1 rounded-lg md:hidden" style={{ color: C.textMuted }} aria-label="Close sidebar">
           <X size={20} />
         </button>
 
-        {/* Header */}
-        <div style={{ padding: "20px 20px 16px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <Link href="/" className="flex items-center gap-2.5" onClick={closeSidebar} style={{ textDecoration: "none" }}>
+        {/* Header — DS `.sb__brand`: mark + Bricolage wordmark */}
+        <div style={{ padding: "16px 16px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Link href="/" className="flex items-center" onClick={closeSidebar} style={{ textDecoration: "none", gap: 9 }}>
             <img src="/brand/logo-mark.svg" width={28} height={28} alt="" />
-            <div>
-              <div style={{ fontFamily: "var(--font-display)", fontSize: 19, fontWeight: 700, color: "var(--ink-900)", letterSpacing: "-0.01em" }}>Concilium</div>
-              <div style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 1, letterSpacing: "0.02em" }}>give every project a council</div>
-            </div>
+            <span style={{ fontFamily: "var(--font-display)", fontSize: 19, fontWeight: 700, color: "var(--ink-900)", letterSpacing: "-0.01em" }}>Concilium</span>
           </Link>
           <button onClick={() => setIsCollapsed(true)} className="hidden md:block"
             style={{ background: "none", border: "none", color: C.textMuted, cursor: "pointer", padding: 4, borderRadius: 6, display: "flex", alignItems: "center", transition: "color 0.12s" }}
@@ -204,32 +204,35 @@ export function Sidebar() {
         </div>
 
         {/* Search */}
-        <div style={{ padding: "12px 16px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, background: C.searchBg, border: `1px solid ${C.border}` }}>
+        <div style={{ padding: "0 12px 8px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: "var(--radius-md)", background: C.searchBg, border: `1px solid ${C.border}` }}>
             <Search size={13} style={{ color: C.textMuted }} />
-            <span style={{ fontSize: 12, color: C.textMuted }}>Search...</span>
+            <span style={{ fontSize: 12.5, color: C.textMuted }}>Search…</span>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav style={{ flex: 1, padding: "4px 8px" }}>
-          <div style={{ padding: "8px 12px 6px", fontFamily: "var(--font-mono)", fontSize: 10.5, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-faint)" }}>Navigation</div>
+        <nav style={{ flex: 1, padding: "0 12px", display: "flex", flexDirection: "column", gap: 4 }}>
+          <div style={{ padding: "10px 10px 6px", fontFamily: "var(--font-mono)", fontSize: 10.5, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-faint)" }}>Navigation</div>
           {navItems.map((item) => {
             const isActive = "href" in item && item.href ? pathname === item.href : false;
             const navStyle = n(isActive);
 
+            const hoverIn = (e: React.MouseEvent<HTMLElement>) => { if (!isActive) e.currentTarget.style.background = C.hoverBg; };
+            const hoverOut = (e: React.MouseEvent<HTMLElement>) => { if (!isActive) e.currentTarget.style.background = "transparent"; };
+
             if ("onClick" in item && item.onClick) {
               return (
-                <button key={item.label} onClick={() => { item.onClick?.(); closeSidebar(); }} style={navStyle}>
-                  <item.icon size={16} />
+                <button key={item.label} onClick={() => { item.onClick?.(); closeSidebar(); }} style={navStyle} onMouseOver={hoverIn} onMouseOut={hoverOut}>
+                  <item.icon size={18} />
                   <span style={{ flex: 1, textAlign: "left" }}>{item.label}</span>
                 </button>
               );
             }
 
             return (
-              <Link key={item.href} href={item.href ?? "/"} onClick={closeSidebar} style={navStyle}>
-                <item.icon size={16} />
+              <Link key={item.href} href={item.href ?? "/"} onClick={closeSidebar} style={navStyle} onMouseOver={hoverIn} onMouseOut={hoverOut}>
+                <item.icon size={18} />
                 <span style={{ flex: 1, textAlign: "left" }}>{item.label}</span>
                 {"href" in item && item.href === "/" && ticketCounts.total > 0 && (
                   <span className="flex items-center gap-1.5">
@@ -256,36 +259,36 @@ export function Sidebar() {
           })}
         </nav>
 
-        {/* Teams */}
-        <div style={{ padding: "4px 8px", borderTop: `1px solid ${C.border}` }}>
-          <div style={{ padding: "8px 12px 6px", fontFamily: "var(--font-mono)", fontSize: 10.5, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-faint)" }}>Teams</div>
+        {/* Teams — DS `.sb__proj` persona-dot rows */}
+        <div style={{ padding: "4px 12px" }}>
+          <div style={{ padding: "10px 10px 6px", fontFamily: "var(--font-mono)", fontSize: 10.5, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-faint)" }}>Teams</div>
           {teamItems.map(team => (
             <div key={team.label}
-              style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 8, fontSize: 13, fontWeight: 500, letterSpacing: "-0.1px", color: C.text, cursor: "pointer", transition: "background 0.12s" }}
+              style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 10px", borderRadius: "var(--radius-md)", fontSize: 14, fontWeight: 500, color: C.text, cursor: "pointer", transition: "background var(--dur-fast) var(--ease-out)" }}
               onMouseOver={e => e.currentTarget.style.background = C.hoverBg}
               onMouseOut={e => e.currentTarget.style.background = "transparent"}
             >
-              <div style={{ width: 7, height: 7, borderRadius: "50%", background: team.color, flexShrink: 0 }} />
-              <span>{team.label}</span>
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: team.color, flexShrink: 0 }} />
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{team.label}</span>
             </div>
           ))}
         </div>
 
-        {/* User */}
-        <div style={{ padding: "12px 16px", borderTop: `1px solid ${C.border}` }}>
+        {/* User — DS `.sb__user`: avatar + name/email rows */}
+        <div style={{ padding: "8px 12px 12px" }}>
           {user ? (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2.5 px-1">
+            <div className="space-y-1">
+              <div className="flex items-center" style={{ gap: 10, padding: 8, borderRadius: "var(--radius-md)" }}>
                 {user.user_metadata?.avatar_url ? (
-                  <img src={user.user_metadata.avatar_url} alt="Avatar" className="w-7 h-7 rounded-full shrink-0" style={{ border: `1.5px solid ${C.accentBorder}` }} />
+                  <img src={user.user_metadata.avatar_url} alt="Avatar" className="w-[30px] h-[30px] rounded-full shrink-0" />
                 ) : (
-                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: C.accentLight, border: `1.5px solid ${C.accentBorder}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: C.accent, flexShrink: 0 }}>
+                  <div style={{ width: 30, height: 30, borderRadius: "50%", background: C.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#fff", flexShrink: 0, fontFamily: "var(--font-sans)" }}>
                     {getInitials(displayName || user.email)}
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold truncate" style={{ color: C.textPrimary }}>{displayName || user.email?.split("@")[0]}</p>
-                  <p className="text-[10px]" style={{ color: C.textMuted }}>Free plan</p>
+                  <p className="truncate" style={{ fontSize: 13.5, fontWeight: 600, color: C.textPrimary, lineHeight: 1.2, margin: 0 }}>{displayName || user.email?.split("@")[0]}</p>
+                  <p className="truncate" style={{ fontSize: 11.5, color: "var(--text-muted)", margin: 0 }}>{user.email}</p>
                 </div>
               </div>
               <ThemeToggle />

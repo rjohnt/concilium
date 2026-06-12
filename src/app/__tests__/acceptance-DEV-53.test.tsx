@@ -338,6 +338,7 @@ describe("DEV-53 Acceptance: Ticket tag/label system with dashboard filtering", 
       mockStore.getTickets.mockReturnValue([makeTicket()]);
       const DashboardPage = (await import("@/app/page")).default;
       render(<DashboardPage />);
+      fireEvent.click(screen.getByRole("button", { name: /^filters/i }));
 
       // "Tags:" label confirms the tag filter row exists
       const tagsLabel = await screen.findByText("Tags:");
@@ -361,6 +362,7 @@ describe("DEV-53 Acceptance: Ticket tag/label system with dashboard filtering", 
       mockStore.getTickets.mockReturnValue([makeTicket()]);
       const DashboardPage = (await import("@/app/page")).default;
       render(<DashboardPage />);
+      fireEvent.click(screen.getByRole("button", { name: /^filters/i }));
 
       // "All" appears at least twice (status FilterBar + priority + tags each have one)
       await screen.findByText("Tags:");
@@ -383,6 +385,7 @@ describe("DEV-53 Acceptance: Ticket tag/label system with dashboard filtering", 
 
       const DashboardPage = (await import("@/app/page")).default;
       render(<DashboardPage />);
+      fireEvent.click(screen.getByRole("button", { name: /^filters/i }));
 
       // Click the Bug tag toggle
       const bugBtns = await screen.findAllByRole("button", { name: /Bug/i });
@@ -417,6 +420,7 @@ describe("DEV-53 Acceptance: Ticket tag/label system with dashboard filtering", 
 
       const DashboardPage = (await import("@/app/page")).default;
       render(<DashboardPage />);
+      fireEvent.click(screen.getByRole("button", { name: /^filters/i }));
 
       const bugBtns = await screen.findAllByRole("button", { name: /Bug/i });
       const featureBtns = screen.getAllByRole("button", { name: /Feature/i });
@@ -438,6 +442,7 @@ describe("DEV-53 Acceptance: Ticket tag/label system with dashboard filtering", 
       mockStore.getTickets.mockReturnValue([makeTicket()]);
       const DashboardPage = (await import("@/app/page")).default;
       render(<DashboardPage />);
+      fireEvent.click(screen.getByRole("button", { name: /^filters/i }));
 
       // Both filter rows exist: priority and tags
       await screen.findByText("Priority:");
@@ -570,6 +575,7 @@ describe("DEV-53 Acceptance: Ticket tag/label system with dashboard filtering", 
 
       const DashboardPage = (await import("@/app/page")).default;
       render(<DashboardPage />);
+      fireEvent.click(screen.getByRole("button", { name: /^filters/i }));
 
       // Select Bug tag
       const bugBtns = await screen.findAllByRole("button", { name: /Bug/i });
@@ -577,7 +583,7 @@ describe("DEV-53 Acceptance: Ticket tag/label system with dashboard filtering", 
       fireEvent.click(bugToggle);
 
       // Select Done status
-      const doneBtn = screen.getByRole("button", { name: /Done/ });
+      const doneBtn = screen.getByRole("tab", { name: /Done/ });
       fireEvent.click(doneBtn);
 
       expect(screen.getByText("Bug done")).toBeInTheDocument();
@@ -601,6 +607,7 @@ describe("DEV-53 Acceptance: Ticket tag/label system with dashboard filtering", 
 
       const DashboardPage = (await import("@/app/page")).default;
       render(<DashboardPage />);
+      fireEvent.click(screen.getByRole("button", { name: /^filters/i }));
 
       // Select Bug tag
       const bugBtns = await screen.findAllByRole("button", { name: /Bug/i });
@@ -634,6 +641,7 @@ describe("DEV-53 Acceptance: Ticket tag/label system with dashboard filtering", 
 
       const DashboardPage = (await import("@/app/page")).default;
       render(<DashboardPage />);
+      fireEvent.click(screen.getByRole("button", { name: /^filters/i }));
 
       // Select Bug tag
       const bugBtns = await screen.findAllByRole("button", { name: /Bug/i });
@@ -677,6 +685,7 @@ describe("DEV-53 Acceptance: Ticket tag/label system with dashboard filtering", 
 
       const DashboardPage = (await import("@/app/page")).default;
       render(<DashboardPage />);
+      fireEvent.click(screen.getByRole("button", { name: /^filters/i }));
 
       // Select Bug tag
       const bugBtns = await screen.findAllByRole("button", { name: /Bug/i });
@@ -684,7 +693,7 @@ describe("DEV-53 Acceptance: Ticket tag/label system with dashboard filtering", 
       fireEvent.click(bugToggle);
 
       // Select Draft status
-      const draftBtn = screen.getByRole("button", { name: /Draft/ });
+      const draftBtn = screen.getByRole("tab", { name: /Draft/ });
       fireEvent.click(draftBtn);
 
       // Select Urgent priority — grab the filter button
@@ -712,6 +721,7 @@ describe("DEV-53 Acceptance: Ticket tag/label system with dashboard filtering", 
       mockStore.getTickets.mockReturnValue([makeTicket({ tags: [] })]);
       const DashboardPage = (await import("@/app/page")).default;
       render(<DashboardPage />);
+      fireEvent.click(screen.getByRole("button", { name: /^filters/i }));
 
       const bugBtns = await screen.findAllByRole("button", { name: /Bug/i });
       const bugToggle = bugBtns.find((b) => b.getAttribute("aria-pressed") !== null)!;
@@ -725,6 +735,7 @@ describe("DEV-53 Acceptance: Ticket tag/label system with dashboard filtering", 
       mockStore.getTickets.mockReturnValue([]);
       const DashboardPage = (await import("@/app/page")).default;
       render(<DashboardPage />);
+      fireEvent.click(screen.getByRole("button", { name: /^filters/i }));
 
       const emptyMsg = await screen.findByText("No tickets yet");
       expect(emptyMsg).toBeInTheDocument();

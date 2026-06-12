@@ -55,36 +55,38 @@ export function ConsensusProgress({
   // Determine progress bar color
   const progressColor =
     percentage >= 100
-      ? "bg-emerald-500"
+      ? "bg-[color:var(--success-500)]"
       : percentage >= 75
-      ? "bg-emerald-400"
+      ? "bg-[color:color-mix(in_oklab,var(--success-500)_85%,white)]"
       : percentage >= 50
-      ? "bg-yellow-400"
+      ? "bg-[color:color-mix(in_oklab,var(--warning-500)_85%,white)]"
       : percentage >= 25
-      ? "bg-amber-500"
+      ? "bg-[color:var(--warning-500)]"
       : "bg-ink-ghost";
 
   const progressGlow =
-    percentage >= 75 ? "shadow-[0_0_12px_rgba(52,211,153,0.4)]" : "";
+    percentage >= 75
+      ? "shadow-[0_0_12px_color-mix(in_oklab,var(--success-500)_40%,transparent)]"
+      : "";
 
   return (
     <div className="space-y-4">
       {/* Celebration overlay */}
       {showCelebration && (
-        <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-emerald-900/40 via-emerald-800/30 to-emerald-900/40 border border-emerald-500/30 p-4 animate-in fade-in slide-in-from-top-2 duration-500">
+        <div className="relative overflow-hidden rounded-xl bg-[color:var(--success-100)] border border-[color:color-mix(in_oklab,var(--success-500)_22%,transparent)] p-4 animate-in fade-in slide-in-from-top-2 duration-500">
           <div className="flex items-center gap-3">
             <div className="flex-shrink-0">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/20">
-                <Trophy size={20} className="text-emerald-400" />
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[color:color-mix(in_oklab,var(--success-500)_20%,transparent)]">
+                <Trophy size={20} className="text-[color:var(--success-500)]" />
               </span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-lg font-bold text-emerald-300 flex items-center gap-2">
-                <Sparkles size={16} className="text-emerald-400" />
+              <p className="text-lg font-bold text-[color:color-mix(in_oklab,var(--success-500)_80%,black)] flex items-center gap-2">
+                <Sparkles size={16} className="text-[color:var(--success-500)]" />
                 Consensus Reached!
-                <Sparkles size={16} className="text-emerald-400" />
+                <Sparkles size={16} className="text-[color:var(--success-500)]" />
               </p>
-              <p className="text-sm text-emerald-400/80">
+              <p className="text-sm text-[color:color-mix(in_oklab,var(--success-500)_80%,black)]">
                 {approved}/{total} personas have approved — the ticket is ready
                 to build!
               </p>
@@ -92,17 +94,17 @@ export function ConsensusProgress({
           </div>
           {/* Animated sparkle particles */}
           <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-2 left-1/4 w-1 h-1 bg-emerald-300 rounded-full animate-ping" />
+            <div className="absolute top-2 left-1/4 w-1 h-1 bg-[color:var(--success-500)] rounded-full animate-ping" />
             <div
-              className="absolute top-4 right-1/3 w-1.5 h-1.5 bg-emerald-200 rounded-full animate-ping"
+              className="absolute top-4 right-1/3 w-1.5 h-1.5 bg-[color:color-mix(in_oklab,var(--success-500)_60%,white)] rounded-full animate-ping"
               style={{ animationDelay: "0.3s" }}
             />
             <div
-              className="absolute bottom-2 left-1/3 w-1 h-1 bg-emerald-300 rounded-full animate-ping"
+              className="absolute bottom-2 left-1/3 w-1 h-1 bg-[color:var(--success-500)] rounded-full animate-ping"
               style={{ animationDelay: "0.7s" }}
             />
             <div
-              className="absolute bottom-3 right-1/4 w-1.5 h-1.5 bg-emerald-200 rounded-full animate-ping"
+              className="absolute bottom-3 right-1/4 w-1.5 h-1.5 bg-[color:color-mix(in_oklab,var(--success-500)_60%,white)] rounded-full animate-ping"
               style={{ animationDelay: "1s" }}
             />
           </div>
@@ -118,7 +120,7 @@ export function ConsensusProgress({
           <span className="text-sm text-ink-secondary">
             <span
               className={
-                consensusReached ? "text-emerald-400 font-semibold" : ""
+                consensusReached ? "text-[color:var(--success-500)] font-semibold" : ""
               }
             >
               {approved}
@@ -128,9 +130,9 @@ export function ConsensusProgress({
           <span
             className={`badge text-xs ${
               consensusReached
-                ? "bg-emerald-900/50 text-emerald-400"
+                ? "bg-[color:var(--success-100)] text-[color:color-mix(in_oklab,var(--success-500)_80%,black)]"
                 : percentage >= 50
-                ? "bg-yellow-900/50 text-yellow-400"
+                ? "bg-[color:var(--warning-100)] text-[color:color-mix(in_oklab,var(--warning-500)_72%,black)]"
                 : "bg-elevated text-ink-secondary"
             }`}
           >
@@ -178,7 +180,7 @@ export function ConsensusProgress({
               className="flex items-center gap-2 p-2 rounded-lg bg-elevated/40 border border-border-subtle"
             >
               <PersonaBadge personaId={persona.id} approved={true} />
-              <CheckCircle size={14} className="text-emerald-400 ml-auto flex-shrink-0" />
+              <CheckCircle size={14} className="text-[color:var(--success-500)] ml-auto flex-shrink-0" />
             </div>
           ))}
           {/* Remaining personas */}
@@ -196,8 +198,8 @@ export function ConsensusProgress({
 
       {/* Remaining personas callout */}
       {remaining.length > 0 && (
-        <div className="p-3 rounded-lg bg-amber-900/20 border border-amber-800/30">
-          <p className="text-xs text-amber-400/80 flex items-center gap-1.5">
+        <div className="p-3 rounded-lg bg-[color:var(--warning-100)] border border-[color:color-mix(in_oklab,var(--warning-500)_28%,transparent)]">
+          <p className="text-xs text-[color:color-mix(in_oklab,var(--warning-500)_72%,black)] flex items-center gap-1.5">
             <Clock size={12} />
             Waiting for:{" "}
             {remaining.map((p) => p.label).join(", ")}

@@ -86,7 +86,7 @@ export function SessionParticipants({
                       personaId={p.personaId as PersonaId}
                       size={18}
                     />
-                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border-2 border-deep" />
+                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[var(--success-500)] border-2 border-deep" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-ink-primary truncate">

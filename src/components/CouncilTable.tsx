@@ -170,9 +170,13 @@ export function CouncilTable({ ticket }: { ticket: Ticket }) {
     <div className="ctbl">
       <style>{`
         .ctbl{font-family:var(--font-sans)}
-        .ctbl-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:16px}
-        .ctbl-eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint)}
+        .ctbl-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+        .ctbl-heads{display:flex;align-items:center}
+        .ctbl-heads > *{margin-left:-6px}
+        .ctbl-heads > *:first-child{margin-left:0}
+        .ctbl-headav{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;flex:0 0 auto}
         .ctbl-sub{font-size:13px;color:var(--text-muted)}
+        .ctbl-sub b{color:var(--ink-900);font-weight:600}
         .ctbl-grid{display:grid;grid-template-columns:1fr minmax(168px,188px) 1fr;grid-template-areas:". top ." "left center right" ". bottom .";gap:14px;align-items:center}
         .ctbl-center{grid-area:center;display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--warm-100);border:1px solid var(--border-subtle);border-radius:var(--radius-xl);padding:14px 10px}
         .ctbl-clabel{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint)}
@@ -192,15 +196,33 @@ export function CouncilTable({ ticket }: { ticket: Ticket }) {
         @media (prefers-reduced-motion:reduce){.ctbl-pulse{animation:none}.ctbl-arc{transition:none}}
       `}</style>
 
+      {/* Council header strip — DS app `.council` (avatar row + meta + live) */}
       <div className="ctbl-head">
-        <span className="ctbl-eyebrow">The council</span>
-        <span className="ctbl-sub">
-          {ready
-            ? "Consensus reached — the council is ready to build."
-            : council.hasConcerns
-            ? "Concerns are open — resolve them to reach consensus."
-            : "Engineer, Designer, Product & QA — here's where each seat stands."}
+        <span className="ctbl-heads">
+          {council.seats.map((seat) => {
+            const p = PERSONA_COUNCIL[seat.personaId];
+            const Glyph = GLYPH[seat.personaId];
+            return (
+              <span key={seat.personaId} className="ctbl-headav" style={{ background: p.colorVar, boxShadow: `0 0 0 2px var(--surface-card), 0 0 0 4px color-mix(in oklab, ${p.colorVar} 45%, transparent)` } as React.CSSProperties}>
+                <Glyph size={15} />
+              </span>
+            );
+          })}
         </span>
+        <span className="ctbl-sub">
+          <b>The council</b> —{" "}
+          {ready
+            ? "consensus reached, ready to build."
+            : council.hasConcerns
+            ? "concerns are open — resolve them to reach consensus."
+            : "Engineer, Designer, Product & QA are on this ticket."}
+        </span>
+        {council.seats.some((s) => s.occupant === "ai" && s.stance === "awaiting") && (
+          <span className="cc-live" style={{ marginLeft: "auto" }}>
+            <span className="cc-live__dot" />
+            {council.seats.filter((s) => s.occupant === "ai" && s.stance === "awaiting").length} working now
+          </span>
+        )}
       </div>
 
       <div className="ctbl-grid">

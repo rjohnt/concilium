@@ -68,9 +68,12 @@ function setupTicketsWithFeedback() {
   addFeedback(t5.id, "engineer", "Use fuse.js for fuzzy matching", true);
 }
 
-/** Render the dashboard after seeding tickets. */
+/** Render the dashboard after seeding tickets, with the advanced-filter
+ * rows opened — they live behind the Filters disclosure since the redesign. */
 function renderDashboard() {
-  return render(<DashboardPage />);
+  const result = render(<DashboardPage />);
+  fireEvent.click(screen.getByRole("button", { name: /^filters/i }));
+  return result;
 }
 
 /** Find a persona filter toggle button by its label text.
@@ -190,10 +193,10 @@ describe("DEV-52: Persona reviewed-by filter (acceptance)", () => {
       });
 
       // Active mode gets brand-colored classes
-      expect(reviewedByBtn.className).toContain("bg-brand-900/50");
-      expect(reviewedByBtn.className).toContain("text-brand-400");
+      expect(reviewedByBtn.style.background).toContain("coral");
+      expect(reviewedByBtn.style.color).toContain("coral");
       // Inactive mode should NOT have those classes
-      expect(awaitingBtn.className).not.toContain("bg-brand-900/50");
+      expect(awaitingBtn.style.background).not.toContain("coral");
     });
 
     it("switches active state when clicking 'Awaiting review'", () => {
@@ -205,13 +208,13 @@ describe("DEV-52: Persona reviewed-by filter (acceptance)", () => {
       });
       fireEvent.click(awaitingBtn);
 
-      expect(awaitingBtn.className).toContain("bg-brand-900/50");
-      expect(awaitingBtn.className).toContain("text-brand-400");
+      expect(awaitingBtn.style.background).toContain("coral");
+      expect(awaitingBtn.style.color).toContain("coral");
 
       const reviewedByBtn = screen.getByRole("button", {
         name: /Reviewed by/i,
       });
-      expect(reviewedByBtn.className).not.toContain("bg-brand-900/50");
+      expect(reviewedByBtn.style.background).not.toContain("coral");
     });
 
     it("switches back to 'Reviewed by' when clicked again", () => {
@@ -226,7 +229,7 @@ describe("DEV-52: Persona reviewed-by filter (acceptance)", () => {
       const reviewedByBtn = screen.getByRole("button", {
         name: /Reviewed by/i,
       });
-      expect(reviewedByBtn.className).toContain("bg-brand-900/50");
+      expect(reviewedByBtn.style.background).toContain("coral");
     });
   });
 
@@ -305,7 +308,7 @@ describe("DEV-52: Persona reviewed-by filter (acceptance)", () => {
       renderDashboard();
 
       // Filter to draft only (T3, T4 have no feedback at all)
-      fireEvent.click(screen.getByRole("button", { name: /Draft/ }));
+      fireEvent.click(screen.getByRole("tab", { name: /Draft/ }));
 
       // Now click Engineer persona — no draft tickets have engineer feedback
       clickPersona("Engineer");
@@ -426,7 +429,7 @@ describe("DEV-52: Persona reviewed-by filter (acceptance)", () => {
       expect(engineerBtnAll.textContent).toMatch(/2/);
 
       // Filter to draft only: only T3, T4 — no engineer feedback
-      fireEvent.click(screen.getByRole("button", { name: /Draft/ }));
+      fireEvent.click(screen.getByRole("tab", { name: /Draft/ }));
 
       // After filtering to draft, engineer count is 0, badge hidden
       const engineerBtnDraft = getPersonaButton("Engineer");
@@ -442,7 +445,7 @@ describe("DEV-52: Persona reviewed-by filter (acceptance)", () => {
       renderDashboard();
 
       // Filter to "In Review" status
-      fireEvent.click(screen.getByRole("button", { name: /In Review/ }));
+      fireEvent.click(screen.getByRole("tab", { name: /In review/i }));
 
       // Should show T1, T2, T5 (all in-review)
       expectTicketVisible("Dark mode toggle");
@@ -546,7 +549,7 @@ describe("DEV-52: Persona reviewed-by filter (acceptance)", () => {
       setupTicketsWithFeedback();
       renderDashboard();
 
-      fireEvent.click(screen.getByRole("button", { name: /Draft/ }));
+      fireEvent.click(screen.getByRole("tab", { name: /Draft/ }));
       clickPersona("Engineer");
 
       expect(
@@ -577,7 +580,7 @@ describe("DEV-52: Persona reviewed-by filter (acceptance)", () => {
       setupTicketsWithFeedback();
       renderDashboard();
 
-      fireEvent.click(screen.getByRole("button", { name: /Draft/ }));
+      fireEvent.click(screen.getByRole("tab", { name: /Draft/ }));
       clickPersona("Engineer");
 
       expect(

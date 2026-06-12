@@ -12,13 +12,14 @@ import { PROMPT_VERSION } from "@/lib/persona-prompts";
 import { conflictScenario } from "./scenarios";
 import { judgeResponse } from "./judge";
 import { recordResult } from "./record";
+import { EVAL_MODEL } from "./config";
 
 const PASS_THRESHOLD = 3;
 const hasApiKey = !!process.env.DEEPSEEK_API_KEY;
 
 describe.skipIf(!hasApiKey)("mediator facilitator prompt", () => {
   it("detects the seeded engineer/designer conflict and proposes a compromise", async () => {
-    const report = await runMediatorLLM(conflictScenario.ticket, conflictScenario.history);
+    const report = await runMediatorLLM(conflictScenario.ticket, conflictScenario.history, EVAL_MODEL);
 
     // Structural check: exactly the one seeded conflict, involving both parties
     expect(report.conflicts.length).toBeGreaterThanOrEqual(1);

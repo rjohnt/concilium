@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { Loader2 } from "lucide-react";
 
-const PUBLIC_PATHS = ["/login", "/signup", "/auth/callback", "/welcome", "/share", "/compare"];
+const PUBLIC_PATHS = ["/login", "/signup", "/auth/callback", "/welcome", "/share", "/compare", "/evals"];
 
 // In development without Supabase credentials, bypass auth entirely.
 // NEXT_PUBLIC_* is inlined on both server and client, so this resolves to

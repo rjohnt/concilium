@@ -54,7 +54,8 @@ src/
 ├── components/       # Reusable components (30+ components)
 ├── lib/              # Business logic, types, store, personas, consensus
 │   ├── seats.ts            # Seat model: humans + AI stand-ins per persona
-│   ├── persona-prompts.ts  # Versioned persona system prompts (eval-able)
+│   ├── persona-charters.ts # Per-role mandate/lens/pushBackOn/defersTo (role distinctness)
+│   ├── persona-prompts.ts  # Composes charters into versioned system prompts (eval-able)
 │   ├── standin.ts          # AI stand-in feedback generation (server-side)
 │   ├── mediator-persona.ts # The Mediator facilitator agent (own prompt)
 │   └── build-executor/     # Pluggable build executors (report, local-claude)
@@ -86,9 +87,16 @@ scripts/evals/        # LLM prompt eval harness (npm run evals)
   store (`claimSeat`/`releaseSeat`), never by mutating the map.
 - **Feedback sources**: `FeedbackEntry.source` is `"human"` or `"ai-standin"`
   (absent = legacy human). Stand-in approvals count toward consensus.
-- **Prompts**: persona/mediator prompts live in `persona-prompts.ts` and
-  `mediator-persona.ts`. When changing them, bump `PROMPT_VERSION` and run
-  `npm run evals` (scenarios in `scripts/evals/`).
+- **Prompts**: each role's distinctness comes from its charter in
+  `persona-charters.ts` (mandate / lens / pushBackOn / **defersTo** — the last
+  keeps lanes from bleeding); `persona-prompts.ts` composes those into the
+  system prompt. When changing a charter/prompt, bump `PROMPT_VERSION` and run
+  `npm run evals`. Deterministic guardrail: `persona-charters.test.ts` asserts
+  each prompt carries its own lens vocabulary (no LLM/key needed).
+- **Evals**: strategy in `EVALS.md` (read before changing scenarios, judges, or
+  thresholds). Results dual-write to local JSONL and the Supabase
+  `eval_results` table; the `/evals` page is the performance-over-time
+  dashboard and `eval-report.ts` holds its (unit-tested) aggregation.
 - **Build executors**: select via `CONCILIUM_BUILD_EXECUTOR` (`report` default,
   `local-claude` for sandboxed Claude Code builds). New executors implement
   `BuildExecutor` in `src/lib/build-executor/`.
@@ -126,15 +134,39 @@ scripts/evals/        # LLM prompt eval harness (npm run evals)
 - **Do not** log raw auth tokens or Supabase keys.
 - **Do not** use `any` in TypeScript.
 - **Do not** skip tests for new features. Every new component gets a test file in `src/components/__tests__/`.
+- **Do not** leave the suite red. Updating affected tests is part of definition-of-done for EVERY change — see Testing below.
 
 ## Testing
 
+- **Green suite is the definition of done.** `npm test` must pass 1314+/0 before
+  any change ships. If your change makes a test fail, that's part of YOUR
+  change: update the test to the new contract, or — if the behavior it asserts
+  no longer exists in the product — delete it with a one-line comment saying
+  what it asserted and why it's obsolete. Never ship with failures, never
+  "note the baseline," never skip-and-move-on. (History: redesigns that
+  shipped without touching their acceptance tests rotted the suite to 90
+  failures, which masked real regressions until a full cleanup in PR #93.)
+- This applies doubly to **redesigns and copy changes**: if you rename a
+  label, move a control behind a disclosure, or swap design tokens, grep the
+  test suite for the old strings/classes and update them in the same PR.
 - Vitest with jsdom environment. Config in `vitest.config.ts`.
 - Setup in `vitest.setup.ts` (mocks for next/navigation, framer-motion, localStorage).
 - Component tests: render + user interactions + accessibility.
 - Store tests: state transitions + persistence + edge cases.
 - Run: `npm test` or `npx vitest run`.
 - Test files mirror source: `src/components/Foo.tsx` → `src/components/__tests__/Foo.test.tsx`.
+- Prefer **behavior assertions over styling assertions** (accessible roles,
+  labels, interactions). Asserting specific token classes (`bg-gold`,
+  `ring-brand-500/70`) couples tests to the design system and breaks on every
+  rebrand; only pin a class when the class IS the contract.
+- When mocking a module, include every export the code under test pulls —
+  and re-check mocks when the real module grows exports (`isLLMConfigured`,
+  `getBuildReadiness`, and `usePathname` rotted 40+ tests this way).
+- Ticket fixtures must walk **legal status transitions** (draft → in-review →
+  consensus → building → done); illegal jumps silently no-op since DEV-102.
+- In large multi-suite acceptance files, suites that exercise REAL modules
+  must `vi.doUnmock(...)` + `vi.unstubAllGlobals()` in `beforeEach` —
+  `doMock` registrations and window stubs leak across suites.
 
 ## Common Pitfalls
 

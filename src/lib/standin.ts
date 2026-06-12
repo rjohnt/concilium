@@ -88,7 +88,10 @@ function formatStandinFeedback(parsed: ParsedStandinResponse): string {
 export async function runStandinLLM(
   ticket: Ticket,
   personaId: PersonaId,
-  history: FeedbackEntry[]
+  history: FeedbackEntry[],
+  /** Optional model override — production passes none (default model); the
+   *  eval harness passes the model under test so models can be compared. */
+  model?: string
 ): Promise<{ parsed: ParsedStandinResponse; model: string; tokensUsed: number } | null> {
   const persona = getPersona(personaId);
   if (!persona) return null;
@@ -97,6 +100,7 @@ export async function runStandinLLM(
     systemPrompt: buildPersonaSystemPrompt(persona),
     userPrompt: buildStandinUserPrompt(ticket, persona, history),
     expectJson: true,
+    model,
   });
 
   return {

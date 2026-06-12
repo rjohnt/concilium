@@ -69,7 +69,7 @@ describe("TicketCard", () => {
   it("renders ticket ID and status badge", () => {
     render(<TicketCard ticket={createTestTicket()} />);
     expect(screen.getByText("TIX-001")).toBeInTheDocument();
-    expect(screen.getByText("draft")).toBeInTheDocument();
+    expect(screen.getByText("Draft")).toBeInTheDocument();
   });
 
   // === Click to edit ===
@@ -246,10 +246,10 @@ describe("TicketCard", () => {
 
     const input = screen.getByRole("textbox", { name: "Edit ticket title" });
     expect(input.className).toContain("bg-deep");
-    expect(input.className).toContain("border-gold/40");
+    expect(input.className).toContain("border-brand-300/40");
     expect(input.className).toContain("rounded");
     expect(input.className).toContain("text-ink-primary");
-    expect(input.className).toContain("focus:border-gold");
+    expect(input.className).toContain("focus:border-brand-500/50");
   });
 
   // === CopyButton isolation ===
@@ -318,16 +318,16 @@ describe("TicketCard", () => {
 
   it("[AC7] adds gold ring styling when selected is true", () => {
     render(<TicketCard ticket={createTestTicket()} selected={true} />);
-    // The card Link element should have ring-2 and ring-gold/70 classes
+    // The card Link element should have ring-2 and ring-brand-500/70 classes
     const link = screen.getByRole("link");
     expect(link.className).toContain("ring-2");
-    expect(link.className).toContain("ring-gold/70");
+    expect(link.className).toContain("ring-brand-500/70");
   });
 
   it("does not have gold ring when selected is false or omitted", () => {
     render(<TicketCard ticket={createTestTicket()} />);
     const link = screen.getByRole("link");
-    expect(link.className).not.toContain("ring-gold/70");
+    expect(link.className).not.toContain("ring-brand-500/70");
   });
 
   it("wraps persona badges instead of overlapping them", () => {
