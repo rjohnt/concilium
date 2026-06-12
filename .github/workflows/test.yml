@@ -1,0 +1,23 @@
+# Green-suite gate — the enforcement half of the definition-of-done rule in
+# AGENTS.md §Testing. Every PR and every push to main must pass the full unit
+# suite. (LLM evals are NOT run here — they need DEEPSEEK_API_KEY and cost
+# money; they skip automatically without the key.)
+name: test
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
