@@ -30,7 +30,6 @@ function Nav() {
             <a href="#how-it-works">Product</a>
             <a href="#council">The council</a>
             <Link href="/compare">vs Jira</Link>
-            <a href="#">Docs</a>
           </div>
           <div className={styles.navRight}>
             <Link href="/login" className={`${styles.btn} ${styles.btnSm} ${styles.btnGhost}`}>
@@ -225,10 +224,8 @@ function Footer() {
           </div>
           <div className={styles.footLinks}>
             <a href="#how-it-works">Product</a>
-            <a href="#">Pricing</a>
-            <a href="#">Docs</a>
-            <a href="#">Careers</a>
-            <a href="#">Privacy</a>
+            <a href="#council">The council</a>
+            <Link href="/compare">vs Jira</Link>
           </div>
           <div className={styles.footCopy}>© 2026 Concilium</div>
         </div>
