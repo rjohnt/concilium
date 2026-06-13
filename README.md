@@ -47,9 +47,24 @@ draft → in-review → consensus → building → done
    - `local-claude`: additionally drives a local Claude Code CLI in a
      sandboxed per-ticket git workspace; the diff, changed files, and run log
      attach to the ticket as **artifacts** (set `CONCILIUM_BUILD_EXECUTOR=local-claude`)
-   - planned: Daytona / remote sandboxes behind the same interface
 5. **Review loop** — stakeholders file role-scoped **change requests**
    against the completed build; a rebuild consumes them as delta context.
+
+## Sandbox providers
+
+Where a ticket's build actually runs is pluggable (`src/lib/sandbox/`). Pick a
+provider per project in Project Settings, or set a global default with
+`CONCILIUM_SANDBOX_PROVIDER`:
+
+- **`local`** (default) — commands run directly on the host in a per-ticket
+  git workspace under `data/builds/`.
+- **`docker`** — same workspace, but commands run inside a disposable
+  container (devcontainer image auto-detected, `node:22-bookworm` fallback).
+- **`daytona`** — builds run in a hosted [Daytona](https://www.daytona.io)
+  sandbox: the repo is cloned remotely via Daytona's git API and the sandbox
+  is deleted after each build round. Requires `DAYTONA_API_KEY`; optional
+  `DAYTONA_API_URL` (self-hosted/regional API endpoint) and `DAYTONA_GIT_PAT`
+  (clone/push auth for private repos).
 
 ## Brand
 
@@ -74,24 +89,29 @@ Brand strategy, voice & tone, visual identity, and logo concepts live in
   (cross-tab). Powers presence, the feedback stream, and cross-tab sync. When
   Supabase is configured, the store also subscribes to Postgres Changes
   (`src/lib/postgres-sync.ts`) so other users' writes appear without a refresh.
-- **Testing**: Vitest (`npm test`); LLM prompt evals (`npm run evals`, see
-  `scripts/evals/README.md`)
+- **Testing**: Vitest (`npm test`); LLM agent evals (`npm run evals`) with the
+  strategy in `EVALS.md`, runner docs in `scripts/evals/README.md`, and a live
+  performance-over-time dashboard at `/evals` (results persist to the
+  `eval_results` table in Supabase)
 - **Deploy**: Railway (`railway.json`)
 
 ## Development
 
 ```bash
-npm run dev      # localhost:3000
-npm run build    # production build
-npm test         # unit tests
-npm run evals    # LLM prompt evals (requires DEEPSEEK_API_KEY)
+npm run dev           # localhost:3000
+npm run build         # production build
+npm test              # unit tests
+npm run evals         # LLM agent evals (requires DEEPSEEK_API_KEY)
+npm run evals:report  # tabulate recorded eval runs (CLI; /evals is the dashboard)
 ```
 
 Env vars: `DEEPSEEK_API_KEY` (mediator/stand-ins/builds),
 `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` (auth + realtime +
 client reads), `SUPABASE_SERVICE_ROLE_KEY` (server-side Postgres data layer;
 when absent the server uses local SQLite), `CONCILIUM_BUILD_EXECUTOR`,
-`CONCILIUM_BUILD_WORKSPACE` (build executor).
+`CONCILIUM_BUILD_WORKSPACE` (build executor), `CONCILIUM_SANDBOX_PROVIDER`,
+`DAYTONA_API_KEY`, `DAYTONA_API_URL`, `DAYTONA_GIT_PAT` (sandbox providers —
+see above).
 
 ## Roadmap
 

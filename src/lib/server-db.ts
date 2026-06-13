@@ -20,6 +20,8 @@ import {
   PriorityLevel,
   Tag,
   SeatMap,
+  Project,
+  SandboxProvider,
 } from "./types";
 import * as sqliteDb from "./db/sqlite-db";
 import * as supabaseDb from "./db/supabase-db";
@@ -36,6 +38,16 @@ type TicketUpdates = {
   status?: TicketStatus;
   tags?: Tag[];
   seats?: SeatMap;
+  projectId?: string | null;
+  branchOverride?: string | null;
+};
+
+export type ProjectUpdates = {
+  name?: string;
+  repoUrl?: string | null;
+  defaultBranch?: string;
+  sandboxProvider?: SandboxProvider;
+  createPr?: boolean;
 };
 
 export async function getTickets(): Promise<Ticket[]> {
@@ -79,6 +91,33 @@ export async function updateTicketStatus(
   return isPostgresBacked()
     ? supabaseDb.updateTicketStatus(ticketId, status)
     : sqliteDb.updateTicketStatus(ticketId, status);
+}
+
+export async function getProjects(): Promise<Project[]> {
+  return isPostgresBacked() ? supabaseDb.getProjects() : sqliteDb.getProjects();
+}
+
+export async function getProject(id: string): Promise<Project | undefined> {
+  return isPostgresBacked() ? supabaseDb.getProject(id) : sqliteDb.getProject(id);
+}
+
+export async function createProject(
+  name: string,
+  options: ProjectUpdates = {},
+  id?: string
+): Promise<Project> {
+  return isPostgresBacked()
+    ? supabaseDb.createProject(name, options, id)
+    : sqliteDb.createProject(name, options, id);
+}
+
+export async function updateProject(
+  projectId: string,
+  updates: ProjectUpdates
+): Promise<Project | undefined> {
+  return isPostgresBacked()
+    ? supabaseDb.updateProject(projectId, updates)
+    : sqliteDb.updateProject(projectId, updates);
 }
 
 export async function addFeedback(

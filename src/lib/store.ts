@@ -249,7 +249,7 @@ export function deleteTicket(ticketId: string): boolean {
 
 export function updateTicket(
   ticketId: string,
-  updates: { title?: string; description?: string; dueDate?: string | null }
+  updates: { title?: string; description?: string; dueDate?: string | null; projectId?: string | null; branchOverride?: string | null }
 ): Ticket | null {
   const ticket = tickets.find((t) => t.id === ticketId);
   if (!ticket) return null;
@@ -261,6 +261,12 @@ export function updateTicket(
   }
   if (updates.dueDate !== undefined) {
     ticket.dueDate = updates.dueDate || undefined;
+  }
+  if (updates.projectId !== undefined) {
+    ticket.projectId = updates.projectId || null;
+  }
+  if (updates.branchOverride !== undefined) {
+    ticket.branchOverride = updates.branchOverride || null;
   }
   ticket.updatedAt = new Date().toISOString();
   persistState(ticketId);

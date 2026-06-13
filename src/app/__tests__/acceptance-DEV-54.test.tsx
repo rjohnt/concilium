@@ -13,7 +13,9 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
+import { ToastProvider } from "@/components/Toast";
 import type { ReactNode } from "react";
+import type { PersonaId } from "@/lib/types";
 
 // ===========================================================================
 // Mocks shared across all test suites
@@ -276,7 +278,9 @@ describe("AC 2: Full-context prompt includes all persona feedback", () => {
     vi.doMock("@/lib/llm", () => ({
       callDeepSeek: vi.fn(),
       DEEPSEEK_PRO_MODEL: "deepseek-v4-pro",
-    }));
+      isLLMConfigured: () => true,
+      AI_NOT_CONFIGURED_MESSAGE: "AI not configured",
+      }));
 
     // Set up store mock with a ticket
     const mockTicket = {
@@ -317,10 +321,11 @@ describe("AC 2: Full-context prompt includes all persona feedback", () => {
       approvals: ["engineer", "designer", "product-owner"] as const,
     };
 
-    vi.doMock("@/lib/store", () => ({
-      getTicket: vi.fn(() => mockTicket),
-      getFeedbackHistory: vi.fn(() => mockTicket.feedback),
-      setBuildReport: vi.fn(),
+    // The build route reads from the server data layer, not the client store
+    vi.doMock("@/lib/server-db", () => ({
+      getTicket: vi.fn(async () => mockTicket),
+      getFeedbackHistory: vi.fn(async () => mockTicket.feedback),
+      setBuildReport: vi.fn(async () => undefined),
     }));
 
     vi.doMock("@/lib/personas", () => ({
@@ -361,6 +366,7 @@ describe("AC 2: Full-context prompt includes all persona feedback", () => {
     }));
 
     vi.doMock("@/lib/consensus-threshold", () => ({
+      getBuildReadiness: vi.fn(() => ({ ready: true, score: 100, consensusMet: true, feedbackCount: 4, missingPersonas: [], nextSteps: [] })),
       checkConsensusThreshold: vi.fn(() => ({
         reached: true,
         progress: 0.75,
@@ -429,7 +435,9 @@ describe("AC 2: Full-context prompt includes all persona feedback", () => {
     vi.doMock("@/lib/llm", () => ({
       callDeepSeek: vi.fn(),
       DEEPSEEK_PRO_MODEL: "deepseek-v4-pro",
-    }));
+      isLLMConfigured: () => true,
+      AI_NOT_CONFIGURED_MESSAGE: "AI not configured",
+      }));
 
     const mockTicket = {
       id: "TIX-002",
@@ -469,7 +477,7 @@ describe("AC 2: Full-context prompt includes all persona feedback", () => {
       approvals: ["engineer", "designer", "product-owner"] as const,
     };
 
-    vi.doMock("@/lib/store", () => ({
+    vi.doMock("@/lib/server-db", () => ({
       getTicket: vi.fn(() => mockTicket),
       getFeedbackHistory: vi.fn(() => mockTicket.feedback),
       setBuildReport: vi.fn(),
@@ -485,6 +493,7 @@ describe("AC 2: Full-context prompt includes all persona feedback", () => {
     }));
 
     vi.doMock("@/lib/consensus-threshold", () => ({
+      getBuildReadiness: vi.fn(() => ({ ready: true, score: 100, consensusMet: true, feedbackCount: 4, missingPersonas: [], nextSteps: [] })),
       checkConsensusThreshold: vi.fn(() => ({
         reached: true, progress: 0.75, threshold: 0.75,
       })),
@@ -534,9 +543,11 @@ describe("AC 3: POST /api/build returns BuildReport", () => {
     vi.doMock("@/lib/llm", () => ({
       callDeepSeek: vi.fn(),
       DEEPSEEK_PRO_MODEL: "deepseek-v4-pro",
-    }));
+      isLLMConfigured: () => true,
+      AI_NOT_CONFIGURED_MESSAGE: "AI not configured",
+      }));
 
-    vi.doMock("@/lib/store", () => ({
+    vi.doMock("@/lib/server-db", () => ({
       getTicket: vi.fn(),
       getFeedbackHistory: vi.fn(() => []),
       setBuildReport: vi.fn(),
@@ -547,6 +558,7 @@ describe("AC 3: POST /api/build returns BuildReport", () => {
     }));
 
     vi.doMock("@/lib/consensus-threshold", () => ({
+      getBuildReadiness: vi.fn(() => ({ ready: true, score: 100, consensusMet: true, feedbackCount: 4, missingPersonas: [], nextSteps: [] })),
       checkConsensusThreshold: vi.fn(() => ({ reached: false, progress: 0, threshold: 0.75 })),
       generateBuildSummary: vi.fn(() => ""),
     }));
@@ -570,9 +582,11 @@ describe("AC 3: POST /api/build returns BuildReport", () => {
     vi.doMock("@/lib/llm", () => ({
       callDeepSeek: vi.fn(),
       DEEPSEEK_PRO_MODEL: "deepseek-v4-pro",
-    }));
+      isLLMConfigured: () => true,
+      AI_NOT_CONFIGURED_MESSAGE: "AI not configured",
+      }));
 
-    vi.doMock("@/lib/store", () => ({
+    vi.doMock("@/lib/server-db", () => ({
       getTicket: vi.fn(),
       getFeedbackHistory: vi.fn(() => []),
       setBuildReport: vi.fn(),
@@ -583,6 +597,7 @@ describe("AC 3: POST /api/build returns BuildReport", () => {
     }));
 
     vi.doMock("@/lib/consensus-threshold", () => ({
+      getBuildReadiness: vi.fn(() => ({ ready: true, score: 100, consensusMet: true, feedbackCount: 4, missingPersonas: [], nextSteps: [] })),
       checkConsensusThreshold: vi.fn(() => ({ reached: false, progress: 0, threshold: 0.75 })),
       generateBuildSummary: vi.fn(() => ""),
     }));
@@ -606,9 +621,11 @@ describe("AC 3: POST /api/build returns BuildReport", () => {
     vi.doMock("@/lib/llm", () => ({
       callDeepSeek: vi.fn(),
       DEEPSEEK_PRO_MODEL: "deepseek-v4-pro",
-    }));
+      isLLMConfigured: () => true,
+      AI_NOT_CONFIGURED_MESSAGE: "AI not configured",
+      }));
 
-    vi.doMock("@/lib/store", () => ({
+    vi.doMock("@/lib/server-db", () => ({
       getTicket: vi.fn(() => undefined),
       getFeedbackHistory: vi.fn(() => []),
       setBuildReport: vi.fn(),
@@ -619,6 +636,7 @@ describe("AC 3: POST /api/build returns BuildReport", () => {
     }));
 
     vi.doMock("@/lib/consensus-threshold", () => ({
+      getBuildReadiness: vi.fn(() => ({ ready: true, score: 100, consensusMet: true, feedbackCount: 4, missingPersonas: [], nextSteps: [] })),
       checkConsensusThreshold: vi.fn(() => ({ reached: false, progress: 0, threshold: 0.75 })),
       generateBuildSummary: vi.fn(() => ""),
     }));
@@ -642,7 +660,9 @@ describe("AC 3: POST /api/build returns BuildReport", () => {
     vi.doMock("@/lib/llm", () => ({
       callDeepSeek: vi.fn(),
       DEEPSEEK_PRO_MODEL: "deepseek-v4-pro",
-    }));
+      isLLMConfigured: () => true,
+      AI_NOT_CONFIGURED_MESSAGE: "AI not configured",
+      }));
 
     const mockTicket = {
       id: "TIX-001",
@@ -670,7 +690,7 @@ describe("AC 3: POST /api/build returns BuildReport", () => {
       approvals: ["engineer", "designer", "product-owner"] as const,
     };
 
-    vi.doMock("@/lib/store", () => ({
+    vi.doMock("@/lib/server-db", () => ({
       getTicket: vi.fn(() => mockTicket),
       getFeedbackHistory: vi.fn(() => mockTicket.feedback),
       setBuildReport: vi.fn(),
@@ -686,6 +706,7 @@ describe("AC 3: POST /api/build returns BuildReport", () => {
     }));
 
     vi.doMock("@/lib/consensus-threshold", () => ({
+      getBuildReadiness: vi.fn(() => ({ ready: true, score: 100, consensusMet: true, feedbackCount: 4, missingPersonas: [], nextSteps: [] })),
       checkConsensusThreshold: vi.fn(() => ({
         reached: true, progress: 0.75, threshold: 0.75,
       })),
@@ -788,6 +809,8 @@ describe("AC 4: LLM response parsed into BuildReport shape", () => {
     };
 
     vi.doMock("@/lib/llm", () => ({
+      isLLMConfigured: () => true,
+      AI_NOT_CONFIGURED_MESSAGE: "AI not configured",
       callDeepSeek: vi.fn().mockResolvedValue({
         content: llmContent,
         model: "deepseek-v4-pro",
@@ -796,7 +819,7 @@ describe("AC 4: LLM response parsed into BuildReport shape", () => {
       DEEPSEEK_PRO_MODEL: "deepseek-v4-pro",
     }));
 
-    vi.doMock("@/lib/store", () => ({
+    vi.doMock("@/lib/server-db", () => ({
       getTicket: vi.fn(() => mockTicket),
       getFeedbackHistory: vi.fn(() => mockTicket.feedback),
       setBuildReport: vi.fn(),
@@ -812,6 +835,7 @@ describe("AC 4: LLM response parsed into BuildReport shape", () => {
     }));
 
     vi.doMock("@/lib/consensus-threshold", () => ({
+      getBuildReadiness: vi.fn(() => ({ ready: true, score: 100, consensusMet: true, feedbackCount: 4, missingPersonas: [], nextSteps: [] })),
       checkConsensusThreshold: vi.fn(() => ({
         reached: true, progress: 0.75, threshold: 0.75,
       })),
@@ -1187,8 +1211,9 @@ describe("AC 6: Build output visible inline on ticket detail page", () => {
 
     render(<BuildReportInline ticket={ticket} />);
 
-    expect(screen.getByText("Failed")).toBeInTheDocument();
-    expect(screen.getByText("Build failed due to API error.")).toBeInTheDocument();
+    // Since DEV-63, a failed build in "building" status renders the retry
+    // card rather than a plain Failed badge.
+    expect(screen.getByText("Build Generation Failed")).toBeInTheDocument();
   });
 
   it("returns null when no buildReport exists on ticket", async () => {
@@ -1297,6 +1322,12 @@ describe("AC 6: Build output visible inline on ticket detail page", () => {
 
 describe("AC 7: Manual triggerBuild() routes through /api/build", () => {
   beforeEach(() => {
+    // Clear doMock registrations leaked from earlier suites — these tests
+    // exercise the real store/consensus modules.
+    vi.doUnmock("@/lib/llm");
+    vi.doUnmock("@/lib/consensus-threshold");
+    vi.doUnmock("@/lib/personas");
+    vi.doUnmock("@/lib/server-db");
     vi.resetModules();
   });
 
@@ -1474,6 +1505,7 @@ describe("AC 7b: BuildTrigger component integration", () => {
     }));
 
     const { BuildTrigger } = await import("@/components/BuildTrigger");
+    const { ToastProvider } = await import("@/components/Toast");
 
     const ticket = {
       id: "TIX-001",
@@ -1493,7 +1525,7 @@ describe("AC 7b: BuildTrigger component integration", () => {
       approvals: ["engineer", "designer", "product-owner"] as PersonaId[],
     };
 
-    render(<BuildTrigger ticket={ticket} onBuildTriggered={vi.fn()} />);
+    render(<ToastProvider><BuildTrigger ticket={ticket} onBuildTriggered={vi.fn()} /></ToastProvider>);
 
     // Should show "Ready to Build!" button since readiness is true
     expect(screen.getByText("Ready to Build!")).toBeInTheDocument();
@@ -1524,6 +1556,7 @@ describe("AC 7b: BuildTrigger component integration", () => {
     }));
 
     const { BuildTrigger } = await import("@/components/BuildTrigger");
+    const { ToastProvider } = await import("@/components/Toast");
 
     const ticket = {
       id: "TIX-002",
@@ -1549,7 +1582,7 @@ describe("AC 7b: BuildTrigger component integration", () => {
       },
     };
 
-    render(<BuildTrigger ticket={ticket} onBuildTriggered={vi.fn()} />);
+    render(<ToastProvider><BuildTrigger ticket={ticket} onBuildTriggered={vi.fn()} /></ToastProvider>);
 
     expect(screen.getByText("Build In Progress")).toBeInTheDocument();
     expect(screen.getByText("View Report")).toBeInTheDocument();
@@ -1576,6 +1609,7 @@ describe("AC 7b: BuildTrigger component integration", () => {
     }));
 
     const { BuildTrigger } = await import("@/components/BuildTrigger");
+    const { ToastProvider } = await import("@/components/Toast");
 
     const ticket = {
       id: "TIX-003",
@@ -1601,7 +1635,7 @@ describe("AC 7b: BuildTrigger component integration", () => {
       },
     };
 
-    render(<BuildTrigger ticket={ticket} onBuildTriggered={vi.fn()} />);
+    render(<ToastProvider><BuildTrigger ticket={ticket} onBuildTriggered={vi.fn()} /></ToastProvider>);
 
     expect(screen.getByText("Build Complete")).toBeInTheDocument();
   });
@@ -1618,6 +1652,8 @@ describe("AC 8: Graceful error handling", () => {
 
   it("API returns 500 on LLM call failure", async () => {
     vi.doMock("@/lib/llm", () => ({
+      isLLMConfigured: () => true,
+      AI_NOT_CONFIGURED_MESSAGE: "AI not configured",
       callDeepSeek: vi.fn().mockRejectedValue(new Error("API timeout")),
       DEEPSEEK_PRO_MODEL: "deepseek-v4-pro",
     }));
@@ -1648,7 +1684,7 @@ describe("AC 8: Graceful error handling", () => {
       approvals: ["engineer", "designer", "product-owner"] as const,
     };
 
-    vi.doMock("@/lib/store", () => ({
+    vi.doMock("@/lib/server-db", () => ({
       getTicket: vi.fn(() => mockTicket),
       getFeedbackHistory: vi.fn(() => mockTicket.feedback),
       setBuildReport: vi.fn(),
@@ -1664,6 +1700,7 @@ describe("AC 8: Graceful error handling", () => {
     }));
 
     vi.doMock("@/lib/consensus-threshold", () => ({
+      getBuildReadiness: vi.fn(() => ({ ready: true, score: 100, consensusMet: true, feedbackCount: 4, missingPersonas: [], nextSteps: [] })),
       checkConsensusThreshold: vi.fn(() => ({
         reached: true, progress: 0.75, threshold: 0.75,
       })),
@@ -1689,7 +1726,9 @@ describe("AC 8: Graceful error handling", () => {
     vi.doMock("@/lib/llm", () => ({
       callDeepSeek: vi.fn(),
       DEEPSEEK_PRO_MODEL: "deepseek-v4-pro",
-    }));
+      isLLMConfigured: () => true,
+      AI_NOT_CONFIGURED_MESSAGE: "AI not configured",
+      }));
 
     // BuildBuildPrompt calls getTicket which returns undefined
     // but the route already checked for that. The only way to hit
@@ -1721,6 +1760,7 @@ describe("AC 8: Graceful error handling", () => {
     }));
 
     vi.doMock("@/lib/consensus-threshold", () => ({
+      getBuildReadiness: vi.fn(() => ({ ready: true, score: 100, consensusMet: true, feedbackCount: 4, missingPersonas: [], nextSteps: [] })),
       checkConsensusThreshold: vi.fn(() => ({
         reached: false, progress: 0, threshold: 0.75,
       })),
@@ -1872,6 +1912,18 @@ describe("AC 9: Pipeline test coverage", () => {
 // ===========================================================================
 
 describe("Full pipeline integration: from feedback to build display", () => {
+  beforeEach(() => {
+    // Fresh module registry — these tests register their own mocks and must
+    // not inherit cached imports, registrations, or stubbed globals (e.g. the
+    // minimal window stubs from the AC7 suite) from earlier suites.
+    vi.unstubAllGlobals();
+    vi.doUnmock("@/lib/llm");
+    vi.doUnmock("@/lib/consensus-threshold");
+    vi.doUnmock("@/lib/personas");
+    vi.doUnmock("@/lib/server-db");
+    vi.resetModules();
+  });
+
   it("user sees build report on ticket detail page after consensus", async () => {
     // This test simulates the full user journey:
     // 1. Ticket reaches consensus → build triggered
@@ -1891,7 +1943,8 @@ describe("Full pipeline integration: from feedback to build display", () => {
       consensusSummary: "All 4 personas approved unanimously.",
     };
 
-    vi.doMock("@/lib/store", () => ({
+    vi.doMock("@/lib/store", async (importOriginal) => ({
+      ...(await importOriginal<typeof import("@/lib/store")>()),
       seedData: vi.fn(),
       getTicket: vi.fn(() => ({
         id: "TIX-010",
@@ -1961,8 +2014,9 @@ describe("Full pipeline integration: from feedback to build display", () => {
     }));
 
     const TicketDetailPage = (await import("@/app/ticket/[id]/page")).default;
+    const { ToastProvider } = await import("@/components/Toast");
 
-    render(<TicketDetailPage />);
+    render(<ToastProvider><TicketDetailPage /></ToastProvider>);
 
     // Wait for the page to load and render
     const title = await screen.findByText("Dark Mode Feature");
@@ -1985,7 +2039,8 @@ describe("Full pipeline integration: from feedback to build display", () => {
   });
 
   it("no build report shown when ticket has no buildReport", async () => {
-    vi.doMock("@/lib/store", () => ({
+    vi.doMock("@/lib/store", async (importOriginal) => ({
+      ...(await importOriginal<typeof import("@/lib/store")>()),
       seedData: vi.fn(),
       getTicket: vi.fn(() => ({
         id: "TIX-011",
@@ -2022,8 +2077,9 @@ describe("Full pipeline integration: from feedback to build display", () => {
     }));
 
     const TicketDetailPage = (await import("@/app/ticket/[id]/page")).default;
+    const { ToastProvider } = await import("@/components/Toast");
 
-    render(<TicketDetailPage />);
+    render(<ToastProvider><TicketDetailPage /></ToastProvider>);
 
     // Should render the ticket
     const title = await screen.findByText("Draft ticket");

@@ -6,6 +6,8 @@ import { NextRequest } from "next/server";
 vi.mock("@/lib/llm", () => ({
   callDeepSeek: vi.fn(),
   DEEPSEEK_PRO_MODEL: "deepseek-v4-pro",
+  isLLMConfigured: vi.fn(() => true),
+  AI_NOT_CONFIGURED_MESSAGE: "AI features aren't configured on this server",
 }));
 
 vi.mock("@/lib/server-db", () => {
@@ -42,7 +44,7 @@ vi.mock("@/lib/consensus-threshold", () => ({
 }));
 
 import { POST } from "../build/route";
-import { callDeepSeek } from "@/lib/llm";
+import { callDeepSeek, isLLMConfigured } from "@/lib/llm";
 import * as serverDb from "@/lib/server-db";
 import * as consensus from "@/lib/consensus-threshold";
 import { Ticket } from "@/lib/types";
@@ -370,5 +372,26 @@ describe("POST /api/build", () => {
     expect(response.status).toBe(429);
     expect(response.headers.get("X-RateLimit-Remaining")).toBe("0");
     expect(response.headers.get("X-RateLimit-Reset")).toBeTruthy();
+  });
+});
+
+describe("POST /api/build — AI not configured", () => {
+  beforeEach(() => {
+    resetRateLimitBuckets();
+  });
+
+  it("returns 503 with code ai_not_configured when the LLM key is missing", async () => {
+    vi.mocked(isLLMConfigured).mockReturnValueOnce(false);
+    const request = new NextRequest("http://localhost:3000/api/build", {
+      method: "POST",
+      body: JSON.stringify({ ticketId: "TIX-001" }),
+      headers: { "Content-Type": "application/json", "x-forwarded-for": "10.9.9.9" },
+    });
+    const response = await POST(request);
+    expect(response.status).toBe(503);
+    const data = await response.json();
+    expect(data.code).toBe("ai_not_configured");
+    // The message is user-facing — must not leak infra commands
+    expect(data.error).not.toContain("railway");
   });
 });

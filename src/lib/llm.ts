@@ -4,7 +4,9 @@
  */
 
 const DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1";
-const DEEPSEEK_MODEL = "deepseek-v4-flash";
+/** Default generation model (stand-ins, mediator). */
+export const DEEPSEEK_MODEL = "deepseek-v4-flash";
+/** Stronger model used for build specs and the eval judge. */
 export const DEEPSEEK_PRO_MODEL = "deepseek-v4-pro";
 
 export interface LLMRequest {
@@ -38,6 +40,21 @@ function getApiKey(): string {
   }
   return key;
 }
+
+/** Whether the LLM backend is configured (API key present). */
+export function isLLMConfigured(): boolean {
+  return Boolean(process.env.DEEPSEEK_API_KEY);
+}
+
+/**
+ * User-facing message for AI endpoints when no API key is configured.
+ * Routes return it as `error` with HTTP 503 + code "ai_not_configured";
+ * the panels render `error` verbatim, so keep it friendly and actionable.
+ */
+export const AI_NOT_CONFIGURED_MESSAGE =
+  "AI features aren't configured on this server — set DEEPSEEK_API_KEY to bring " +
+  "the stand-ins, Mediator, and build agent to life. Humans can still claim seats " +
+  "and weigh in.";
 
 /**
  * Send a prompt to DeepSeek V4 Flash and return the response.

@@ -229,23 +229,23 @@ const iconMap: Record<
 > = {
   created: {
     Icon: PlusCircle,
-    color: "text-blue-400",
-    bg: "bg-blue-900/40",
+    color: "text-[#185FA5]",
+    bg: "bg-[color:var(--info-100)]",
   },
   feedback: {
     Icon: MessageSquare,
-    color: "text-purple-400",
-    bg: "bg-purple-900/40",
+    color: "text-[color:var(--persona-des-500)]",
+    bg: "bg-[color:var(--persona-des-100)]",
   },
   approval: {
     Icon: CheckCircle,
-    color: "text-emerald-400",
-    bg: "bg-emerald-900/40",
+    color: "text-[color:var(--success-500)]",
+    bg: "bg-[color:var(--success-100)]",
   },
   "approval-withdrawn": {
     Icon: XCircle,
-    color: "text-amber-400",
-    bg: "bg-amber-900/40",
+    color: "text-[color:color-mix(in_oklab,var(--warning-500)_78%,black)]",
+    bg: "bg-[color:var(--warning-100)]",
   },
   "status-change": {
     Icon: ArrowRight,
@@ -259,8 +259,8 @@ const iconMap: Record<
   },
   "build-completed": {
     Icon: CheckCheck,
-    color: "text-emerald-400",
-    bg: "bg-emerald-900/40",
+    color: "text-[color:var(--success-500)]",
+    bg: "bg-[color:var(--success-100)]",
   },
   "build-failed": {
     Icon: AlertTriangle,

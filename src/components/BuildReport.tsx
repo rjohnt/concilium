@@ -1,8 +1,12 @@
 "use client";
 
 import { BuildReport as BuildReportType, TicketStatus } from "@/lib/types";
-import { CheckCircle2, Clock, XCircle, Wrench, Palette, FlaskConical, FileText } from "lucide-react";
+import { CheckCircle2, Clock, XCircle, Wrench, Palette, FlaskConical, FileText, GitPullRequestArrow } from "lucide-react";
 import { BuildRetryCard } from "@/components/BuildRetryCard";
+
+// Matches PULL_REQUEST_ARTIFACT_LABEL in @/lib/github/build-pr (kept as a
+// literal here so the client bundle doesn't pull in Octokit).
+const PULL_REQUEST_ARTIFACT_LABEL = "Pull request";
 
 interface BuildReportProps {
   report?: BuildReportType;
@@ -50,6 +54,9 @@ export function BuildReport({
   const reportRef = report;
   const status = statusConfig[reportRef.status] || statusConfig.building;
   const StatusIcon = status.icon;
+  const pullRequest = reportRef.artifacts?.find(
+    (a) => a.type === "report" && a.label === PULL_REQUEST_ARTIFACT_LABEL
+  );
 
   return (
     <div className="space-y-6">
@@ -84,6 +91,20 @@ export function BuildReport({
 
       {reportRef.status !== "failed" && (
         <>
+          {/* Pull request */}
+          {pullRequest && (
+            <a
+              href={pullRequest.content}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 bg-elevated/40 border border-border-subtle rounded-lg p-4 text-sm text-gold hover:border-gold/40 transition-colors"
+            >
+              <GitPullRequestArrow size={16} />
+              <span className="font-semibold">Pull request</span>
+              <span className="text-ink-muted font-mono text-xs truncate">{pullRequest.content}</span>
+            </a>
+          )}
+
           {/* Consensus Summary */}
           <div className="bg-elevated/40 border border-border-subtle rounded-lg p-4">
             <div className="flex items-center gap-2 mb-2">

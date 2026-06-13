@@ -8,20 +8,20 @@ import { X, RotateCcw, Eye, Settings, Copy, Check } from "lucide-react";
 
 // Persona-aware accent colors matching the app's palette
 const PERSONA_ACCENTS: Record<PersonaId, string> = {
-  engineer: "border-blue-500/50 bg-blue-500/5 text-blue-400",
-  designer: "border-purple-500/50 bg-purple-500/5 text-purple-400",
-  "product-owner": "border-emerald-500/50 bg-emerald-500/5 text-emerald-400",
-  qa: "border-amber-500/50 bg-amber-500/5 text-amber-400",
+  engineer: "border-[color-mix(in_oklab,var(--persona-eng-500)_50%,transparent)] bg-[var(--persona-eng-50)] text-[var(--persona-eng-500)]",
+  designer: "border-[color-mix(in_oklab,var(--persona-des-500)_50%,transparent)] bg-[var(--persona-des-50)] text-[var(--persona-des-500)]",
+  "product-owner": "border-[color-mix(in_oklab,var(--persona-prod-500)_50%,transparent)] bg-[var(--persona-prod-50)] text-[var(--persona-prod-500)]",
+  qa: "border-[color-mix(in_oklab,var(--persona-res-500)_50%,transparent)] bg-[var(--persona-res-50)] text-[var(--persona-res-500)]",
 };
 
 const PERSONA_TAB_ACCENTS: Record<PersonaId, string> = {
   engineer:
-    "data-[state=active]:border-blue-500 data-[state=active]:text-blue-400",
+    "data-[state=active]:border-[var(--persona-eng-500)] data-[state=active]:text-[var(--persona-eng-500)]",
   designer:
-    "data-[state=active]:border-purple-500 data-[state=active]:text-purple-400",
+    "data-[state=active]:border-[var(--persona-des-500)] data-[state=active]:text-[var(--persona-des-500)]",
   "product-owner":
-    "data-[state=active]:border-emerald-500 data-[state=active]:text-emerald-400",
-  qa: "data-[state=active]:border-amber-500 data-[state=active]:text-amber-400",
+    "data-[state=active]:border-[var(--persona-prod-500)] data-[state=active]:text-[var(--persona-prod-500)]",
+  qa: "data-[state=active]:border-[var(--persona-res-500)] data-[state=active]:text-[var(--persona-res-500)]",
 };
 
 // Sample values for template variable preview

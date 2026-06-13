@@ -499,8 +499,7 @@ describe("DEV-58 Acceptance: Pagination with Load More button", () => {
 
       // Change filter to "Done" -> display count resets to BATCH_SIZE
       // FilterBar buttons have aria-label like "Done (N tickets)"
-      const doneFilter = screen.getByRole("button", {
-        name: /Done \(\d+ tickets\)/i,
+      const doneFilter = screen.getByRole("tab", { name: /^Done\b/i,
       });
       fireEvent.click(doneFilter);
 
@@ -525,8 +524,7 @@ describe("DEV-58 Acceptance: Pagination with Load More button", () => {
       expect(ticketCards()).toHaveLength(30);
 
       // Switch to "Draft" filter (all tickets are draft)
-      const draftFilter = screen.getByRole("button", {
-        name: /Draft \(\d+ tickets\)/i,
+      const draftFilter = screen.getByRole("tab", { name: /^Draft\b/i,
       });
       fireEvent.click(draftFilter);
 
@@ -555,6 +553,8 @@ describe("DEV-58 Acceptance: Pagination with Load More button", () => {
       });
       expect(ticketCards()).toHaveLength(30);
 
+      // Open the Filters disclosure (priority moved behind it in the redesign)
+      fireEvent.click(screen.getByRole("button", { name: /^filters/i }));
       // Click "High" priority filter (the button, not the ticket badges)
       const highBtn = screen
         .getAllByText("High")

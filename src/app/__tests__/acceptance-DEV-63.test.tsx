@@ -128,6 +128,10 @@ describe("AC-1: Store-level retryBuild() function", () => {
 
     // Setup: create ticket in building state with a stub build report
     const ticket = createTicket("Build Test", "Description");
+    // Walk the legal status path (DEV-102 added transition validation;
+    // draft→building is a multi-step jump and is rejected)
+    updateTicketStatus(ticket.id, "in-review");
+    updateTicketStatus(ticket.id, "consensus");
     updateTicketStatus(ticket.id, "building");
     setBuildReport(ticket.id, {
       id: "BLD-001",
@@ -547,6 +551,10 @@ describe("AC-5: Rate-limiting via lastAttemptedAt", () => {
     clearStorage();
 
     const ticket = createTicket("Cooldown Test", "Description");
+    // Walk the legal status path (DEV-102 added transition validation;
+    // draft→building is a multi-step jump and is rejected)
+    updateTicketStatus(ticket.id, "in-review");
+    updateTicketStatus(ticket.id, "consensus");
     updateTicketStatus(ticket.id, "building");
     setBuildReport(ticket.id, {
       id: "BLD-001",

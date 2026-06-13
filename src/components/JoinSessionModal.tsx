@@ -8,38 +8,38 @@ import { Sparkles, ArrowRight, Bot, User, Lock } from "lucide-react";
 import { PersonaIcon } from "./PersonaIcon";
 
 const PERSONA_BORDER_COLORS: Record<PersonaId, string> = {
-  engineer: "border-blue-500/50 hover:border-blue-400 group-hover:shadow-blue-500/20",
-  designer: "border-purple-500/50 hover:border-purple-400 group-hover:shadow-purple-500/20",
-  "product-owner": "border-emerald-500/50 hover:border-emerald-400 group-hover:shadow-emerald-500/20",
-  qa: "border-amber-500/50 hover:border-amber-400 group-hover:shadow-amber-500/20",
+  engineer: "border-[color:color-mix(in_oklab,var(--persona-eng-500)_50%,transparent)] hover:border-[color:var(--persona-eng-400)] group-hover:shadow-[color:color-mix(in_oklab,var(--persona-eng-500)_20%,transparent)]",
+  designer: "border-[color:color-mix(in_oklab,var(--persona-des-500)_50%,transparent)] hover:border-[color:var(--persona-des-400)] group-hover:shadow-[color:color-mix(in_oklab,var(--persona-des-500)_20%,transparent)]",
+  "product-owner": "border-[color:color-mix(in_oklab,var(--persona-prod-500)_50%,transparent)] hover:border-[color:var(--persona-prod-400)] group-hover:shadow-[color:color-mix(in_oklab,var(--persona-prod-500)_20%,transparent)]",
+  qa: "border-[color:color-mix(in_oklab,var(--persona-res-500)_50%,transparent)] hover:border-[color:var(--persona-res-400)] group-hover:shadow-[color:color-mix(in_oklab,var(--persona-res-500)_20%,transparent)]",
 };
 
 const PERSONA_GLOW_COLORS: Record<PersonaId, string> = {
-  engineer: "shadow-blue-500/30",
-  designer: "shadow-purple-500/30",
-  "product-owner": "shadow-emerald-500/30",
-  qa: "shadow-amber-500/30",
+  engineer: "shadow-[color:color-mix(in_oklab,var(--persona-eng-500)_30%,transparent)]",
+  designer: "shadow-[color:color-mix(in_oklab,var(--persona-des-500)_30%,transparent)]",
+  "product-owner": "shadow-[color:color-mix(in_oklab,var(--persona-prod-500)_30%,transparent)]",
+  qa: "shadow-[color:color-mix(in_oklab,var(--persona-res-500)_30%,transparent)]",
 };
 
 const PERSONA_RING_COLORS: Record<PersonaId, string> = {
-  engineer: "ring-blue-500",
-  designer: "ring-purple-500",
-  "product-owner": "ring-emerald-500",
-  qa: "ring-amber-500",
+  engineer: "ring-[color:var(--persona-eng-500)]",
+  designer: "ring-[color:var(--persona-des-500)]",
+  "product-owner": "ring-[color:var(--persona-prod-500)]",
+  qa: "ring-[color:var(--persona-res-500)]",
 };
 
 const PERSONA_TEXT_COLORS: Record<PersonaId, string> = {
-  engineer: "text-blue-400",
-  designer: "text-purple-400",
-  "product-owner": "text-emerald-400",
-  qa: "text-amber-400",
+  engineer: "text-[color:var(--persona-eng-500)]",
+  designer: "text-[color:var(--persona-des-500)]",
+  "product-owner": "text-[color:var(--persona-prod-500)]",
+  qa: "text-[color:var(--persona-res-500)]",
 };
 
 const PERSONA_BG_GLOW: Record<PersonaId, string> = {
-  engineer: "bg-blue-500/5",
-  designer: "bg-purple-500/5",
-  "product-owner": "bg-emerald-500/5",
-  qa: "bg-amber-500/5",
+  engineer: "bg-[color:color-mix(in_oklab,var(--persona-eng-500)_5%,transparent)]",
+  designer: "bg-[color:color-mix(in_oklab,var(--persona-des-500)_5%,transparent)]",
+  "product-owner": "bg-[color:color-mix(in_oklab,var(--persona-prod-500)_5%,transparent)]",
+  qa: "bg-[color:color-mix(in_oklab,var(--persona-res-500)_5%,transparent)]",
 };
 
 function SeatBadge({ seat, isMine }: { seat: Seat; isMine: boolean }) {
@@ -73,6 +73,7 @@ export function JoinSessionModal({
   mode = "initial",
   seats,
   clientId,
+  preferredRole,
 }: {
   isOpen: boolean;
   onJoin: (personaId: PersonaId) => void;
@@ -81,6 +82,8 @@ export function JoinSessionModal({
   seats?: Record<PersonaId, Seat>;
   /** Stable id of this client, used to recognize seats you already hold. */
   clientId?: string;
+  /** Account-level remembered role; overrides the localStorage preference. */
+  preferredRole?: PersonaId | null;
 }) {
   const [selectedId, setSelectedId] = useState<PersonaId | null>(null);
   const [joining, setJoining] = useState(false);
@@ -94,12 +97,12 @@ export function JoinSessionModal({
   // Preselect the user's remembered role when the modal opens fresh
   useEffect(() => {
     if (!isOpen || mode !== "initial") return;
-    const preferred = getPreferredRole();
+    const preferred = preferredRole ?? getPreferredRole();
     if (preferred && !isLockedSeat(preferred)) {
       setSelectedId(preferred);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, mode]);
+  }, [isOpen, mode, preferredRole]);
 
   if (!isOpen) return null;
 

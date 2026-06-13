@@ -2,8 +2,10 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Ticket, PersonaId, PRIORITY_LABELS, PRIORITY_COLORS, PriorityLevel, PREDEFINED_TAGS, TicketStatus } from "@/lib/types";
-import { seedData, getTicket, deleteTicket, updateTicket, updateTicketPriority, updateTicketTags, updateTicketStatus, retryBuild, createTicket } from "@/lib/store";
+import { Ticket, PersonaId, Seat, PRIORITY_LABELS, PRIORITY_COLORS, PriorityLevel, PREDEFINED_TAGS, TicketStatus } from "@/lib/types";
+import { seedData, getTicket, deleteTicket, updateTicket, updateTicketPriority, updateTicketTags, updateTicketStatus, retryBuild, createTicket, getSeats, claimSeat, releaseSeat } from "@/lib/store";
+import { useAuth } from "@/lib/auth-context";
+import { getClientId } from "@/lib/session-presence";
 import { validateTransition } from "@/lib/status-machine";
 import { formatDueDate } from "@/lib/date-utils";
 import { getPersona } from "@/lib/personas";
@@ -20,6 +22,7 @@ import { DetailSkeleton } from "@/components/Skeleton";
 import { DeleteTicketDialog } from "@/components/DeleteTicketDialog";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { EditableField } from "@/components/EditableField";
+import { TicketProjectSelect } from "@/components/TicketProjectSelect";
 import { TagChip } from "@/components/TagChip";
 import { EmptyState } from "@/components/EmptyState";
 import { Clock, GitBranch, RefreshCw, Sparkles, Trash2, FileQuestion, Calendar, Users, ChevronDown, Check, Share2, MoreHorizontal, Link2 } from "lucide-react";
@@ -31,12 +34,19 @@ export default function TicketDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { addToast } = useToast();
+  const { user, loading: authLoading, displayName, preferredRole, saveRole } = useAuth();
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Session state
   const [sessionPersona, setSessionPersona] = useState<PersonaId | null>(null);
   const [showJoinModal, setShowJoinModal] = useState(false);
+  const [seats, setSeats] = useState<Record<PersonaId, Seat> | undefined>(undefined);
+
+  // Seats are claimed under the account id when signed in, falling back to
+  // the anonymous per-browser id.
+  const seatId = user?.id ?? getClientId();
+  const humanLabel = displayName ?? "Human";
 
   // Delete dialog state
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -105,6 +115,7 @@ export default function TicketDetailPage() {
     seedData();
     const t = getTicket(params.id as string);
     setTicket(t || null);
+    setSeats(getSeats(params.id as string));
     setLoading(false);
   }, [params.id]);
 
@@ -118,6 +129,7 @@ export default function TicketDetailPage() {
       const t = getTicket(params.id as string);
       if (t) {
         setTicket(t);
+        setSeats(getSeats(params.id as string));
       } else {
         // Ticket was deleted — redirect to dashboard
         router.push("/");
@@ -127,16 +139,37 @@ export default function TicketDetailPage() {
     return () => window.removeEventListener("tickets-changed", handler);
   }, [params.id, router]);
 
+  // Resume a seat you already hold on this ticket — your role follows you in
+  // without re-picking. Waits for auth so account-claimed seats are recognized.
+  useEffect(() => {
+    if (loading || authLoading || sessionPersona || !ticket || !seats) return;
+    const mine = Object.values(seats).find(
+      (s) => s.occupant === "human" && s.claimedBy === seatId
+    );
+    if (mine) {
+      setSessionPersona(mine.personaId);
+      setShowJoinModal(false);
+    }
+  }, [loading, authLoading, sessionPersona, ticket, seats, seatId]);
+
   // After ticket loads, show the join modal if no session is active
   useEffect(() => {
-    if (!loading && ticket && !sessionPersona && !showJoinModal) {
+    if (!loading && !authLoading && ticket && !sessionPersona && !showJoinModal) {
       // Small delay for cinematic entrance after page load
       const timer = setTimeout(() => setShowJoinModal(true), 400);
       return () => clearTimeout(timer);
     }
-  }, [loading, ticket, sessionPersona, showJoinModal]);
+  }, [loading, authLoading, ticket, sessionPersona, showJoinModal]);
 
   const handleJoinSession = (personaId: PersonaId) => {
+    const ticketId = params.id as string;
+    // Hand any previously held seat back to its AI stand-in, then claim the new one
+    if (sessionPersona && sessionPersona !== personaId) {
+      releaseSeat(ticketId, sessionPersona, seatId);
+    }
+    claimSeat(ticketId, personaId, seatId, humanLabel);
+    saveRole(personaId);
+    setSeats(getSeats(ticketId));
     setSessionPersona(personaId);
     setShowJoinModal(false);
   };
@@ -201,6 +234,21 @@ export default function TicketDetailPage() {
     if (updated) setTicket({ ...updated });
   };
 
+  const handleUpdateBranchOverride = (newBranch: string | null) => {
+    if (!ticket) return;
+    const trimmed = newBranch?.trim() || null;
+    if ((ticket.branchOverride ?? null) === trimmed) return;
+    const updated = updateTicket(ticket.id, { branchOverride: trimmed });
+    if (updated) setTicket({ ...updated });
+  };
+
+  const handleUpdateProject = (newProjectId: string | null) => {
+    if (!ticket) return;
+    if ((ticket.projectId ?? null) === newProjectId) return;
+    const updated = updateTicket(ticket.id, { projectId: newProjectId });
+    if (updated) setTicket({ ...updated });
+  };
+
   if (loading) {
     return <DetailSkeleton />;
   }
@@ -222,16 +270,14 @@ export default function TicketDetailPage() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* Join Session Modal */}
+      {/* Join Session Modal — single instance with mode prop */}
       <JoinSessionModal
-        isOpen={showJoinModal && !sessionPersona}
+        isOpen={showJoinModal}
         onJoin={handleJoinSession}
-      />
-
-      {/* Switch Persona Modal (re-join) */}
-      <JoinSessionModal
-        isOpen={showJoinModal && !!sessionPersona}
-        onJoin={handleJoinSession}
+        mode={sessionPersona ? "switch" : "initial"}
+        seats={seats}
+        clientId={seatId}
+        preferredRole={preferredRole}
       />
 
       {/* Active persona indicator */}
@@ -264,20 +310,22 @@ export default function TicketDetailPage() {
                 {ticket.id}
               </span>
               <CopyButton text={ticket.id} label={ticket.id} />
-              {/* Status dropdown */}
+              {/* Status dropdown — DS cc-badge tones */}
               <div className="relative" ref={statusDropdownRef}>
                 <button
                   onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-                  className={`badge inline-flex items-center gap-1.5 cursor-pointer ${
-                    ticket.status === "draft" ? "bg-cardinal/20 text-cardinal" :
-                    ticket.status === "in-review" ? "bg-blue-steel/20 text-blue-steel" :
-                    ticket.status === "consensus" ? "bg-gold/20 text-gold-light" :
-                    ticket.status === "building" ? "bg-olive/20 text-olive" :
-                    "bg-raised text-ink-primary"
-                  }`}
+                  className="cc-badge cursor-pointer"
+                  style={
+                    ticket.status === "draft" ? { background: "var(--warm-150)", color: "var(--ink-700)" } :
+                    ticket.status === "in-review" ? { background: "var(--warning-100)", color: "#8A5A12" } :
+                    ticket.status === "consensus" ? { background: "var(--success-100)", color: "#1B6B4A" } :
+                    ticket.status === "building" ? { background: "var(--info-100)", color: "#185FA5" } :
+                    { background: "var(--success-100)", color: "#1B6B4A" }
+                  }
                 >
+                  <span className="cc-badge__dot" />
                   {ticket.status === "draft" ? "Draft" :
-                   ticket.status === "in-review" ? "In Review" :
+                   ticket.status === "in-review" ? "In review" :
                    ticket.status === "consensus" ? "Consensus" :
                    ticket.status === "building" ? "Building" :
                    "Done"}
@@ -285,7 +333,9 @@ export default function TicketDetailPage() {
                 </button>
 
                 {showStatusDropdown && (
-                  <div className="absolute top-full mt-1 left-0 z-50 bg-elevated border border-border-visible rounded-lg shadow-lg py-1 min-w-[160px]">
+                  <div className="absolute top-full mt-1 left-0 z-50 py-1 min-w-[160px]"
+                    style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-lg)" }}
+                  >
                     {(["draft", "in-review", "consensus", "building", "done"] as TicketStatus[]).map((s) => {
                       const isValid = validateTransition(ticket.status, s);
                       const isCurrent = ticket.status === s;
@@ -295,14 +345,14 @@ export default function TicketDetailPage() {
                           disabled={!isValid && !isCurrent}
                           onClick={() => isValid && handleStatusChange(s)}
                           className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between ${
-                            isCurrent ? "bg-gold/10 text-gold-light" :
-                            isValid ? "text-ink-primary hover:bg-raised cursor-pointer" :
-                            "text-ink-muted opacity-40 cursor-not-allowed"
+                            isCurrent ? "bg-[var(--coral-50)] text-[var(--coral-700)] font-semibold" :
+                            isValid ? "text-[var(--ink-900)] hover:bg-[var(--bg-hover)] cursor-pointer" :
+                            "text-[var(--text-faint)] opacity-50 cursor-not-allowed"
                           }`}
                         >
                           <span>
                             {s === "draft" ? "Draft" :
-                             s === "in-review" ? "In Review" :
+                             s === "in-review" ? "In review" :
                              s === "consensus" ? "Consensus" :
                              s === "building" ? "Building" :
                              "Done"}
@@ -332,7 +382,7 @@ export default function TicketDetailPage() {
               type="input"
               placeholder="Enter ticket title"
               className="mb-3"
-              displayClassName="text-2xl font-bold text-ink-primary"
+              displayClassName="text-2xl font-bold text-ink-primary font-display tracking-[-0.02em]"
             />
             <EditableField
               value={ticket.description}
@@ -430,6 +480,50 @@ export default function TicketDetailPage() {
                 );
               })()}
             </div>
+
+            {/* Project assignment — links this ticket's builds to a repo */}
+            <div className="mt-4 pt-4 border-t border-border-subtle">
+              <TicketProjectSelect
+                value={ticket.projectId ?? null}
+                onChange={handleUpdateProject}
+              />
+            </div>
+
+            {/* Build branch override */}
+            <div className="mt-4 pt-4 border-t border-border-subtle">
+              <p className="text-xs font-medium text-ink-muted mb-2">Build Branch</p>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  key={ticket.branchOverride ?? ""}
+                  defaultValue={ticket.branchOverride ?? ""}
+                  placeholder="Project default"
+                  aria-label="Build branch override"
+                  onBlur={(e) => handleUpdateBranchOverride(e.target.value || null)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      (e.target as HTMLInputElement).blur();
+                    }
+                  }}
+                  className="bg-elevated border border-border-visible rounded-lg px-3 py-2 text-sm text-ink-primary placeholder:text-ink-muted/50 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent font-mono"
+                />
+                {ticket.branchOverride && (
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateBranchOverride(null)}
+                    className="px-3 py-2 text-sm text-ink-muted hover:text-ink-primary transition-colors"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              <p className="mt-1.5 text-xs text-ink-muted">
+                {ticket.branchOverride
+                  ? "Builds for this ticket target this branch."
+                  : "Leave empty to build on the project's default branch."}
+              </p>
+            </div>
           </div>
 
           {/* Actions — primary action up front, the rest in an overflow menu */}
@@ -458,7 +552,8 @@ export default function TicketDetailPage() {
               {showActionsMenu && (
                 <div
                   role="menu"
-                  className="absolute right-0 mt-1 w-60 bg-raised border border-border-visible rounded-lg shadow-xl py-1 z-30"
+                  className="absolute right-0 mt-1 w-60 py-1 z-30"
+                  style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-lg)" }}
                 >
                   <button
                     role="menuitem"
@@ -505,7 +600,7 @@ export default function TicketDetailPage() {
                       setShowActionsMenu(false);
                       setShowDeleteDialog(true);
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left text-cardinal hover:bg-cardinal/10 transition-colors"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left text-[var(--danger-500)] hover:bg-[var(--danger-100)] transition-colors"
                   >
                     <Trash2 size={15} />
                     Delete ticket

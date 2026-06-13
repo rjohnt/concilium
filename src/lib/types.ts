@@ -16,12 +16,13 @@ export const PRIORITY_LABELS: Record<PriorityLevel, string> = {
   4: "None",
 };
 
+// Concilium DS badge tones — warm tints with darkened text (cc-badge)
 export const PRIORITY_COLORS: Record<PriorityLevel, string> = {
-  0: "bg-red-900/50 text-red-400 border-red-800",
-  1: "bg-orange-900/50 text-orange-400 border-orange-800",
-  2: "bg-yellow-900/50 text-yellow-400 border-yellow-800",
-  3: "bg-gray-800 text-gray-400 border-gray-700",
-  4: "bg-gray-900/30 text-gray-600 border-gray-800", // None priority — subtle styling
+  0: "bg-[var(--danger-100)] text-[color-mix(in_oklab,var(--danger-500)_82%,black)] border-transparent",
+  1: "bg-[var(--coral-100)] text-[var(--coral-700)] border-transparent",
+  2: "bg-[var(--info-100)] text-[#185FA5] border-transparent",
+  3: "bg-[var(--warm-150)] text-[var(--ink-700)] border-transparent",
+  4: "bg-[var(--warm-100)] text-[var(--ink-400)] border-transparent", // None priority — subtle styling
 };
 
 export interface Tag {
@@ -31,17 +32,37 @@ export interface Tag {
 }
 
 export const PREDEFINED_TAGS: Tag[] = [
-  { id: "bug",         label: "Bug",         color: "bg-cardinal/20 text-cardinal border-cardinal/40" },
-  { id: "feature",     label: "Feature",     color: "bg-gold/20 text-gold-light border-gold/40" },
-  { id: "docs",        label: "Docs",        color: "bg-blue-steel/20 text-blue-steel border-blue-steel/40" },
-  { id: "design",      label: "Design",      color: "bg-purple-900/50 text-purple-400 border-purple-700" },
-  { id: "performance", label: "Performance", color: "bg-orange-900/50 text-orange-400 border-orange-800" },
-  { id: "security",    label: "Security",    color: "bg-red-950/60 text-red-400 border-red-900" },
+  { id: "bug",         label: "Bug",         color: "bg-[var(--danger-100)] text-[color-mix(in_oklab,var(--danger-500)_82%,black)] border-transparent" },
+  { id: "feature",     label: "Feature",     color: "bg-[var(--coral-100)] text-[var(--coral-700)] border-transparent" },
+  { id: "docs",        label: "Docs",        color: "bg-[var(--info-100)] text-[#185FA5] border-transparent" },
+  { id: "design",      label: "Design",      color: "bg-[var(--persona-des-100)] text-[#3C3489] border-transparent" },
+  { id: "performance", label: "Performance", color: "bg-[var(--warning-100)] text-[color-mix(in_oklab,var(--warning-500)_72%,black)] border-transparent" },
+  { id: "security",    label: "Security",    color: "bg-[var(--warm-150)] text-[var(--ink-700)] border-transparent" },
 ];
 
 export const TAG_COLORS: Record<string, string> = Object.fromEntries(
   PREDEFINED_TAGS.map((t) => [t.id, t.color])
 );
+
+// === Projects: build settings that tickets hang off ===
+
+export type SandboxProvider = "local" | "docker" | "daytona";
+
+export const SANDBOX_PROVIDERS: SandboxProvider[] = ["local", "docker", "daytona"];
+
+export interface Project {
+  id: string;
+  name: string;
+  /** Git remote the build executor clones/pushes. Null for local-only projects. */
+  repoUrl: string | null;
+  /** Branch builds target unless a ticket overrides it. */
+  defaultBranch: string;
+  /** Where ticket builds run: 'local' | 'docker' | 'daytona'. */
+  sandboxProvider: SandboxProvider;
+  /** Open a PR after a successful build instead of committing to the branch. */
+  createPr: boolean;
+  createdAt: string; // ISO string
+}
 
 export interface Persona {
   id: PersonaId;
@@ -159,6 +180,10 @@ export interface Ticket {
    * normalizeSeats() from @/lib/seats, which defaults every seat to an AI stand-in.
    */
   seats?: SeatMap;
+  /** Owning project. Null/absent for standalone tickets (back-compat). */
+  projectId?: string | null;
+  /** When set, builds target this branch instead of the project's default. */
+  branchOverride?: string | null;
   buildReport?: BuildReport;
   /** Timestamp of the last build retry attempt (ISO string). Enforces 5s cooldown. */
   lastAttemptedAt?: string;

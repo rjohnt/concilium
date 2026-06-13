@@ -404,7 +404,7 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
             <p className="text-xs text-ink-muted">{persona?.expertise}</p>
           </div>
           {hasApproved && (
-            <span className="ml-auto badge bg-emerald-900/50 text-emerald-400">
+            <span className="ml-auto cc-badge cc-badge--success">
               <CheckCircle size={12} />
               Approved
             </span>
@@ -438,15 +438,13 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
         {/* Real-time streaming indicator */}
         {liveStreamActive && (
           <div className="sticky top-0 z-10 mb-2 flex items-center justify-center">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-900/30 border border-emerald-500/30 text-xs text-emerald-400 animate-in fade-in slide-in-from-top-2 duration-300">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-              </span>
+            <div className="cc-live inline-flex px-3 py-1 rounded-full animate-in fade-in slide-in-from-top-2 duration-300"
+              style={{ background: "var(--persona-eng-50)", border: "1px solid var(--persona-eng-100)" }}>
+              <span className="cc-live__dot" />
               <span>
                 Live
                 {streamEventLog.length > 0 && (
-                  <span className="ml-1 text-emerald-400/70">
+                  <span className="ml-1 opacity-70">
                     · {streamEventLog[streamEventLog.length - 1].label} just submitted
                   </span>
                 )}
@@ -476,44 +474,40 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
               className={`flex gap-3 ${isCurrentPersona ? "flex-row-reverse" : ""}`}
             >
               <div
-                className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm ${
+                className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-sm text-white ${
                   entryPersona?.color || "bg-overlay"
-                } ${isCurrentPersona ? "ring-2 ring-gold" : ""}`}
+                }`}
+                style={isCurrentPersona ? { boxShadow: "0 0 0 2px var(--surface-card), 0 0 0 4px var(--coral-200)" } : undefined}
               >
-                <PersonaIcon personaId={entry.personaId} size={16} />
+                <PersonaIcon personaId={entry.personaId} size={16} className="!text-white" />
               </div>
 
               <div
                 className={`flex-1 max-w-[80%] ${isCurrentPersona ? "text-right" : ""}`}
               >
-                <div
-                  className={`inline-block p-3 rounded-xl text-left ${
-                    isCurrentPersona
-                      ? "bg-gold/20 border border-gold/30 rounded-tr-sm"
-                      : "bg-elevated border border-border-visible rounded-tl-sm"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-medium text-ink-primary">
-                      {entryPersona?.label}
-                    </span>
-                    <span
-                      className="text-xs text-ink-muted"
-                      title={formatAbsoluteDate(entry.createdAt)}
-                    >
-                      {formatRelativeTime(entry.createdAt)}
-                    </span>
-                    {entry.approved && (
-                      <ThumbsUp size={12} className="text-emerald-400" />
-                    )}
-                  </div>
-                  <p className="text-sm text-ink-primary whitespace-pre-wrap">
+                <div className={`flex items-center gap-2 mb-1 ${isCurrentPersona ? "justify-end" : ""}`}>
+                  <span className="text-sm font-bold" style={{ color: "var(--ink-900)" }}>
+                    {entryPersona?.label}
+                  </span>
+                  <span
+                    className="text-[11.5px]"
+                    style={{ color: "var(--text-faint)", fontFamily: "var(--font-mono)" }}
+                    title={formatAbsoluteDate(entry.createdAt)}
+                  >
+                    {formatRelativeTime(entry.createdAt)}
+                  </span>
+                  {entry.approved && (
+                    <ThumbsUp size={12} style={{ color: "var(--success-500)" }} />
+                  )}
+                </div>
+                <div className={`inline-block text-left cc-bubble ${isCurrentPersona ? "cc-bubble--you" : ""}`}>
+                  <p className="whitespace-pre-wrap" style={{ margin: 0 }}>
                     {entry.content}
                   </p>
                 </div>
                 <div className="mt-1">
                   {entry.approved ? (
-                    <span className="text-xs text-emerald-500 flex items-center gap-1 justify-end">
+                    <span className="text-xs flex items-center gap-1 justify-end" style={{ color: "var(--success-500)" }}>
                       <CheckCircle size={10} /> Approved
                     </span>
                   ) : (
@@ -532,9 +526,9 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
           <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
             {/* Mediator header */}
             <div className="flex items-center gap-2 px-1">
-              <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-gold/10 border border-gold/20">
-                <Sparkles size={12} className="text-gold" />
-                <span className="text-xs font-medium text-gold">
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded-full" style={{ background: "var(--coral-50)", border: "1px solid var(--coral-200)" }}>
+                <Sparkles size={12} style={{ color: "var(--coral-600)" }} />
+                <span className="text-xs font-medium" style={{ color: "var(--coral-700)" }}>
                   AI-Mediated {persona?.label} Response
                 </span>
               </div>
@@ -546,13 +540,14 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
             </div>
 
             {/* Refined feedback */}
-            <div className="p-4 rounded-xl bg-raised border border-gold/30">
+            <div className="p-4 rounded-lg" style={{ background: "var(--surface-card)", border: "1px solid var(--coral-200)", boxShadow: "var(--shadow-xs)" }}>
               {editMode ? (
                 <div className="space-y-2">
                   <textarea
                     value={editedFeedback}
                     onChange={(e) => setEditedFeedback(e.target.value)}
-                    className="w-full bg-elevated border border-border-visible rounded-lg p-3 text-sm text-ink-primary placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent"
+                    className="w-full rounded-md p-3 text-sm text-ink-primary placeholder:text-ink-muted focus:outline-none focus:border-[var(--coral-500)] focus:shadow-focus"
+                    style={{ background: "var(--surface-card)", border: "1px solid var(--border-strong)" }}
                     rows={6}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
@@ -598,10 +593,10 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
 
             {/* Concerns */}
             {currentMediatorResponse.concerns.length > 0 && (
-              <div className="p-3 rounded-lg bg-red-900/10 border border-red-500/20">
+              <div className="p-3 rounded-md" style={{ background: "var(--danger-100)", border: "1px solid color-mix(in oklab, var(--danger-500) 24%, transparent)" }}>
                 <div className="flex items-center gap-1.5 mb-2">
-                  <AlertTriangle size={14} className="text-red-400" />
-                  <span className="text-xs font-medium text-red-400">
+                  <AlertTriangle size={14} style={{ color: "var(--danger-500)" }} />
+                  <span className="text-xs font-medium" style={{ color: "var(--danger-500)" }}>
                     Concerns
                   </span>
                 </div>
@@ -609,7 +604,8 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
                   {currentMediatorResponse.concerns.map((c, i) => (
                     <li
                       key={i}
-                      className="text-xs text-red-300/80 flex items-start gap-1.5"
+                      className="text-xs flex items-start gap-1.5"
+                      style={{ color: "color-mix(in oklab, var(--danger-500) 82%, black)" }}
                     >
                       <span className="mt-0.5">•</span>
                       {c}
@@ -621,10 +617,10 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
 
             {/* Recommendations */}
             {currentMediatorResponse.recommendations.length > 0 && (
-              <div className="p-3 rounded-lg bg-emerald-900/10 border border-emerald-500/20">
+              <div className="p-3 rounded-md" style={{ background: "var(--success-100)", border: "1px solid color-mix(in oklab, var(--success-500) 22%, transparent)" }}>
                 <div className="flex items-center gap-1.5 mb-2">
-                  <Lightbulb size={14} className="text-emerald-400" />
-                  <span className="text-xs font-medium text-emerald-400">
+                  <Lightbulb size={14} style={{ color: "var(--success-500)" }} />
+                  <span className="text-xs font-medium" style={{ color: "var(--success-500)" }}>
                     Recommendations
                   </span>
                 </div>
@@ -632,7 +628,8 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
                   {currentMediatorResponse.recommendations.map((r, i) => (
                     <li
                       key={i}
-                      className="text-xs text-emerald-300/80 flex items-start gap-1.5"
+                      className="text-xs flex items-start gap-1.5"
+                      style={{ color: "color-mix(in oklab, var(--success-500) 80%, black)" }}
                     >
                       <span className="mt-0.5">•</span>
                       {r}
@@ -644,17 +641,18 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
 
             {/* Approval suggestion */}
             <div
-              className={`p-3 rounded-lg border ${
+              className="p-3 rounded-md"
+              style={
                 currentMediatorResponse.suggestApproval
-                  ? "bg-emerald-900/20 border-emerald-500/30"
-                  : "bg-yellow-900/10 border-yellow-500/20"
-              }`}
+                  ? { background: "var(--success-100)", border: "1px solid color-mix(in oklab, var(--success-500) 22%, transparent)" }
+                  : { background: "var(--warning-100)", border: "1px solid color-mix(in oklab, var(--warning-500) 28%, transparent)" }
+              }
             >
               <div className="flex items-center gap-2">
                 {currentMediatorResponse.suggestApproval ? (
-                  <ThumbsUp size={14} className="text-emerald-400" />
+                  <ThumbsUp size={14} style={{ color: "var(--success-500)" }} />
                 ) : (
-                  <Clock size={14} className="text-yellow-400" />
+                  <Clock size={14} style={{ color: "color-mix(in oklab, var(--warning-500) 78%, black)" }} />
                 )}
                 <p className="text-xs text-ink-secondary">
                   {currentMediatorResponse.approvalReasoning}
@@ -675,11 +673,12 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
                       key={i}
                       onClick={() => handleFollowUpResponse(q)}
                       disabled={mediating}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border transition-all ${
+                      className="cc-chip disabled:opacity-50"
+                      style={
                         activeFollowUp === q
-                          ? "bg-gold/20 border-gold/40 text-gold"
-                          : "bg-elevated border-border-visible text-ink-secondary hover:border-gold/30 hover:text-ink-primary"
-                      } disabled:opacity-50`}
+                          ? { borderColor: "var(--coral-500)", color: "var(--coral-700)", background: "var(--coral-50)" }
+                          : undefined
+                      }
                     >
                       <ArrowRightCircle size={12} />
                       {q.length > 60 ? q.slice(0, 60) + "..." : q}
@@ -695,7 +694,7 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
                 <ArrowRight size={12} />
                 <span>
                   Suggested next:{" "}
-                  <span className="text-gold font-medium">
+                  <span className="font-medium" style={{ color: "var(--coral-700)" }}>
                     <PersonaIcon
                       personaId={
                         currentMediatorResponse.suggestedNextPersona
@@ -722,7 +721,7 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
                   type="checkbox"
                   checked={approved}
                   onChange={(e) => setApproved(e.target.checked)}
-                  className="rounded bg-overlay border-border-visible text-gold focus:ring-gold"
+                  className="rounded border-border-visible accent-[var(--coral-500)]"
                 />
                 <span>Approve as {persona?.label}</span>
                 {approved && <ThumbsUp size={16} className="text-emerald-400" />}
@@ -768,12 +767,13 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
 
       {/* Consensus reached banner */}
       {consensusReached && (
-        <div className="p-3 rounded-lg bg-emerald-900/30 border border-emerald-500/30 text-center animate-in fade-in slide-in-from-bottom-2 duration-500">
-          <p className="text-sm font-semibold text-emerald-300 flex items-center justify-center gap-2">
+        <div className="p-3 rounded-md text-center animate-in fade-in slide-in-from-bottom-2 duration-500"
+          style={{ background: "var(--success-100)", border: "1px solid color-mix(in oklab, var(--success-500) 22%, transparent)" }}>
+          <p className="text-sm font-semibold flex items-center justify-center gap-2" style={{ color: "color-mix(in oklab, var(--success-500) 80%, black)" }}>
             <PartyPopper size={16} />
-            Consensus reached! All required personas have approved.
+            Consensus reached — all required personas have approved.
           </p>
-          <p className="text-xs text-emerald-400/70 mt-1">
+          <p className="text-xs mt-1" style={{ color: "var(--success-500)" }}>
             This ticket is ready to move to building.
           </p>
         </div>
@@ -792,15 +792,16 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
               return (
                 <div
                   key={p.id}
-                  className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs ${
+                  className="flex items-center gap-1.5 px-2 py-1 rounded-full text-xs border"
+                  style={
                     p.id === activePersona
-                      ? "bg-gold/20 border border-gold/30 text-gold-light"
+                      ? { background: "var(--coral-50)", borderColor: "var(--coral-200)", color: "var(--coral-700)" }
                       : approvedP
-                        ? "bg-emerald-900/20 border border-emerald-500/20 text-emerald-400"
+                        ? { background: "var(--success-100)", borderColor: "color-mix(in oklab, var(--success-500) 22%, transparent)", color: "color-mix(in oklab, var(--success-500) 80%, black)" }
                         : submitted
-                          ? "bg-yellow-900/20 border border-yellow-500/20 text-yellow-400"
-                          : "bg-elevated/50 border border-border-visible/30 text-ink-muted"
-                  }`}
+                          ? { background: "var(--warning-100)", borderColor: "color-mix(in oklab, var(--warning-500) 28%, transparent)", color: "color-mix(in oklab, var(--warning-500) 72%, black)" }
+                          : { background: "var(--surface-card)", borderColor: "var(--border-subtle)", color: "var(--text-muted)" }
+                  }
                 >
                   <PersonaIcon personaId={p.id} size={14} />
                   <span>
@@ -829,14 +830,14 @@ export function SessionPrompt({ ticket, activePersona }: SessionPromptProps) {
                 : `Write your raw thoughts as ${persona?.label}... The mediator will refine them.`
             }
             rows={4}
-            textareaClassName="bg-elevated border border-border-visible text-ink-primary placeholder-ink-muted focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent"
-            previewClassName="bg-elevated border border-border-visible text-ink-primary"
+            textareaClassName="bg-[var(--surface-card)] border border-[var(--border-strong)] text-ink-primary placeholder-ink-muted rounded-md focus:outline-none focus:border-[var(--coral-500)] focus:shadow-focus"
+            previewClassName="bg-[var(--surface-card)] border border-[var(--border-strong)] text-ink-primary rounded-md"
           />
 
           {/* Actions row */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs text-ink-muted">
-              <Sparkles size={14} className="text-gold" />
+              <Sparkles size={14} style={{ color: "var(--coral-500)" }} />
               <span>Your input will be refined by the {persona?.label} mediator</span>
             </div>
 
