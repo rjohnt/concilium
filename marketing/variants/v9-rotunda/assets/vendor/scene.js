@@ -100,7 +100,8 @@
     const back = new THREE.Mesh(
       new THREE.CylinderGeometry(0.42, 0.42, 0.74, 24, 1, true, -Math.PI / 3.1, (Math.PI * 2) / 3.1),
       new THREE.MeshStandardMaterial({ color: 0x6a4f30, roughness: 0.58, metalness: 0.12, side: THREE.DoubleSide }));
-    back.position.y = 0.1; back.rotation.y = Math.PI / 2 + Math.PI / 3.4; place.add(back);
+    back.position.y = 0.1; back.rotation.y = 0; // arc wall sits at local +z = outward (chair back behind the persona)
+    place.add(back);
     const base = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.15, 0.7, 16), chairMat);
     base.position.y = -0.68; place.add(base);
     const mat = new THREE.MeshStandardMaterial({

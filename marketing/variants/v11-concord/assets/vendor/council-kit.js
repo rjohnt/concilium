@@ -93,15 +93,15 @@
     const handR = new THREE.Group();
     const armGeo = new THREE.CapsuleGeometry(0.05, 0.2, 6, 12);
     const armL = new THREE.Mesh(armGeo, mat);
-    armL.position.set(-0.21, 0.5, 0.14);
-    armL.rotation.set(0.9, 0, 0.5);
+    armL.position.set(-0.21, 0.5, -0.14);
+    armL.rotation.set(-0.9, 0, 0.5);
     g.add(armL);
     const armR = new THREE.Mesh(armGeo, mat);
-    armR.position.set(0.21, 0.5, 0.14);
-    armR.rotation.set(0.9, 0, -0.5);
+    armR.position.set(0.21, 0.5, -0.14);
+    armR.rotation.set(-0.9, 0, -0.5);
     g.add(armR);
-    handL.position.set(-0.24, 0.42, 0.3);
-    handR.position.set(0.24, 0.42, 0.3);
+    handL.position.set(-0.24, 0.42, -0.3);
+    handR.position.set(0.24, 0.42, -0.3);
     g.add(handL, handR);
     return { group: g, mats: [mat], handL, handR };
   }
@@ -170,31 +170,34 @@
   }
   const PROPS = [makeWrench, makeBrush, makeScroll, makeLens]; // by seat index
 
-  /* -------- the council mark in 3D (public/brand/logo-mark.svg) ------ */
-  // svg circles: coral (60,38) r22 · iris (39,74) r22 · teal (81,74) r22 · ink dot (60,62) r11
+  /* -------- the council mark in 3D (public/brand/logo-mark.svg, rotated quad) --
+     after the 45° rotation the four role circles sit at compass points:
+     purple N · gold E · teal S · blue W, ink dot upright at center.        */
   function makeMark3D(scale, dotColor, ei) {
     const g = new THREE.Group();
-    const unit = scale; // 1 unit = one pebble radius (22 svg px)
+    const unit = scale; // 1 unit = one circle radius (24 svg px); offset 22.63/24
+    const OFF = 0.943;
     const defs = [
-      { c: 0xe85d34, x: 0, y: (74 - 38) / 22 * 0.5 + 0.5, z: 0, r: 1 },
-      { c: 0x7a57d1, x: -(60 - 39) / 22, y: -0.318, z: 0, r: 1 },
-      { c: 0x1e9c86, x: (81 - 60) / 22, y: -0.318, z: 0, r: 1 },
+      { c: 0x7a57d1, x: 0, y: OFF },    // N
+      { c: 0xd9962a, x: OFF, y: 0 },    // E
+      { c: 0x1e9c86, x: 0, y: -OFF },   // S
+      { c: 0x2f82c7, x: -OFF, y: 0 },   // W
     ];
     const pebbles = [];
     defs.forEach((d) => {
       const m = new THREE.Mesh(
-        new THREE.SphereGeometry(d.r * unit, 40, 40),
+        new THREE.SphereGeometry(unit, 40, 40),
         stdMat(d.c, d.c, ei == null ? 0.32 : ei, 0.42));
-      m.position.set(d.x * unit, d.y * unit, d.z * unit);
+      m.position.set(d.x * unit, d.y * unit, 0);
       g.add(m);
       pebbles.push(m);
     });
     const dot = new THREE.Mesh(
-      new THREE.SphereGeometry(0.5 * unit, 32, 32),
+      new THREE.SphereGeometry(0.583 * unit, 32, 32),
       stdMat(dotColor == null ? 0x2b221c : dotColor, dotColor == null ? 0x2b221c : dotColor, 0.18, 0.5));
-    dot.position.set(0, ((74 - 62) / 22 - 0.318) * unit, 0.62 * unit);
+    dot.position.set(0, 0, 0.62 * unit);
     g.add(dot);
-    pebbles.push(dot);
+    pebbles.push(dot); // index 4 = the dot
     return { group: g, pebbles };
   }
 
@@ -228,7 +231,7 @@
     const back = new THREE.Mesh(
       new THREE.CylinderGeometry(0.44, 0.44, 0.78, 24, 1, true, -Math.PI / 3.1, (Math.PI * 2) / 3.1),
       new THREE.MeshStandardMaterial({ color: color || 0x4a3826, roughness: 0.58, metalness: 0.18, side: THREE.DoubleSide }));
-    back.position.y = 0.12; back.rotation.y = Math.PI / 2 + Math.PI / 3.4; c.add(back);
+    back.position.y = 0.12; back.rotation.y = 0 /* back wall outward */; c.add(back);
     const base = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.16, 0.86, 16), mat);
     base.position.y = -0.76; c.add(base);
     return c;

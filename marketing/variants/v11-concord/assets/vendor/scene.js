@@ -64,7 +64,8 @@
   scene.add(mark.group);
   // fly-in offsets for the three pebbles + dot pop
   const flyFrom = [
-    new THREE.Vector3(-9, 4, -4), new THREE.Vector3(8, 7, -6), new THREE.Vector3(0, 10, 4),
+    new THREE.Vector3(0, 10, -5), new THREE.Vector3(10, 4, -3),
+    new THREE.Vector3(7, -3, 6), new THREE.Vector3(-10, 2, 4),
     new THREE.Vector3(0, 0, 0),
   ];
   const homePos = mark.pebbles.map((p) => p.position.clone());
@@ -149,15 +150,15 @@
       figures[i].fig.mats[0].emissiveIntensity = 0.42 + smooth(14, 16, t) * 0.5;
     }
 
-    // giant mark pebbles fly home (3.2–6.4), dot pops last
-    for (let i = 0; i < 3; i++) {
-      const k = smooth(3.2 + i * 0.6, 4.5 + i * 0.6, t);
+    // giant mark pebbles fly home (3.2–6.6), dot pops last
+    for (let i = 0; i < 4; i++) {
+      const k = smooth(3.0 + i * 0.55, 4.2 + i * 0.55, t);
       mark.pebbles[i].position.lerpVectors(
         homePos[i].clone().add(flyFrom[i]), homePos[i], k);
       mark.pebbles[i].scale.setScalar(0.3 + k * 0.7);
     }
-    const dk = smooth(6.2, 6.9, t);
-    mark.pebbles[3].scale.setScalar(0.001 + dk * (1 + Math.sin(dk * Math.PI) * 0.35));
+    const dk = smooth(6.3, 7.0, t);
+    mark.pebbles[4].scale.setScalar(0.001 + dk * (1 + Math.sin(dk * Math.PI) * 0.35));
     // the mark floats and billboards toward the camera so it always reads
     mark.group.position.y = 3.9 + Math.sin(t * 0.8) * 0.18;
     mark.group.rotation.y = Math.atan2(

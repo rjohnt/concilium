@@ -1,5 +1,16 @@
 # Concilium reel variants
 
+## Series 4 — the heist (Ocean's-style)
+
+v16/v17 share `council-post.js` (bloom/grain/CA pipeline + PMREM env) and the
+council-kit crew figures with role props. Letterboxed, title-slam typography,
+tense A-minor pulse beds.
+
+| File | Cut | Length | The job |
+| --- | --- | --- | --- |
+| `concilium-heist.mp4` | The Heist | 27s | Crew intros (Mastermind / Safecracker / Artist / Lookout), laser-grid vault, Ada rappels to the coral diamond — "Plan the job. Execute together." |
+| `concilium-getaway.mp4` | The Getaway | 27s | "The Concilium Job" title, street intros out of the fog, the crew loads the quad-logo van, light-trail exit — "In. Out. Shipped." |
+
 Ten finished cuts of the council concept. Source compositions live in
 [`marketing/variants/`](../variants/); re-render any of them with
 `npx hyperframes render --quality high` inside its folder.

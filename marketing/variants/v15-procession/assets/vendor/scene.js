@@ -70,12 +70,12 @@
     [0, -3.4 + 2.62],   // near (product)
     [-2.62, -3.4],      // left (qa)
   ];
-  const SEAT_RY = [Math.PI, -Math.PI / 2, 0, Math.PI / 2]; // face the table
+  const SEAT_RY = [Math.PI, Math.PI / 2, 0, -Math.PI / 2]; // front (local -z) toward the table
   const walkers = [];
   for (let i = 0; i < 4; i++) {
     const chair = K.makeChair(0x4a3826);
     chair.position.set(SEAT_AT[i][0], -0.3, SEAT_AT[i][1]);
-    chair.rotation.y = SEAT_RY[i] + Math.PI; // backrest outward
+    chair.rotation.y = SEAT_RY[i]; // chair back (local +z) outward
     scene.add(chair);
     const fig = K.makeFigureCrafts(SEATCOLORS[i], 0.45);
     scene.add(fig.group);
@@ -152,7 +152,7 @@
       const sink = seat * 0.16; // settle into the chair
 
       w.fig.group.position.set(x, bob - sink, z);
-      const facing = peel < 0.5 ? Math.PI : SEAT_RY[i];
+      const facing = peel < 0.5 ? 0 : SEAT_RY[i]; // marching down -z, then turn to the table
       w.fig.group.rotation.y = facing;
       w.fig.group.rotation.z = walking ? Math.sin(t * 3.4 + i * 1.7) * 0.045 : 0;
       // props raise in salute at the verdict

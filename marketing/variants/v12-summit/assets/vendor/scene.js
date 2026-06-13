@@ -10,13 +10,25 @@
   renderer.toneMappingExposure = 0.96;
 
   const scene = new THREE.Scene();
+  (function () {  // in-scene night sky (post path composites opaque)
+    const cv = document.createElement("canvas"); cv.width = 16; cv.height = 512;
+    const g = cv.getContext("2d");
+    const gr = g.createLinearGradient(0, 0, 0, 512);
+    gr.addColorStop(0, "#1d2940"); gr.addColorStop(0.45, "#131c2e"); gr.addColorStop(1, "#090d18");
+    g.fillStyle = gr; g.fillRect(0, 0, 16, 512);
+    const tx = new THREE.CanvasTexture(cv);
+    tx.flipY = false; // dark at horizon-bottom of frame? keep darker at top of canvas
+    scene.background = tx;
+  })();
   scene.fog = new THREE.Fog(0x131c2a, 14, 42);
   const camera = new THREE.PerspectiveCamera(38, 1920 / 1080, 0.1, 140);
   const { clamp, lerp, smooth, mulberry32, SEATCOLORS, CORAL } = K;
   const rand = mulberry32(1206111);
 
+  scene.environment = CPOST.createEnvironment(renderer, "night");
+
   /* ---- summit platform + cliff ---------------------------------------- */
-  const stone = new THREE.MeshStandardMaterial({ color: 0x4c5668, roughness: 0.7, metalness: 0.12, flatShading: true });
+  const stone = new THREE.MeshPhysicalMaterial({ color: 0x3c4454, roughness: 0.72, metalness: 0.1, clearcoat: 0.12, clearcoatRoughness: 0.6, flatShading: true, envMapIntensity: 0.3 });
   const platform = new THREE.Mesh(new THREE.CylinderGeometry(4.4, 4.7, 0.55, 6), stone);
   platform.position.y = -0.55;
   scene.add(platform);
@@ -115,8 +127,8 @@
   });
 
   /* ---- light ------------------------------------------------------------- */
-  scene.add(new THREE.HemisphereLight(0xbcc8e8, 0x10141f, 0.5));
-  const moon = new THREE.DirectionalLight(0xcfd9f5, 0.95);
+  scene.add(new THREE.HemisphereLight(0xbcc8e8, 0x10141f, 0.38));
+  const moon = new THREE.DirectionalLight(0xcfd9f5, 0.78);
   moon.position.set(-6, 8, 4);
   scene.add(moon);
   const warm = new THREE.PointLight(0xffc89a, 0.7, 12);
@@ -136,13 +148,19 @@
       const k = smooth(0, 8, t);
       const a = -1.9 + k * 0.5;
       camera.position.set(Math.cos(a) * 8.4, lerp(-6.5, 1.6, k), Math.sin(a) * 8.4);
+      camera.fov = 38;
+      camera.updateProjectionMatrix();
       camera.lookAt(0, lerp(2.2, 0.4, k), 0);
     } else if (t < 15) {
       const a = -1.4 + (t - 8) * 0.115;
       camera.position.set(Math.cos(a) * 8.0, 2.4, Math.sin(a) * 8.0);
+      camera.fov = 38 - smooth(8, 12, t) * 4;   // dolly-zoom: world compresses as we arrive
+      camera.updateProjectionMatrix();
       camera.lookAt(0, 0.35, 0);
     } else if (t < 21) {
       const k = smooth(15, 19.5, t);
+      camera.fov = 34;
+      camera.updateProjectionMatrix();
       const a = -0.595 + (t - 15) * 0.06;
       camera.position.set(
         Math.cos(a) * lerp(8.0, 6.2, k),
@@ -151,6 +169,8 @@
       camera.lookAt(0, 0.4, 0);
     } else {
       const k = smooth(21, 26, t);
+      camera.fov = 34;
+      camera.updateProjectionMatrix();
       const a = -0.235 + (t - 21) * 0.05;
       camera.position.set(
         Math.cos(a) * lerp(6.2, 10.6, k),
@@ -174,12 +194,12 @@
     // verdict: ring + warm light vs the cold night
     const verdict = smooth(17, 19.5, t);
     table.ringMat.emissiveIntensity = 0.12 + verdict * 2.8;
-    coralFill.intensity = verdict * 4.2;
-    warm.intensity = 0.7 + verdict * 1.0;
+    coralFill.intensity = verdict * 2.2;
+    warm.intensity = 0.6 + verdict * 0.5;
 
     // aurora breathes; brightens at the verdict
     auroras.forEach((a, i) => {
-      a.m.material.opacity = 0.1 + Math.sin(t * 0.4 + a.ph) * 0.035 + verdict * 0.07;
+      a.m.material.opacity = 0.14 + Math.sin(t * 0.4 + a.ph) * 0.04 + verdict * 0.1;
       a.m.position.x = Math.sin(t * 0.05 + a.ph) * 3;
     });
 
@@ -192,8 +212,13 @@
     const fade = smooth(21.4, 23.2, t);
     renderer.toneMappingExposure = (0.96 + verdict * 0.12) * lerp(1, 0.4, fade);
 
-    renderer.render(scene, camera);
+    post.render(t);
   }
+
+  const post = CPOST.create(renderer, scene, camera, {
+    threshold: 0.74, knee: 0.2, strengthH: 0.5, strengthQ: 0.42,
+    vignette: 0.36, grain: 0.024, ca: 0.04,
+  });
 
   window.addEventListener("hf-seek", (e) => renderAt(e.detail.time));
   renderAt(window.__hfThreeTime || 0);

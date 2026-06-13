@@ -121,13 +121,13 @@
     camAt(t);
 
     // the pebbles of the colossus rise from the dunes (1.5–8), dot last
-    for (let i = 0; i < 3; i++) {
-      const k = smooth(1.5 + i * 1.4, 4.2 + i * 1.4, t);
+    for (let i = 0; i < 4; i++) {
+      const k = smooth(1.3 + i * 1.15, 3.7 + i * 1.15, t);
       const from = homePos[i].clone(); from.y = -3.4;
       mark.pebbles[i].position.lerpVectors(from, homePos[i], k);
     }
     const dk = smooth(7.4, 8.6, t);
-    mark.pebbles[3].scale.setScalar(0.001 + dk * (1 + Math.sin(dk * Math.PI) * 0.2));
+    mark.pebbles[4].scale.setScalar(0.001 + dk * (1 + Math.sin(dk * Math.PI) * 0.2));
 
     // walkers glide toward the monument (2–15), bobbing like footsteps
     walkers.forEach((w, i) => {
@@ -147,7 +147,7 @@
     coralFill.intensity = verdict * 9;
     mark.pebbles.forEach((p, i) => {
       if (p.material && p.material.emissiveIntensity != null) {
-        p.material.emissiveIntensity = (i < 3 ? 0.22 : 0.18) + verdict * 0.5;
+        p.material.emissiveIntensity = (i < 4 ? 0.22 : 0.18) + verdict * 0.5;
       }
     });
 
