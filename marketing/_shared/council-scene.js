@@ -44,6 +44,19 @@
   renderer.toneMappingExposure = dark ? 0.95 : 1.0;
 
   const scene = new THREE.Scene();
+  const CIN = C.cinema || null;   // optional cinematic pass (bloom/env/tour)
+  if (CIN && CIN.bg) {
+    // post path composites opaque — paint the gradient into the scene
+    const cv = document.createElement("canvas"); cv.width = 16; cv.height = 512;
+    const g2d = cv.getContext("2d");
+    const gr = g2d.createLinearGradient(0, 0, 0, 512);
+    gr.addColorStop(0, CIN.bg[0]); gr.addColorStop(0.45, CIN.bg[1]); gr.addColorStop(1, CIN.bg[2]);
+    g2d.fillStyle = gr; g2d.fillRect(0, 0, 16, 512);
+    scene.background = new THREE.CanvasTexture(cv);
+  }
+  if (CIN && CIN.env && window.CPOST) {
+    scene.environment = CPOST.createEnvironment(renderer, CIN.env);
+  }
   // fog gives cheap depth falloff matched to the CSS ground
   scene.fog = new THREE.Fog(dark ? 0x1b130d : 0xf6ecdd, 7.5, 16);
 
@@ -90,11 +103,13 @@
   /* ---------------- The table: plinth, column, slab, rim ----------- */
   // Opaque materials — a transparent slab shows the column through the
   // tabletop during the rise, which reads as a glitch.
-  const woodMat = new THREE.MeshStandardMaterial({
+  const MatClass = (CIN && CIN.gloss) ? THREE.MeshPhysicalMaterial : THREE.MeshStandardMaterial;
+  const glossExtra = (CIN && CIN.gloss) ? { clearcoat: 0.5, clearcoatRoughness: 0.35, envMapIntensity: 0.55 } : {};
+  const woodMat = new MatClass(Object.assign({
     color: dark ? 0x33251a : 0xe9ddc8,
-    roughness: dark ? 0.5 : 0.66,
+    roughness: dark ? 0.42 : 0.6,
     metalness: dark ? 0.3 : 0.06,
-  });
+  }, glossExtra));
   const tableGroup = new THREE.Group();
   scene.add(tableGroup);
 
@@ -194,7 +209,7 @@
       }),
     );
     backrest.position.y = 0.12;
-    backrest.rotation.y = Math.PI / 2 + Math.PI / 3.4; // open side faces the table
+    backrest.rotation.y = 0; // arc wall sits at local +z = outward (chair back behind the persona)
     place.add(backrest);
 
     const chairShadow = contactShadow(0.85, dark ? 0.5 : 0.28);
@@ -215,11 +230,11 @@
 
     // the persona: pebble body + head, slightly leaned toward the table
     const figure = new THREE.Group();
-    const mat = new THREE.MeshStandardMaterial({
+    const mat = new MatClass(Object.assign({
       color: SEATCOLORS[i], emissive: SEATCOLORS[i],
       emissiveIntensity: dark ? 0.3 : 0.12,
-      roughness: 0.38, metalness: 0.05,
-    });
+      roughness: 0.34, metalness: 0.05,
+    }, glossExtra));
     const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.235, 0.32, 8, 24), mat);
     body.position.set(0, 0.16, -0.03);
     const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 30, 30), mat);
@@ -290,15 +305,36 @@
   const span = (pair, x) => (pair ? smooth(pair[0], pair[1], x) : 0);
 
   /* --------------- renderAt ------------------------------------------ */
+  const TOUR = C.personaTour || null;
+  function tourIndex(t) {
+    if (!TOUR) return -1;
+    const i = Math.floor((t - TOUR.start) / TOUR.per);
+    return (t >= TOUR.start && i < 4) ? i : -1;
+  }
+
   function renderAt(t) {
     const cam = C.camera;
     const reveal = span(B.reveal, t);
     const push = span(B.consensus, t);
-    const orbit = cam.orbitSpeed * t + cam.orbitOffset;
-    const radius = lerp(cam.rFrom, cam.rTo, reveal) - push * cam.push;
-    const height = lerp(cam.hFrom, cam.hTo, reveal) - push * cam.pushDrop;
-    camera.position.set(Math.cos(orbit) * radius, height, Math.sin(orbit) * radius);
-    camera.lookAt(0, cam.lookY, 0);
+    const ti = tourIndex(t);
+    if (ti >= 0) {
+      // persona close-up tour: a hero shot per seat, hard cuts between
+      const u = (t - TOUR.start) / TOUR.per - ti;
+      const a = -Math.PI / 2 + (ti * Math.PI) / 2;
+      const drift = (u - 0.5) * 0.22;
+      const cr = TOUR.radius || 4.7;
+      camera.position.set(
+        Math.cos(a + drift) * cr,
+        (TOUR.height || 1.5) + Math.sin(u * Math.PI) * 0.12,
+        Math.sin(a + drift) * cr);
+      camera.lookAt(Math.cos(a) * CHAIR_R, (TOUR.lookY || 0.45), Math.sin(a) * CHAIR_R);
+    } else {
+      const orbit = cam.orbitSpeed * t + cam.orbitOffset;
+      const radius = lerp(cam.rFrom, cam.rTo, reveal) - push * cam.push;
+      const height = lerp(cam.hFrom, cam.hTo, reveal) - push * cam.pushDrop;
+      camera.position.set(Math.cos(orbit) * radius, height, Math.sin(orbit) * radius);
+      camera.lookAt(0, cam.lookY, 0);
+    }
 
     // table settles up into place
     const rise = smooth(B.reveal[0] + 0.2, B.reveal[1] - 1.0, t);
@@ -321,8 +357,12 @@
       const settle = 1 + Math.sin(f * Math.PI) * 0.09;
       seats[i].figure.scale.setScalar(0.001 + f * settle);
       seats[i].figure.position.y = lift + bob;
+      let tourBoost = 1;
+      const tIdx = tourIndex(t);
+      if (tIdx >= 0) tourBoost = (i === tIdx) ? 1.1 : 0.45;
+      const emScale = CIN ? 0.72 : 1;   // env+bloom already lift the figures
       seats[i].mat.emissiveIntensity =
-        ((dark ? 0.3 : 0.12) + f * (dark ? 0.8 : 0.3)) * pulse * (1 + push * 0.7);
+        ((dark ? 0.3 : 0.12) + f * (dark ? 0.8 : 0.3)) * pulse * (1 + push * 0.7) * tourBoost * emScale;
       // pre-seat glow: during a focus window the empty chair 0 breathes,
       // even before its figure arrives (the "seat held for you" beat)
       let preGlow = 0;
@@ -368,8 +408,11 @@
     renderer.toneMappingExposure =
       (dark ? lerp(0.95, 1.14, push) : lerp(1.0, 1.08, push)) * lerp(1, 0.18, fade);
 
-    renderer.render(scene, camera);
+    if (post) post.render(t); else renderer.render(scene, camera);
   }
+
+  const post = (CIN && CIN.post && window.CPOST)
+    ? CPOST.create(renderer, scene, camera, CIN.post) : null;
 
   window.addEventListener("hf-seek", (e) => renderAt(e.detail.time));
   renderAt(window.__hfThreeTime || 0);

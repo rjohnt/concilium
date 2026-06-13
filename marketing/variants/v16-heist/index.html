@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="assets/vendor/gsap.min.js"></script>
+    <script src="assets/vendor/three.min.js"></script>
+    <script src="assets/vendor/council-post.js"></script>
+    <script src="assets/vendor/council-kit.js"></script>
+    <style>
+      @font-face {
+        font-family: "Bricolage Grotesque";
+        font-style: normal; font-weight: 100 900; font-display: block;
+        src: url("assets/fonts/Bricolage-normal.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Hanken Grotesk";
+        font-style: normal; font-weight: 100 900; font-display: block;
+        src: url("assets/fonts/Hanken-normal.woff2") format("woff2");
+      }
+      :root {
+        --coral: #e85d34; --coral-light: #f07e5c; --cream: #fcfaf6;
+        --eng: #1e9c86; --des: #7a57d1; --prod: #d9962a; --qa: #2f82c7;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #080604; }
+      body { font-family: "Hanken Grotesk", sans-serif; }
+      .display { font-family: "Bricolage Grotesque", sans-serif; }
+
+      #stage { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+      #three-layer { position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: 1; }
+      /* cinematic letterbox — always on for the heist */
+      .bar { position: absolute; left: 0; right: 0; height: 110px; background: #000; z-index: 5; }
+      .bar.top { top: 0; } .bar.bot { bottom: 0; }
+      #grain {
+        position: absolute; inset: 0; z-index: 4; pointer-events: none; opacity: 0.05;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+      }
+
+      .scene {
+        position: absolute; inset: 110px 0; z-index: 6;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        text-align: center; padding: 40px 180px;
+        opacity: 0; visibility: hidden;
+      }
+
+      /* cold open */
+      #s0 .l1 { font-size: 30px; letter-spacing: 0.5em; text-transform: uppercase; font-weight: 700; color: #c9b294; }
+      #s0 .l2 { font-family: "Bricolage Grotesque", sans-serif; font-weight: 700; font-size: 96px;
+                letter-spacing: -0.02em; color: var(--cream); margin-top: 18px;
+                text-shadow: 0 4px 40px rgba(0,0,0,0.7); }
+      #s0 .l2 .accent { color: var(--coral-light); }
+
+      /* crew title slams — lower-left, trailer style */
+      .slam { position: absolute; left: 190px; bottom: 160px; text-align: left; opacity: 0; z-index: 6; }
+      .slam .crewrole { font-size: 26px; letter-spacing: 0.42em; text-transform: uppercase; font-weight: 800; }
+      .slam .crewname { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800;
+                        font-size: 168px; line-height: 0.95; letter-spacing: -0.03em; color: var(--cream);
+                        text-transform: uppercase; text-shadow: 0 6px 44px rgba(0,0,0,0.75); }
+      .slam .crewline { margin-top: 12px; font-size: 26px; font-weight: 600; color: #d8c8b2;
+                        letter-spacing: 0.04em; }
+      .slam .rule { width: 130px; height: 6px; margin: 18px 0 0; border-radius: 3px; }
+
+      /* the target */
+      #starget .tl1 { font-size: 26px; letter-spacing: 0.5em; text-transform: uppercase; font-weight: 800; color: var(--coral-light); }
+      #starget .tl2 { font-family: "Bricolage Grotesque", sans-serif; font-weight: 700; font-size: 88px;
+                      color: var(--cream); margin-top: 14px; letter-spacing: -0.02em;
+                      text-shadow: 0 4px 40px rgba(0,0,0,0.7); }
+
+      /* plan / execute */
+      #splan .p1, #splan .p2 {
+        font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; text-transform: uppercase;
+        font-size: 110px; line-height: 1.02; letter-spacing: -0.01em; color: var(--cream);
+        text-shadow: 0 6px 44px rgba(0,0,0,0.75); }
+      #splan .p2 { color: var(--coral-light); }
+
+      /* lockup */
+      #s6 .lockrow { display: flex; align-items: center; gap: 28px; }
+      #s6 .marksvg { width: 112px; height: 112px; overflow: visible; }
+      #s6 .brand { font-family: "Bricolage Grotesque", sans-serif; font-weight: 700; font-size: 100px;
+                   color: var(--cream); letter-spacing: -0.03em; }
+      #s6 .tagline { margin-top: 20px; font-weight: 500; font-size: 38px; color: var(--coral-light); }
+      .ctaline2 { margin-top: 44px; font-family: "Bricolage Grotesque", sans-serif;
+                  font-weight: 700; font-size: 36px; letter-spacing: -0.02em; color: #fcfaf6; }
+      .dots4 { display: inline-flex; gap: 9px; margin-left: 14px; vertical-align: middle; }
+      .dots4 b { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+      #scrim { position: absolute; inset: 0; z-index: 5; opacity: 0; pointer-events: none;
+               background: radial-gradient(82% 72% at 50% 48%, rgba(6, 4, 3, 0.7) 0%, rgba(6, 4, 3, 0.42) 58%, transparent 100%); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="27" data-width="1920" data-height="1080">
+      <audio id="bed" class="clip" src="assets/music.m4a" data-start="0" data-duration="27" data-track-index="9" data-volume="0.85"></audio>
+      <div id="stage">
+        <canvas id="three-layer" width="1920" height="1080" data-layout-ignore></canvas>
+        <div id="grain" data-layout-ignore></div>
+        <div id="scrim" data-layout-ignore></div>
+        <div class="bar top" data-layout-ignore></div>
+        <div class="bar bot" data-layout-ignore></div>
+
+        <!-- cold open -->
+        <div id="s0" class="scene">
+          <div class="l1">Every great build</div>
+          <div class="l2 display">is an <span class="accent">inside job.</span></div>
+        </div>
+
+        <!-- crew slams -->
+        <div class="slam" id="slam0" data-layout-ignore>
+          <div class="crewrole" style="color:var(--prod)">The Mastermind</div>
+          <div class="crewname display">Pam</div>
+          <div class="crewline">Product Owner — picks the target.</div>
+          <div class="rule" style="background:var(--prod)"></div>
+        </div>
+        <div class="slam" id="slam1" data-layout-ignore>
+          <div class="crewrole" style="color:var(--eng)">The Safecracker</div>
+          <div class="crewname display">Ada</div>
+          <div class="crewline">Engineer — no system keeps her out.</div>
+          <div class="rule" style="background:var(--eng)"></div>
+        </div>
+        <div class="slam" id="slam2" data-layout-ignore>
+          <div class="crewrole" style="color:var(--des)">The Artist</div>
+          <div class="crewname display">Iris</div>
+          <div class="crewline">Designer — makes it look easy.</div>
+          <div class="rule" style="background:var(--des)"></div>
+        </div>
+        <div class="slam" id="slam3" data-layout-ignore>
+          <div class="crewrole" style="color:var(--qa)">The Lookout</div>
+          <div class="crewname display">Ray</div>
+          <div class="crewline">QA — sees every trap coming.</div>
+          <div class="rule" style="background:var(--qa)"></div>
+        </div>
+
+        <!-- the target -->
+        <div id="starget" class="scene">
+          <div class="tl1">The target</div>
+          <div class="tl2 display">The perfect build.</div>
+        </div>
+
+        <!-- plan / execute -->
+        <div id="splan" class="scene">
+          <div class="p1 display">Plan the job.</div>
+          <div class="p2 display">Execute together.</div>
+        </div>
+
+        <!-- lockup -->
+        <div id="s6" class="scene">
+          <div class="lockrow">
+            <svg class="marksvg" viewBox="0 0 120 120" fill="none">
+              <g transform="rotate(45 60 60)">
+                <g class="pq1"><circle cx="44" cy="44" r="24" fill="#7A57D1"></circle></g>
+                <g class="pq2"><circle cx="76" cy="44" r="24" fill="#D9962A"></circle></g>
+                <g class="pq3"><circle cx="44" cy="76" r="24" fill="#2F82C7"></circle></g>
+                <g class="pq4"><circle cx="76" cy="76" r="24" fill="#1E9C86"></circle></g>
+              </g>
+              <g class="dotg"><circle cx="60" cy="60" r="14" fill="#FCFAF6"></circle></g>
+            </svg>
+            <div class="brand display">Concilium</div>
+          </div>
+          <div class="ctaline2">Convene your council.<span class="dots4"><b style="background:#7A57D1"></b><b style="background:#D9962A"></b><b style="background:#1E9C86"></b><b style="background:#2F82C7"></b></span></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="assets/vendor/scene.js"></script>
+
+    <script>
+      (function () {
+        window.__timelines = window.__timelines || {};
+        const tl = gsap.timeline({ paused: true });
+        const E = "power3.out";
+        function showScene(sel, start, end, inDur, outDur) {
+          tl.fromTo(sel, { autoAlpha: 0 }, { autoAlpha: 1, duration: inDur, ease: "power2.out" }, start);
+          tl.to(sel, { autoAlpha: 0, duration: outDur, ease: "power2.in" }, end - outDur);
+        }
+
+        /* cold open (0.3–2.1) */
+        showScene("#s0", 0.3, 2.1, 0.4, 0.3);
+        tl.from("#s0 .l1", { y: 18, opacity: 0, duration: 0.35, ease: E }, 0.4);
+        tl.fromTo("#s0 .l2", { scale: 1.25, opacity: 0, filter: "blur(10px)" },
+          { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.4, ease: "power4.out" }, 0.62);
+
+        /* crew title slams — hard in, hard out with each cut */
+        [0, 1, 2, 3].forEach((i) => {
+          const t0 = 2.2 + i * 2.3;
+          const sel = "#slam" + i;
+          tl.fromTo(sel, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.08 }, t0 + 0.12);
+          tl.fromTo(sel + " .crewname", { scale: 1.5, opacity: 0, filter: "blur(14px)" },
+            { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.28, ease: "power4.out" }, t0 + 0.12);
+          tl.from(sel + " .crewrole", { x: -36, opacity: 0, duration: 0.26, ease: E }, t0 + 0.3);
+          tl.from(sel + " .crewline", { y: 16, opacity: 0, duration: 0.26, ease: E }, t0 + 0.42);
+          tl.fromTo(sel + " .rule", { scaleX: 0, transformOrigin: "left center" },
+            { scaleX: 1, duration: 0.3, ease: E }, t0 + 0.5);
+          tl.to(sel, { autoAlpha: 0, x: -30, duration: 0.22, ease: "power2.in" }, t0 + 2.0);
+        });
+
+        /* the target (11.5–13.1) */
+        showScene("#starget", 11.5, 13.1, 0.3, 0.3);
+        tl.from("#starget .tl1", { y: 16, opacity: 0, duration: 0.3, ease: E }, 11.6);
+        tl.fromTo("#starget .tl2", { scale: 1.2, opacity: 0, filter: "blur(8px)" },
+          { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.34, ease: "power4.out" }, 11.78);
+
+        /* plan / execute (19.6–22.0) */
+        showScene("#splan", 19.6, 22.0, 0.3, 0.4);
+        tl.fromTo("#splan .p1", { scale: 1.3, opacity: 0, filter: "blur(10px)" },
+          { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.3, ease: "power4.out" }, 19.7);
+        tl.fromTo("#splan .p2", { scale: 1.3, opacity: 0, filter: "blur(10px)" },
+          { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.3, ease: "power4.out" }, 20.05);
+
+        /* scrim + lockup (22.2 → end, holds) */
+        tl.fromTo("#scrim", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.7, ease: "power2.out" }, 22.2);
+        tl.fromTo("#s6", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.6, ease: "power2.out" }, 22.2);
+        tl.from("#s6 .pq1", { x: -72, y: -72, opacity: 0, duration: 0.5, ease: "back.out(1.5)" }, 22.35);
+        tl.from("#s6 .pq2", { x: 72, y: -72, opacity: 0, duration: 0.5, ease: "back.out(1.5)" }, 22.47);
+        tl.from("#s6 .pq3", { x: -72, y: 72, opacity: 0, duration: 0.5, ease: "back.out(1.5)" }, 22.59);
+        tl.from("#s6 .pq4", { x: 72, y: 72, opacity: 0, duration: 0.5, ease: "back.out(1.5)" }, 22.71);
+        tl.from("#s6 .dotg", { scale: 0, svgOrigin: "60 60", opacity: 0, duration: 0.4, ease: "back.out(2)" }, 23.0);
+        tl.from("#s6 .brand", { x: -24, opacity: 0, duration: 0.6, ease: E }, 22.9);
+        tl.from("#s6 .ctaline2", { y: 20, opacity: 0, duration: 0.55, ease: E }, 23.7);
+        tl.from("#s6 .dots4 b", { scale: 0, opacity: 0, duration: 0.26, stagger: 0.11, ease: "back.out(2)" }, 24.2);
+
+        /* anchor: pad to composition end */
+        tl.set("#root", { autoAlpha: 1 }, 26.98);
+
+        window.__timelines["main"] = tl;
+      })();
+    </script>
+  </body>
+</html>

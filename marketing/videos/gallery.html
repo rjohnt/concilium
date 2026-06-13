@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Concilium — reel review</title>
+    <style>
+      :root {
+        --coral: #e85d34; --cream: #fcfaf6; --ink: #2b221c; --muted: #6e6053;
+        --card: #ffffff; --line: #e8dccb; --bg: #f7f1e8;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: var(--bg); color: var(--ink); padding: 32px 28px 80px;
+      }
+      header { max-width: 1280px; margin: 0 auto 26px; }
+      .brandrow { display: flex; align-items: center; gap: 12px; }
+      .brandrow svg { width: 38px; height: 38px; }
+      h1 { font-size: 26px; letter-spacing: -0.02em; }
+      .sub { color: var(--muted); margin-top: 6px; font-size: 15px; }
+      .controls { margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+      .controls button {
+        font: inherit; font-weight: 600; font-size: 13px; cursor: pointer;
+        padding: 8px 16px; border-radius: 999px; border: 1px solid var(--line);
+        background: var(--card); color: var(--ink);
+      }
+      .controls button.primary { background: var(--coral); color: #fff; border-color: var(--coral); }
+      .controls .seg { display: flex; gap: 6px; }
+      .controls .seg button[data-on="true"] { border-color: var(--coral); color: var(--coral); }
+      .grid {
+        max-width: 1280px; margin: 0 auto;
+        display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px;
+      }
+      .card {
+        background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+        overflow: hidden; box-shadow: 0 8px 26px rgba(43, 34, 28, 0.07);
+      }
+      .card video { width: 100%; display: block; background: #160f0a; aspect-ratio: 16/9; }
+      .meta { padding: 13px 16px 15px; }
+      .meta .t { font-weight: 700; font-size: 16px; }
+      .meta .d { color: var(--muted); font-size: 13px; margin-top: 3px; }
+      .badge {
+        display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+        text-transform: uppercase; padding: 3px 9px; border-radius: 999px;
+        background: var(--bg); color: var(--muted); margin-left: 8px; vertical-align: middle;
+      }
+      @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brandrow">
+        <svg viewBox="0 0 120 120" fill="none" aria-label="Concilium">
+          <circle cx="60" cy="38" r="22" fill="#E85D34"></circle>
+          <circle cx="39" cy="74" r="22" fill="#7A57D1"></circle>
+          <circle cx="81" cy="74" r="22" fill="#1E9C86"></circle>
+          <circle cx="60" cy="62" r="11" fill="#2B221C"></circle>
+        </svg>
+        <div>
+          <h1>Concilium — reel review</h1>
+          <div class="sub">17 cuts · 1920×1080 · click any video to play (audio on). Use the buttons to filter or play all.</div>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="primary" id="playAll">▶ Play all in sequence</button>
+        <button id="pauseAll">⏸ Pause all</button>
+        <span style="width:1px;height:22px;background:var(--line)"></span>
+        <div class="seg" id="filters"></div>
+      </div>
+    </header>
+    <div class="grid" id="grid"></div>
+
+    <script>
+      const REELS = [
+        ["chamber", "Chamber", "Series 1 · flagship", "31s", "Cinematic dark chamber → warm bloom at consensus", "s1"],
+        ["daylight", "Daylight", "Series 1 · product", "24s", "Bright studio cream, calm pacing", "s1"],
+        ["midnight", "Midnight", "Series 1 · bold", "20s", "Dark throughout, glow-lit council", "s1"],
+        ["verdict", "Verdict", "Series 1 · social", "15s", "Punchy: question → council → verdict", "s1"],
+        ["seat", "The Seat", "Series 1 · ident", "12s", "One glowing held seat, then it's claimed", "s1"],
+        ["journey", "Journey", "Series 2 · bespoke", "26s", "A 3D ticket tracked through stamps to the build portal", "s2"],
+        ["rises", "Rises", "Series 2 · bespoke", "24s", "Instanced-block tower assembles from the ring; crane-up", "s2"],
+        ["voices", "Voices", "Series 2 · bespoke", "22s", "6k particles storm, then resolve into the council", "s2"],
+        ["dawn", "Dawn (Rotunda)", "Series 2 · bespoke", "20s", "Columned rotunda at dawn, god-rays, walk-in dolly", "s2"],
+        ["blueprint", "Blueprint", "Series 2 · bespoke", "26s", "Wireframe plan solidifies into reality", "s2"],
+        ["concord", "Concord", "Series 3 · upbeat", "22s", "Confetti plaza; the logo assembles as giant 3D spheres", "s3"],
+        ["summit", "Summit", "Series 3 · dramatic", "28s", "Platform above the clouds, aurora; camera climbs the cliff", "s3"],
+        ["colossus", "Colossus", "Series 3 · monumental", "24s", "The logo at colossal scale in the dunes; a pilgrimage", "s3"],
+        ["workshop", "Workshop", "Series 3 · role props", "22s", "Engineer's wrench, Designer's brush, PO scroll, QA lens", "s3"],
+        ["procession", "Procession", "Series 3 · role props", "24s", "Torchlit hall; instruments carried to the seats", "s3"],
+        ["heist", "The Heist", "Series 4 · heist", "27s", "Ocean's-style crew intros, laser vault, the diamond grab", "s4"],
+        ["getaway", "The Getaway", "Series 4 · heist", "27s", "Title card, crew loads the council van, light-trail exit", "s4"],
+      ];
+      const SERIES = { all: "All", s1: "Council table", s2: "Bespoke worlds", s3: "Grand / props", s4: "Heist" };
+      const grid = document.getElementById("grid");
+      function render(filter) {
+        grid.innerHTML = "";
+        REELS.filter(r => filter === "all" || r[5] === filter).forEach(([id, title, tag, dur, desc]) => {
+          const card = document.createElement("div");
+          card.className = "card";
+          card.innerHTML =
+            '<video controls preload="metadata" playsinline poster="" src="concilium-' + id + '.mp4"></video>' +
+            '<div class="meta"><div class="t">' + title + '<span class="badge">' + tag + '</span><span class="badge">' + dur + '</span></div>' +
+            '<div class="d">' + desc + '</div></div>';
+          grid.appendChild(card);
+        });
+      }
+      const filtersEl = document.getElementById("filters");
+      Object.entries(SERIES).forEach(([k, label], i) => {
+        const b = document.createElement("button");
+        b.textContent = label; b.dataset.on = i === 0 ? "true" : "false";
+        b.onclick = () => {
+          [...filtersEl.children].forEach(c => c.dataset.on = "false");
+          b.dataset.on = "true"; render(k);
+        };
+        filtersEl.appendChild(b);
+      });
+      render("all");
+
+      document.getElementById("pauseAll").onclick = () =>
+        document.querySelectorAll("video").forEach(v => v.pause());
+      document.getElementById("playAll").onclick = () => {
+        const vids = [...document.querySelectorAll("video")];
+        let i = 0;
+        const playNext = () => {
+          if (i >= vids.length) return;
+          const v = vids[i++];
+          v.scrollIntoView({ block: "center", behavior: "smooth" });
+          v.play();
+          v.onended = playNext;
+        };
+        vids.forEach(v => { v.onended = null; });
+        playNext();
+      };
+    </script>
+  </body>
+</html>

@@ -4,8 +4,37 @@
     {
       "name": "next-dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "port": 3000
+    },
+    {
+      "name": "reels-gallery",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "--yes",
+        "serve",
+        "marketing/videos",
+        "-l",
+        "4700",
+        "--no-clipboard"
+      ],
+      "port": 4700
+    },
+    {
+      "name": "variant-static",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "--yes",
+        "serve",
+        "marketing/variants",
+        "-l",
+        "4601",
+        "--no-clipboard"
+      ],
+      "port": 4601
     }
   ]
 }

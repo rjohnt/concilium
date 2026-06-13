@@ -9,6 +9,14 @@
   renderer.toneMappingExposure = 1.0;
 
   const scene = new THREE.Scene();
+  (function () {  // in-scene night gradient (post path composites opaque)
+    const cv = document.createElement("canvas"); cv.width = 16; cv.height = 512;
+    const g = cv.getContext("2d");
+    const gr = g.createLinearGradient(0, 0, 0, 512);
+    gr.addColorStop(0, "#33271d"); gr.addColorStop(0.46, "#221810"); gr.addColorStop(1, "#0e0a06");
+    g.fillStyle = gr; g.fillRect(0, 0, 16, 512);
+    scene.background = new THREE.CanvasTexture(cv);
+  })();
   scene.fog = new THREE.Fog(0x191009, 10, 30);
   const camera = new THREE.PerspectiveCamera(36, 1920 / 1080, 0.1, 120);
 
@@ -26,6 +34,8 @@
     };
   }
   const rand = mulberry32(770611);
+
+  scene.environment = CPOST.createEnvironment(renderer, "night");
 
   /* ---- ground + consensus ring ------------------------------------ */
   const ground = new THREE.Mesh(
@@ -61,18 +71,27 @@
         const z = iz * (S + GAP) - off;
         const y = ly * (S + GAP) + S / 2 + 0.06;
         const delay = ly * 0.55 + rand() * 0.5;
+        const ci = Math.floor(rand() * 4);        // every block belongs to a role
+        const shade = 0.82 + rand() * 0.34;       // deterministic tonal variety
         if (rand() < 0.16 && glowBlocks.length < 22) {
-          glowBlocks.push({ x, y, z, delay, c: SEATCOLORS[glowBlocks.length % 4] });
+          glowBlocks.push({ x, y, z, delay, c: SEATCOLORS[ci] });
         } else {
-          blocks.push({ x, y, z, delay });
+          blocks.push({ x, y, z, delay, ci, shade });
         }
       }
     }
   }
   const blockGeo = new THREE.BoxGeometry(S, S, S);
-  const blockMat = new THREE.MeshStandardMaterial({ color: 0xe6d6bd, roughness: 0.62, metalness: 0.05 });
+  // white base material — per-instance colors carry the four persona hues
+  const blockMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.45, metalness: 0.06, clearcoat: 0.5, clearcoatRoughness: 0.35 });
   const inst = new THREE.InstancedMesh(blockGeo, blockMat, blocks.length);
   inst.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  const cTmp = new THREE.Color();
+  blocks.forEach((b, i) => {
+    cTmp.setHex(SEATCOLORS[b.ci]).multiplyScalar(b.shade);
+    inst.setColorAt(i, cTmp);
+  });
+  inst.instanceColor.needsUpdate = true;
   scene.add(inst);
   const dummy = new THREE.Object3D();
 
@@ -240,8 +259,13 @@
     const fade = smooth(19.4, 21.0, t);
     renderer.toneMappingExposure = (1.0 + done * 0.15) * lerp(1, 0.34, fade);
 
-    renderer.render(scene, camera);
+    post.render(t);
   }
+
+  const post = CPOST.create(renderer, scene, camera, {
+    threshold: 0.6, knee: 0.28, strengthH: 0.8, strengthQ: 0.75,
+    vignette: 0.34, grain: 0.026, ca: 0.09,
+  });
 
   window.addEventListener("hf-seek", (e) => renderAt(e.detail.time));
   renderAt(window.__hfThreeTime || 0);

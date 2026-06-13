@@ -136,10 +136,12 @@
       camera.position.set(lerp(-8.5, -5.4, k), lerp(1.0, 1.9, k), lerp(6.5, 4.9, k));
       camera.lookAt(0, 0.3, 0);
     } else if (t < 9.5) {
+      // across-the-table close-up: shoot over the assembling blocks at the
+      // seated figure opposite — high enough to clear the mini product
       const u = (t - 4) / 5.5;
       const a = 2.6 + u * 1.5;
-      camera.position.set(Math.cos(a) * 4.6, 1.05 + Math.sin(u * Math.PI) * 0.2, Math.sin(a) * 4.6);
-      camera.lookAt(Math.cos(a) * 2.2, -0.05, Math.sin(a) * 2.2);
+      camera.position.set(Math.cos(a + Math.PI) * 1.35, 1.9 + Math.sin(u * Math.PI) * 0.1, Math.sin(a + Math.PI) * 1.35);
+      camera.lookAt(Math.cos(a) * 2.75, 0.0, Math.sin(a) * 2.75);
     } else if (t < 15) {
       const k = smooth(9.5, 10.6, t);
       const a = 4.1 + (t - 9.5) * 0.1;

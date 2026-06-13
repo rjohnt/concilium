@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Concilium — interstitial & logo options</title>
+    <style>
+      @font-face { font-family: "Bricolage Grotesque"; font-weight: 100 900; font-display: block; src: url("Bricolage-normal.woff2") format("woff2"); }
+      @font-face { font-family: "Hanken Grotesk"; font-weight: 100 900; font-display: block; src: url("Hanken-normal.woff2") format("woff2"); }
+      :root {
+        --coral: #e85d34; --coral-deep: #cf4a28; --cream: #fcfaf6; --ink: #2b221c; --muted: #6e6053;
+        --eng: #1e9c86; --des: #7a57d1; --prod: #d9962a; --qa: #2f82c7; --line: #e8dccb;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: "Hanken Grotesk", -apple-system, sans-serif; background: #efe7d8; color: var(--ink); padding: 30px 26px 80px; }
+      .display { font-family: "Bricolage Grotesque", sans-serif; }
+      header { max-width: 1180px; margin: 0 auto 22px; }
+      h1 { font-size: 24px; letter-spacing: -0.02em; }
+      .sub { color: var(--muted); margin-top: 6px; font-size: 14.5px; max-width: 70ch; }
+      h2.section { max-width: 1180px; margin: 30px auto 14px; font-size: 16px; letter-spacing: 0.02em; color: var(--muted); text-transform: uppercase; font-weight: 700; }
+      .grid { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+      /* a 16:9 "frame" mocking the consensus moment over the warm bloom */
+      .frame {
+        position: relative; aspect-ratio: 16/9; border-radius: 14px; overflow: hidden;
+        background: radial-gradient(120% 100% at 50% 45%, #fffaf3 0%, #fdf3ea 45%, #f6e7d6 100%);
+        border: 1px solid var(--line); box-shadow: 0 8px 24px rgba(43,34,28,0.08);
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+        text-align: center; padding: 6% 8%;
+      }
+      .frame.dark { background: radial-gradient(120% 100% at 50% 42%, #3a2e25 0%, #251b14 55%, #160f0a 100%); color: var(--cream); }
+      .opt-tag { position: absolute; top: 12px; left: 14px; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+      .frame.dark .opt-tag { color: #b7a896; }
+      .hl { font-family: "Bricolage Grotesque", sans-serif; font-weight: 700; font-size: clamp(26px, 4.4vw, 52px); line-height: 1.04; letter-spacing: -0.025em; color: var(--ink); }
+      .frame.dark .hl { color: var(--cream); }
+      .hl .accent { color: var(--coral-deep); }
+      .frame.dark .hl .accent { color: #f07e5c; }
+      .label { font-size: 13px; color: var(--muted); }
+      .caption { max-width: 1180px; margin: 6px auto 0; font-size: 13px; color: var(--muted); }
+
+      /* Option B — four role checks */
+      .roles { display: flex; gap: 16px; }
+      .role { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+      .role .chip { width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
+      .role .chip svg { width: 22px; height: 22px; }
+      .role .rl { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+
+      /* Option C — consensus meter */
+      .meter { width: 60%; }
+      .meter .track { height: 12px; border-radius: 999px; background: rgba(43,34,28,0.1); overflow: hidden; }
+      .meter .fill { height: 100%; width: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--eng), var(--des), var(--prod), var(--qa)); }
+      .meter .row { display: flex; justify-content: space-between; margin-top: 8px; font-size: 13px; font-weight: 700; color: var(--coral-deep); letter-spacing: 0.04em; }
+
+      /* Option D — approved pill */
+      .pill { display: inline-flex; align-items: center; gap: 9px; padding: 9px 18px; border-radius: 999px; border: 1.5px solid var(--coral); color: var(--coral-deep); font-weight: 700; font-size: 15px; }
+      .pill .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--coral); }
+
+      /* ---- logo lockup (animated, four circles) ---- */
+      .logobox { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+      .stage { aspect-ratio: 16/9; border-radius: 14px; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; gap: 26px; box-shadow: 0 8px 24px rgba(43,34,28,0.08); }
+      .stage.light { background: radial-gradient(120% 100% at 50% 45%, #fffaf3, #f6e7d6); }
+      .stage.dark { background: radial-gradient(120% 90% at 50% 40%, #2c2018, #140d08); }
+      .mark4 { width: 132px; height: 132px; }
+      .mark4 circle.peb { transform-box: fill-box; transform-origin: center; }
+      .brand { font-family: "Bricolage Grotesque", sans-serif; font-weight: 700; font-size: 76px; letter-spacing: -0.03em; color: var(--ink); }
+      .stage.dark .brand { color: var(--cream); }
+      .replay { max-width: 1180px; margin: 14px auto 0; }
+      .replay button { font: inherit; font-weight: 600; font-size: 13px; cursor: pointer; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--line); background: #fff; }
+
+      /* keyframes: 4 circles fly from their corners in role order, dot pops, wordmark slides */
+      @keyframes flyTL { from { opacity: 0; transform: translate(-60px,-60px) scale(0.3); } to { opacity: 1; transform: none; } }
+      @keyframes flyTR { from { opacity: 0; transform: translate(60px,-60px) scale(0.3); } to { opacity: 1; transform: none; } }
+      @keyframes flyBL { from { opacity: 0; transform: translate(-60px,60px) scale(0.3); } to { opacity: 1; transform: none; } }
+      @keyframes flyBR { from { opacity: 0; transform: translate(60px,60px) scale(0.3); } to { opacity: 1; transform: none; } }
+      @keyframes pop { 0% { opacity: 0; transform: scale(0); } 70% { transform: scale(1.25); } 100% { opacity: 1; transform: scale(1); } }
+      @keyframes slideIn { from { opacity: 0; transform: translateX(-22px); } to { opacity: 1; transform: none; } }
+      .anim .pTL { animation: flyTL 0.6s cubic-bezier(.2,1.1,.3,1) both; animation-delay: .15s; }
+      .anim .pTR { animation: flyTR 0.6s cubic-bezier(.2,1.1,.3,1) both; animation-delay: .30s; }
+      .anim .pBL { animation: flyBL 0.6s cubic-bezier(.2,1.1,.3,1) both; animation-delay: .45s; }
+      .anim .pBR { animation: flyBR 0.6s cubic-bezier(.2,1.1,.3,1) both; animation-delay: .60s; }
+      .anim .pDOT { animation: pop 0.45s cubic-bezier(.2,1.4,.3,1) both; animation-delay: .95s; }
+      .anim .brand { animation: slideIn 0.6s cubic-bezier(.2,1,.3,1) both; animation-delay: .85s; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1 class="display">Interstitial &amp; logo — options to review</h1>
+      <div class="sub">Top: four replacements for the “Consensus reached. The build begins.” moment (the coral seal you didn't like). Bottom: the lockup rebuilt with the <b>four-circle</b> Claude-design logo (one circle per role). The lockup animates — hit replay to re-watch.</div>
+    </header>
+
+    <h2 class="section">Interstitial options (warm-bloom moment, before the logo)</h2>
+    <div class="grid">
+      <div>
+        <div class="frame">
+          <span class="opt-tag">A · Clean type (no badge)</span>
+          <div class="hl">Consensus reached.<br /><span class="accent">The build begins.</span></div>
+        </div>
+        <div class="caption"><b>A — Clean:</b> drop the seal entirely. Most confident; lets the headline carry it.</div>
+      </div>
+      <div>
+        <div class="frame">
+          <span class="opt-tag">B · Four roles agree</span>
+          <div class="roles">
+            <div class="role"><span class="chip" style="background:var(--eng)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4"><path d="M5 13l4 4L19 7"/></svg></span><span class="rl" style="color:var(--eng)">Eng</span></div>
+            <div class="role"><span class="chip" style="background:var(--des)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4"><path d="M5 13l4 4L19 7"/></svg></span><span class="rl" style="color:var(--des)">Design</span></div>
+            <div class="role"><span class="chip" style="background:var(--prod)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4"><path d="M5 13l4 4L19 7"/></svg></span><span class="rl" style="color:var(--prod)">Product</span></div>
+            <div class="role"><span class="chip" style="background:var(--qa)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4"><path d="M5 13l4 4L19 7"/></svg></span><span class="rl" style="color:var(--qa)">QA</span></div>
+          </div>
+          <div class="hl" style="font-size:clamp(22px,3.4vw,40px)">Consensus reached. <span class="accent">The build begins.</span></div>
+        </div>
+        <div class="caption"><b>B — Four roles agree:</b> each seat checks off (animated 1-2-3-4), explaining consensus as all four agreeing. Ties to the 4-role logo.</div>
+      </div>
+      <div>
+        <div class="frame">
+          <span class="opt-tag">C · Consensus meter → 100%</span>
+          <div class="meter"><div class="track"><div class="fill"></div></div><div class="row"><span>CONSENSUS</span><span>100%</span></div></div>
+          <div class="hl" style="font-size:clamp(22px,3.4vw,40px)">The build <span class="accent">begins.</span></div>
+        </div>
+        <div class="caption"><b>C — Meter:</b> gives the circle a meaning — a consensus gauge filling to 100% (animated). Explains the “progress to agreement” idea.</div>
+      </div>
+      <div>
+        <div class="frame">
+          <span class="opt-tag">D · Approved pill</span>
+          <div class="pill"><span class="dot"></span>Approved by the council</div>
+          <div class="hl">Consensus reached.<br /><span class="accent">The build begins.</span></div>
+        </div>
+        <div class="caption"><b>D — Approved pill:</b> a light verdict chip instead of the heavy seal — clearer, less ceremonial.</div>
+      </div>
+    </div>
+
+    <h2 class="section">Four-circle logo lockup (one circle per role)</h2>
+    <div class="logobox" id="logobox">
+      <div class="stage light anim" data-stage>
+        <svg class="mark4" viewBox="0 0 120 120" fill="none">
+          <circle class="peb pTL" cx="44" cy="44" r="24" fill="#7A57D1"></circle>
+          <circle class="peb pTR" cx="76" cy="44" r="24" fill="#D9962A"></circle>
+          <circle class="peb pBL" cx="44" cy="76" r="24" fill="#2F82C7"></circle>
+          <circle class="peb pBR" cx="76" cy="76" r="24" fill="#1E9C86"></circle>
+          <circle class="peb pDOT" cx="60" cy="60" r="14" fill="#2B221C"></circle>
+        </svg>
+        <div class="brand">Concilium</div>
+      </div>
+      <div class="stage dark anim" data-stage>
+        <svg class="mark4" viewBox="0 0 120 120" fill="none">
+          <circle class="peb pTL" cx="44" cy="44" r="24" fill="#7A57D1"></circle>
+          <circle class="peb pTR" cx="76" cy="44" r="24" fill="#D9962A"></circle>
+          <circle class="peb pBL" cx="44" cy="76" r="24" fill="#2F82C7"></circle>
+          <circle class="peb pBR" cx="76" cy="76" r="24" fill="#1E9C86"></circle>
+          <circle class="peb pDOT" cx="60" cy="60" r="14" fill="#FCFAF6"></circle>
+        </svg>
+        <div class="brand">Concilium</div>
+      </div>
+    </div>
+    <div class="replay"><button id="replay">↻ Replay logo animation</button> <span class="caption" style="margin:0">Light + dark lockup, four persona circles fly in by role, dot pops, wordmark resolves.</span></div>
+
+    <script>
+      const box = document.getElementById('logobox');
+      document.getElementById('replay').onclick = () => {
+        box.querySelectorAll('[data-stage]').forEach(st => {
+          st.classList.remove('anim'); void st.offsetWidth; st.classList.add('anim');
+        });
+      };
+    </script>
+  </body>
+</html>
